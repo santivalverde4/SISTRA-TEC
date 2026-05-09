@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN_CENTER
+  TRANSPORTER
+  DONOR
+}
+
+enum DonationStatus {
+  RECEIVED
+  CLASSIFIED
+  IN_TRANSIT
+  DELIVERED
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  passwordHash  String?
+  name          String?
+  role          Role            @default(DONOR)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  donations     Donation[]      @relation("DonorDonations")
+  oauthAccounts OauthAccount[]
+  refreshTokens RefreshToken[]
+}
+
+model Donation {
+  id          String          @id @default(cuid())
+  title       String
+  description String?
+  status      DonationStatus @default(RECEIVED)
+  donorId     String
+  donor       User            @relation("DonorDonations", fields: [donorId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model OauthAccount {
+  id             String   @id @default(cuid())
+  provider       String
+  providerUserId String
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@unique([provider, providerUserId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
