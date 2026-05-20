@@ -1,20 +1,31 @@
 # SISTRA-TEC
-SISTRA-TEC: Sistema de Trazabilidad de Donaciones.
+Sistema de Trazabilidad de Donaciones.
 
 ## Stack
-- Web: Next.js (React)
+- Web: Next.js (React) + Tailwind + Shadcn UI
 - API: Node.js + Express (MVC)
 - DB: PostgreSQL (Neon) + Prisma
 - Auth: JWT + OAuth2 (Google)
 
 ## Structure
-- apps/api
-- apps/web
+- `web/` — Next.js frontend
+- `api/` — Node.js REST API
 
 ## Setup
-1. npm install
-2. Copy env templates:
-	- apps/api/.env.example -> apps/api/.env
-	- apps/web/.env.local.example -> apps/web/.env.local
-3. Run DB migrations: npm run prisma:migrate
-4. Start dev: npm run dev
+
+### Web
+```bash
+cd web
+npm install
+cp .env.local.example .env.local
+npm run dev
+```
+
+### API
+```bash
+cd api
+npm install
+cp .env.example .env
+npx prisma migrate dev
+npm run dev
+```
