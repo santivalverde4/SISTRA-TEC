@@ -6,7 +6,6 @@ import passport from "passport";
 import { configurePassport } from "./config/passport";
 import { env } from "./config/env";
 import { authRoutes } from "./routes/authRoutes";
-import { donationRoutes } from "./routes/donationRoutes";
 import { healthRoutes } from "./routes/healthRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
 
@@ -22,6 +21,5 @@ app.use(passport.initialize());
 
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/donations", donationRoutes);
 
 app.use(errorHandler);

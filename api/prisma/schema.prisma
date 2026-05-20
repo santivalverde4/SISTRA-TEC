@@ -7,41 +7,53 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
 enum Role {
   ADMIN_CENTER
   TRANSPORTER
   DONOR
 }
 
-enum DonationStatus {
-  RECEIVED
-  CLASSIFIED
+enum CampaignStatus {
+  OPEN
+  FROZEN
+  CLOSED
   IN_TRANSIT
   DELIVERED
+  FINALIZED
 }
+
+enum TransportEventType {
+  TRUCK_DEPARTED
+  PARTIAL_DELIVERY
+  ROUTE_BLOCKED
+  CHECKPOINT
+  TECHNICAL_STOP
+  ARRIVED_AT_DESTINATION
+  OTHER
+}
+
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
 
 model User {
-  id            String          @id @default(cuid())
-  email         String          @unique
+  id            String         @id @default(cuid())
+  email         String         @unique
   passwordHash  String?
   name          String?
-  role          Role            @default(DONOR)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  donations     Donation[]      @relation("DonorDonations")
+  role          Role           @default(DONOR)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
   oauthAccounts OauthAccount[]
   refreshTokens RefreshToken[]
-}
 
-model Donation {
-  id          String          @id @default(cuid())
-  title       String
-  description String?
-  status      DonationStatus @default(RECEIVED)
-  donorId     String
-  donor       User            @relation("DonorDonations", fields: [donorId], references: [id])
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  donations     Donation[]     @relation("DonorDonations")
+  transporter   Transporter?
 }
 
 model OauthAccount {
@@ -63,4 +75,80 @@ model RefreshToken {
   revoked   Boolean  @default(false)
   createdAt DateTime @default(now())
   expiresAt DateTime
+}
+
+// ---------------------------------------------------------------------------
+// Domain
+// ---------------------------------------------------------------------------
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  status      CampaignStatus @default(OPEN)
+  startDate   DateTime
+  endDate     DateTime
+  categories  String[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  donations   Donation[]
+  assignment  TransportAssignment?
+}
+
+model Donation {
+  id         String         @id @default(cuid())
+  campaignId String
+  campaign   Campaign       @relation(fields: [campaignId], references: [id])
+  donorId    String
+  donor      User           @relation("DonorDonations", fields: [donorId], references: [id])
+  note       String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  items      DonationItem[]
+}
+
+model DonationItem {
+  id          String   @id @default(cuid())
+  donationId  String
+  donation    Donation @relation(fields: [donationId], references: [id])
+  description String
+  quantity    String
+}
+
+model Transporter {
+  id      String  @id @default(cuid())
+  userId  String  @unique
+  user    User    @relation(fields: [userId], references: [id])
+  vehicle String
+  plate   String
+
+  assignments TransportAssignment[]
+}
+
+model TransportAssignment {
+  id               String      @id @default(cuid())
+  campaignId       String      @unique
+  campaign         Campaign    @relation(fields: [campaignId], references: [id])
+  transporterId    String
+  transporter      Transporter @relation(fields: [transporterId], references: [id])
+  destination      String
+  distanceKm       Int
+  departureDate    DateTime
+  estimatedArrival DateTime
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  events           TransportEvent[]
+}
+
+model TransportEvent {
+  id           String              @id @default(cuid())
+  assignmentId String
+  assignment   TransportAssignment @relation(fields: [assignmentId], references: [id])
+  type         TransportEventType
+  description  String
+  notes        String?
+  occurredAt   DateTime            @default(now())
 }
