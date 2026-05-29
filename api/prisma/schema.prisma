@@ -152,3 +152,34 @@ model TransportEvent {
   notes        String?
   occurredAt   DateTime            @default(now())
 }
+
+// ---------------------------------------------------------------------------
+// Inventory
+// ---------------------------------------------------------------------------
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  name        String   @unique // ej. "Arroz", "Frijoles", "Ropa de Hombre"
+  category    String   // ej. "Alimentos", "Ropa", "Medicinas"
+  quantity    Float    @default(0) // Ahora sí, un número real para hacer matemática
+  unit        String   // ej. "kg", "unidades", "litros"
+  lastUpdated DateTime @updatedAt
+  
+  // Opcional: Para llevar un registro de los movimientos (entradas y salidas)
+  transactions InventoryTransaction[] 
+}
+
+model InventoryTransaction {
+  id              String        @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  type            TransactionType // ENUM: IN (Entrada), OUT (Salida)
+  amount          Float
+  reason          String        // ej. "Donación #123 recibida", "Envío a Zona Norte"
+  date            DateTime      @default(now())
+}
+
+enum TransactionType {
+  IN
+  OUT
+}
