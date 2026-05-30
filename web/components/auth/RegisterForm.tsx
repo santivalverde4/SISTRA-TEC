@@ -21,7 +21,7 @@ export function RegisterForm() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -47,107 +47,109 @@ export function RegisterForm() {
 
     setRole(formData.role);
     router.push(getDefaultRoute(formData.role));
-  };
+  }
+
+  function field(key: keyof typeof formData, value: string) {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="text-center space-y-2">
-            <h2 className="text-primary">Crear Cuenta</h2>
-            <p className="text-muted-foreground">Únete a SISTRA-TEC</p>
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <div className="text-center space-y-1">
+          <h1 className="text-primary">SISTRA-TEC</h1>
+          <p className="text-muted-foreground text-sm">Crea tu cuenta para empezar</p>
+        </div>
+      </CardHeader>
+
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="block mb-2 text-sm">Nombre Completo</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={formData.name}
+                onChange={(e) => field('name', e.target.value)}
+                placeholder="Juan Pérez"
+                error={errors.name}
+                className="pl-10"
+              />
+            </div>
           </div>
-        </CardHeader>
 
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block mb-2">Nombre Completo</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Juan Pérez"
-                  error={errors.name}
-                  className="pl-10"
-                />
-              </div>
+          <div>
+            <label className="block mb-2 text-sm">Correo Electrónico</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => field('email', e.target.value)}
+                placeholder="tu@correo.com"
+                error={errors.email}
+                className="pl-10"
+              />
             </div>
+          </div>
 
-            <div>
-              <label className="block mb-2">Correo Electrónico</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="tu@correo.com"
-                  error={errors.email}
-                  className="pl-10"
-                />
-              </div>
+          <div>
+            <label className="block mb-2 text-sm">Rol</label>
+            <div className="relative">
+              <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+              <select
+                value={formData.role}
+                onChange={(e) => field('role', e.target.value)}
+                className="w-full pl-10 pr-3 py-2 bg-input border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+              >
+                <option value="donante">Donante</option>
+                <option value="transportista">Transportista</option>
+                <option value="administrador">Administrador</option>
+              </select>
             </div>
+          </div>
 
-            <div>
-              <label className="block mb-2">Rol</label>
-              <div className="relative">
-                <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                  className="w-full pl-10 pr-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="donante">Donante</option>
-                  <option value="transportista">Transportista</option>
-                  <option value="administrador">Administrador</option>
-                </select>
-              </div>
+          <div>
+            <label className="block mb-2 text-sm">Contraseña</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="password"
+                value={formData.password}
+                onChange={(e) => field('password', e.target.value)}
+                placeholder="••••••••"
+                error={errors.password}
+                className="pl-10"
+              />
             </div>
+          </div>
 
-            <div>
-              <label className="block mb-2">Contraseña</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="••••••••"
-                  error={errors.password}
-                  className="pl-10"
-                />
-              </div>
+          <div>
+            <label className="block mb-2 text-sm">Confirmar Contraseña</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => field('confirmPassword', e.target.value)}
+                placeholder="••••••••"
+                error={errors.confirmPassword}
+                className="pl-10"
+              />
             </div>
+          </div>
+        </CardContent>
 
-            <div>
-              <label className="block mb-2">Confirmar Contraseña</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  placeholder="••••••••"
-                  error={errors.confirmPassword}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </CardContent>
-
-          <CardFooter className="flex-col gap-3">
-            <Button type="submit" className="w-full">Registrarse</Button>
-            <p className="text-sm text-muted-foreground">
-              ¿Ya tienes cuenta?{' '}
-              <Link href="/login" className="text-primary hover:underline">
-                Inicia sesión aquí
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+        <CardFooter className="flex-col gap-3">
+          <Button type="submit" className="w-full">Crear Cuenta</Button>
+          <p className="text-sm text-muted-foreground">
+            ¿Ya tienes cuenta?{' '}
+            <Link href="/login" className="text-primary hover:underline">
+              Inicia sesión aquí
+            </Link>
+          </p>
+        </CardFooter>
+      </form>
+    </Card>
   );
 }
