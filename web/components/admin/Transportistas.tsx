@@ -5,6 +5,8 @@ import { Card, CardContent } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { Modal } from '@/components/shared/Modal';
+import { ListCard } from '@/components/shared/ListCard';
+import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/DetailPanel';
 import { Search, Truck, MapPin, Package, Phone, Mail } from 'lucide-react';
 
 interface Assignment {
@@ -123,44 +125,35 @@ export const Transportistas = () => {
 
       <div className="space-y-4">
         {filtered.map((t) => (
-          <Card key={t.id} className="hover:shadow-md transition-shadow">
-            <CardContent>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Truck className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="mb-1">{t.name}</h3>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5" />{t.vehicle} · {t.plate}</span>
-                      <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{t.phone}</span>
-                      <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{t.email}</span>
-                    </div>
-                    <div className="mt-2">
-                      {t.assignments.length === 0 ? (
-                        <span className="text-sm text-muted-foreground">Sin asignaciones activas</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-2">
-                          {t.assignments.map((a, i) => {
-                            const s = statusLabel[a.status];
-                            return (
-                              <span key={i} className={`text-xs px-2 py-1 rounded-full font-medium ${s.classes}`}>
-                                {a.campaignName}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          <ListCard
+            key={t.id}
+            icon={<Truck className="w-6 h-6 text-primary" />}
+            title={t.name}
+            badge={
+              t.assignments.length === 0 ? (
+                <span className="text-sm text-muted-foreground">Sin asignaciones activas</span>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {t.assignments.map((a, i) => {
+                    const s = statusLabel[a.status];
+                    return (
+                      <span key={i} className={`text-xs px-2 py-1 rounded-full font-medium ${s.classes}`}>
+                        {a.campaignName}
+                      </span>
+                    );
+                  })}
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setSelected(t)}>
-                  Ver detalles
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              )
+            }
+            meta={
+              <>
+                <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5" />{t.vehicle} · {t.plate}</span>
+                <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{t.phone}</span>
+                <span className="flex items-center gap-1 truncate"><Mail className="w-3.5 h-3.5 shrink-0" />{t.email}</span>
+              </>
+            }
+            action={{ label: 'Ver detalles', onClick: () => setSelected(t) }}
+          />
         ))}
       </div>
 
@@ -177,63 +170,45 @@ export const Transportistas = () => {
       {selected && (
         <Modal title="Detalle de Transportista" onClose={() => setSelected(null)}>
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Truck className="w-7 h-7 text-primary" />
-              </div>
-              <div>
-                <h3>{selected.name}</h3>
-                <p className="text-muted-foreground text-sm">{selected.vehicle} · {selected.plate}</p>
-              </div>
-            </div>
+            <DetailHeader
+              icon={<Truck className="w-7 h-7 text-primary" />}
+              title={selected.name}
+              subtitle={`${selected.vehicle} · ${selected.plate}`}
+            />
 
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Teléfono</p>
-                <p className="font-medium">{selected.phone}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Correo</p>
-                <p className="font-medium">{selected.email}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Vehículo</p>
-                <p className="font-medium">{selected.vehicle}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Placa</p>
-                <p className="font-medium">{selected.plate}</p>
-              </div>
-            </div>
+            <DetailGrid>
+              <DetailField label="Teléfono" value={selected.phone} />
+              <DetailField label="Correo" value={<span className="truncate block">{selected.email}</span>} />
+              <DetailField label="Vehículo" value={selected.vehicle} />
+              <DetailField label="Placa" value={selected.plate} />
+            </DetailGrid>
 
-            {selected.assignments.length > 0 && (
+            {selected.assignments.length > 0 ? (
               <div>
-                <p className="text-sm font-medium mb-3">Asignación actual</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Asignaciones</p>
                 <div className="space-y-3">
                   {selected.assignments.map((a, i) => {
                     const s = statusLabel[a.status];
                     return (
-                      <div key={i} className="border border-border rounded-lg p-3 space-y-2 text-sm">
+                      <div key={i} className="border border-border rounded-lg p-3 space-y-2">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="font-medium flex-1">{a.campaignName}</p>
-                          <span className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${s.classes}`}>
+                          <p className="text-sm font-medium flex-1">{a.campaignName}</p>
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap shrink-0 ${s.classes}`}>
                             {s.label}
                           </span>
                         </div>
-                        <p className="text-muted-foreground flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5" /> {a.destination}
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" /> {a.destination}
                         </p>
-                        <p className="text-muted-foreground flex items-center gap-1">
-                          <Package className="w-3.5 h-3.5" /> {a.km} km de recorrido
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Package className="w-3.5 h-3.5 shrink-0" /> {a.km} km de recorrido
                         </p>
                       </div>
                     );
                   })}
                 </div>
               </div>
-            )}
-
-            {selected.assignments.length === 0 && (
+            ) : (
               <p className="text-sm text-muted-foreground text-center py-4">Sin asignaciones registradas</p>
             )}
 

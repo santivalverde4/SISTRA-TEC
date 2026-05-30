@@ -107,7 +107,7 @@ export const ManageCampaigns = () => {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
           <h1>Gestión de Campañas</h1>
           <p className="text-muted-foreground mt-1">
@@ -122,7 +122,7 @@ export const ManageCampaigns = () => {
 
       <Card className="mb-6">
         <CardContent>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
@@ -137,7 +137,7 @@ export const ManageCampaigns = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as CampaignStatus | 'all')}
-                className="pl-10 pr-8 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[180px]"
+                className="w-full pl-10 pr-8 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:min-w-[180px]"
               >
                 <option value="all">Todos los estados</option>
                 <option value="abierta">Abierta</option>
@@ -159,14 +159,12 @@ export const ManageCampaigns = () => {
           return (
             <Card key={campaign.id} className="hover:shadow-md transition-shadow">
               <CardContent>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-3 mb-2">
-                      <h3>{campaign.name}</h3>
-                      <StatusBadge status={campaign.status} />
-                    </div>
-                    <p className="text-muted-foreground mb-3">{campaign.description}</p>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="truncate mb-1">{campaign.name}</h3>
+                    <StatusBadge status={campaign.status} />
+                    <p className="text-muted-foreground mt-2 mb-3">{campaign.description}</p>
+                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{campaign.startDate} - {campaign.endDate}</span>
                       <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" />{campaign.donationsCount} donaciones</span>
                       <span className="flex items-center gap-1"><Tag className="w-3.5 h-3.5" />{campaign.categories.join(', ')}</span>
@@ -182,17 +180,17 @@ export const ManageCampaigns = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-1 shrink-0 sm:flex-row sm:gap-2">
                     <Button variant="outline" size="sm" onClick={() => openAssign(campaign)} title="Asignar transportista">
                       <Truck className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => openEdit(campaign)}>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(campaign)} title="Editar">
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setDeleteTarget(campaign)}>
+                    <Button variant="outline" size="sm" onClick={() => setDeleteTarget(campaign)} title="Eliminar">
                       <Trash2 className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setDetailsTarget(campaign)}>
+                    <Button variant="outline" size="sm" onClick={() => setDetailsTarget(campaign)} title="Ver detalles">
                       <MoreVertical className="w-4 h-4" />
                     </Button>
                   </div>

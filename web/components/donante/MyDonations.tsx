@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui-custom/Card';
-import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
+import { Button } from '@/components/ui-custom/Button';
 import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
+import { ListCard } from '@/components/shared/ListCard';
+import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/DetailPanel';
 import { Search, Package, Calendar } from 'lucide-react';
 import type { CampaignStatus } from '@/types';
 
@@ -83,30 +85,25 @@ export const MyDonations = () => {
 
       <div className="space-y-4">
         {filteredDonations.map((donation) => (
-          <Card key={donation.id} className="hover:shadow-md transition-shadow">
-            <CardContent>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Package className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start gap-2 mb-2 flex-wrap">
-                      <h4 className="flex-1">{donation.campaignName}</h4>
-                      <StatusBadge status={donation.campaignStatus} />
-                    </div>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" />{donation.items.length} {donation.items.length === 1 ? 'artículo' : 'artículos'}</span>
-                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{donation.date}</span>
-                    </div>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => setDetailsDonation(donation)}>
-                  Ver detalles
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ListCard
+            key={donation.id}
+            icon={<Package className="w-6 h-6 text-primary" />}
+            title={donation.campaignName}
+            badge={<StatusBadge status={donation.campaignStatus} />}
+            meta={
+              <>
+                <span className="flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5" />
+                  {donation.items.length} {donation.items.length === 1 ? 'artículo' : 'artículos'}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {donation.date}
+                </span>
+              </>
+            }
+            action={{ label: 'Ver detalles', onClick: () => setDetailsDonation(donation) }}
+          />
         ))}
       </div>
 
@@ -124,41 +121,38 @@ export const MyDonations = () => {
       {detailsDonation && (
         <Modal title="Detalle de Donación" onClose={() => setDetailsDonation(null)}>
           <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Campaña</p>
-              <p className="font-medium">{detailsDonation.campaignName}</p>
-            </div>
-            <div className="flex gap-6 text-sm">
-              <div>
-                <p className="text-muted-foreground">Fecha</p>
-                <p className="font-medium">{detailsDonation.date}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Estado campaña</p>
-                <StatusBadge status={detailsDonation.campaignStatus} />
-              </div>
-            </div>
+            <DetailHeader
+              icon={<Package className="w-7 h-7 text-primary" />}
+              title={detailsDonation.campaignName}
+              subtitle={detailsDonation.date}
+            />
+
+            <DetailGrid>
+              <DetailField label="Fecha" value={detailsDonation.date} />
+              <DetailField label="Estado campaña" value={<StatusBadge status={detailsDonation.campaignStatus} />} />
+            </DetailGrid>
 
             <div>
-              <div className="grid grid-cols-[1fr_120px] gap-2 text-sm font-medium text-muted-foreground px-1 mb-2">
-                <span>Producto / Descripción</span>
-                <span>Cantidad</span>
-              </div>
-              <div className="space-y-2">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Artículos donados</p>
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2 bg-secondary/40 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <span>Producto</span>
+                  <span>Cantidad</span>
+                </div>
                 {detailsDonation.items.map((item, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_120px] gap-2 text-sm px-1 py-2 border-b border-border last:border-0">
+                  <div key={i} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2.5 text-sm border-t border-border">
                     <span>{item.description}</span>
-                    <span className="text-muted-foreground">{item.quantity}</span>
+                    <span className="text-muted-foreground whitespace-nowrap">{item.quantity}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {detailsDonation.note && (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Nota</p>
-                <p className="text-sm bg-secondary/50 rounded-lg px-3 py-2">{detailsDonation.note}</p>
-              </div>
+              <DetailField
+                label="Nota"
+                value={<span className="block bg-secondary/50 rounded-lg px-3 py-2 text-sm">{detailsDonation.note}</span>}
+              />
             )}
 
             <div className="flex justify-end pt-2">
