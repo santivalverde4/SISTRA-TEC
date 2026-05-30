@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Timeline } from '@/components/shared/Timeline';
 import { Modal } from '@/components/shared/Modal';
 import { Truck, MapPin, Package, Clock, CheckCircle } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 type CampaignStatus = 'cerrada' | 'en-camino' | 'entregada';
 
@@ -206,14 +207,14 @@ export const TransportTraceability = () => {
                     <Package className="w-4 h-4 text-primary" />
                     <p className="text-xs text-muted-foreground">Salida</p>
                   </div>
-                  <p className="font-medium">{currentSelected.departureDate}</p>
+                  <p className="font-medium">{formatDate(currentSelected.departureDate)}</p>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
                   <div className="flex items-center gap-2 mb-1">
                     <Clock className="w-4 h-4 text-primary" />
                     <p className="text-xs text-muted-foreground">Llegada Est.</p>
                   </div>
-                  <p className="font-medium">{currentSelected.estimatedArrival}</p>
+                  <p className="font-medium">{formatDate(currentSelected.estimatedArrival)}</p>
                 </div>
               </div>
 

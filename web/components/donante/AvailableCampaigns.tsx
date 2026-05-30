@@ -6,6 +6,7 @@ import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { Badge } from '@/components/ui-custom/Badge';
 import { Search, Filter, Heart, Calendar, X, CheckCircle, Plus, Trash2, Package } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 interface DonationRow {
   id: number;
@@ -160,10 +161,10 @@ export const AvailableCampaigns = () => {
               <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>{campaign.startDate}</span>
+                  <span>{formatDate(campaign.startDate)}</span>
                 </div>
                 <span>→</span>
-                <span>{campaign.endDate}</span>
+                <span>{formatDate(campaign.endDate)}</span>
                 <span className="ml-auto font-medium text-primary flex items-center gap-1"><Package className="w-3.5 h-3.5" />{campaign.donationsCount} donaciones</span>
               </div>
 
@@ -210,11 +211,11 @@ export const AvailableCampaigns = () => {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Fecha inicio</p>
-                <p className="font-medium">{detailsCampaign.startDate}</p>
+                <p className="font-medium">{formatDate(detailsCampaign.startDate)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Fecha fin</p>
-                <p className="font-medium">{detailsCampaign.endDate}</p>
+                <p className="font-medium">{formatDate(detailsCampaign.endDate)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Donaciones recibidas</p>

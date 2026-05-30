@@ -7,7 +7,8 @@ import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
-import { MapPin, CheckCircle } from 'lucide-react';
+import { MapPin, CheckCircle, Calendar, Truck, Clock } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 interface AssignedCampaign {
   id: string;
@@ -143,23 +144,21 @@ export const AssignedCampaigns = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-4 mb-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground mb-1">Salida</p>
-                  <p>{campaign.departureDate}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground mb-1">Llegada Est.</p>
-                  <p>{campaign.estimatedArrival}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground mb-1">Distancia</p>
-                  <p>{campaign.km} km</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground mb-1">Eventos</p>
-                  <p>{campaign.eventsCount} registrados</p>
-                </div>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 shrink-0" />
+                  <span className="text-foreground font-medium">{formatDate(campaign.departureDate)}</span>
+                  <span>→</span>
+                  <span className="text-foreground font-medium">{formatDate(campaign.estimatedArrival)}</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 shrink-0" />
+                  {campaign.km} km
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 shrink-0" />
+                  {campaign.eventsCount} evento{campaign.eventsCount !== 1 ? 's' : ''} registrado{campaign.eventsCount !== 1 ? 's' : ''}
+                </span>
               </div>
 
               <div className="flex gap-2">
