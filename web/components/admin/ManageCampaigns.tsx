@@ -8,7 +8,11 @@ import { Input } from '@/components/ui-custom/Input';
 import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
 import { Search, Filter, Edit, Trash2, Plus, MoreVertical, Truck, Calendar, Package, Tag, MapPin, Route } from 'lucide-react';
+
+const today = new Date().toISOString().split('T')[0];
 import type { Campaign, CampaignStatus } from '@/types';
+import { formatDate } from '@/lib/utils';
+import { DateInput } from '@/components/ui-custom/DateInput';
 
 interface Assignment {
   transportistaId: string;
@@ -75,8 +79,18 @@ export const ManageCampaigns = () => {
     setEditForm({ ...c });
   };
 
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+
   const saveEdit = () => {
     if (!editForm) return;
+    const errs: Record<string, string> = {};
+    if (!editForm.startDate) errs.startDate = 'La fecha de inicio es requerida';
+    if (!editForm.endDate) errs.endDate = 'La fecha de fin es requerida';
+    if (editForm.startDate && editForm.endDate && editForm.startDate > editForm.endDate) {
+      errs.endDate = 'La fecha de fin debe ser posterior a la fecha de inicio';
+    }
+    if (Object.keys(errs).length > 0) { setEditErrors(errs); return; }
+    setEditErrors({});
     setCampaigns(prev => prev.map(c => c.id === editForm.id ? editForm : c));
     setEditTarget(null);
     setEditForm(null);
@@ -165,7 +179,7 @@ export const ManageCampaigns = () => {
                     <StatusBadge status={campaign.status} />
                     <p className="text-muted-foreground mt-2 mb-3">{campaign.description}</p>
                     <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{campaign.startDate} - {campaign.endDate}</span>
+                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
                       <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" />{campaign.donationsCount} donaciones</span>
                       <span className="flex items-center gap-1"><Tag className="w-3.5 h-3.5" />{campaign.categories.join(', ')}</span>
                     </div>
@@ -262,7 +276,7 @@ export const ManageCampaigns = () => {
 
       {/* Modal Editar */}
       {editTarget && editForm && (
-        <Modal title="Editar Campaña" onClose={() => { setEditTarget(null); setEditForm(null); }}>
+        <Modal title="Editar Campaña" onClose={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
           <div className="space-y-4">
             <div>
               <label className="block mb-1 text-sm font-medium">Nombre</label>
@@ -283,18 +297,21 @@ export const ManageCampaigns = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium">Fecha inicio</label>
-                <Input
-                  type="date"
+                <DateInput
                   value={editForm.startDate}
-                  onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })}
+                  onChange={(v) => setEditForm({ ...editForm, startDate: v })}
+                  min={today}
+                  max={editForm.endDate || undefined}
+                  error={editErrors.startDate}
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium">Fecha fin</label>
-                <Input
-                  type="date"
+                <DateInput
                   value={editForm.endDate}
-                  onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })}
+                  onChange={(v) => setEditForm({ ...editForm, endDate: v })}
+                  min={editForm.startDate || today}
+                  error={editErrors.endDate}
                 />
               </div>
             </div>
@@ -314,7 +331,7 @@ export const ManageCampaigns = () => {
               </select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => { setEditTarget(null); setEditForm(null); }}>
+              <Button variant="outline" onClick={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
                 Cancelar
               </Button>
               <Button onClick={saveEdit}>Guardar cambios</Button>
@@ -356,11 +373,11 @@ export const ManageCampaigns = () => {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-1">
                 <p className="text-muted-foreground">Fecha inicio</p>
-                <p className="font-medium">{detailsTarget.startDate}</p>
+                <p className="font-medium">{formatDate(detailsTarget.startDate)}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-muted-foreground">Fecha fin</p>
-                <p className="font-medium">{detailsTarget.endDate}</p>
+                <p className="font-medium">{formatDate(detailsTarget.endDate)}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-muted-foreground">Donaciones</p>

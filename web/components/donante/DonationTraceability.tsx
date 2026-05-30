@@ -6,6 +6,7 @@ import { Input } from '@/components/ui-custom/Input';
 import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Timeline } from '@/components/shared/Timeline';
 import { Search, TrendingUp, Calendar, Package } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 interface DonationItem {
   description: string;
@@ -174,7 +175,7 @@ export const DonationTraceability = () => {
                 <CardContent>
                   <h4 className="mb-2">{donation.campaignName}</h4>
                   <StatusBadge status={donation.campaignStatus} />
-                  <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{donation.date}</p>
+                  <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(donation.date)}</p>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Package className="w-3.5 h-3.5" />{donation.items.length} {donation.items.length === 1 ? 'artículo' : 'artículos'} donados
                   </p>
@@ -192,7 +193,7 @@ export const DonationTraceability = () => {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2>{selected.campaignName}</h2>
-                    <p className="text-muted-foreground mt-1 text-sm">Donado el {selected.date}</p>
+                    <p className="text-muted-foreground mt-1 text-sm">Donado el {formatDate(selected.date)}</p>
                   </div>
                   <StatusBadge status={selected.campaignStatus} />
                 </div>

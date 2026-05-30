@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui-custom/Input';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardContent } from '@/components/ui-custom/Card';
+import { DateInput } from '@/components/ui-custom/DateInput';
 import { Plus } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const categoryOptions = ['Alimentos', 'Ropa', 'Medicamentos', 'Suministros', 'Educación', 'Vivienda', 'Otro'];
+
+const today = new Date().toISOString().split('T')[0];
 
 export const CreateCampaign = () => {
   const router = useRouter();
@@ -39,6 +42,9 @@ export const CreateCampaign = () => {
     if (!formData.description) newErrors.description = 'La descripción es requerida';
     if (!formData.startDate) newErrors.startDate = 'La fecha de inicio es requerida';
     if (!formData.endDate) newErrors.endDate = 'La fecha de fin es requerida';
+    if (formData.startDate && formData.endDate && formData.startDate > formData.endDate) {
+      newErrors.endDate = 'La fecha de fin debe ser posterior a la fecha de inicio';
+    }
     if (formData.categories.length === 0) newErrors.categories = 'Selecciona al menos una categoría';
 
     if (Object.keys(newErrors).length > 0) {
@@ -88,19 +94,20 @@ export const CreateCampaign = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block mb-2">Fecha de Inicio</label>
-                <Input
-                  type="date"
+                <DateInput
                   value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  onChange={(v) => setFormData({ ...formData, startDate: v })}
+                  min={today}
+                  max={formData.endDate || undefined}
                   error={errors.startDate}
                 />
               </div>
               <div>
                 <label className="block mb-2">Fecha de Fin</label>
-                <Input
-                  type="date"
+                <DateInput
                   value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  onChange={(v) => setFormData({ ...formData, endDate: v })}
+                  min={formData.startDate || today}
                   error={errors.endDate}
                 />
               </div>
@@ -140,7 +147,7 @@ export const CreateCampaign = () => {
                 variant="outline"
                 onClick={() => router.push('/dashboard/admin/campaigns')}
               >
-                Cancelar
+                Volver a Gestión
               </Button>
             </div>
           </CardContent>

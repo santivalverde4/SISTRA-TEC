@@ -3,6 +3,7 @@
 import { clsx } from 'clsx';
 import { Check, Clock, Truck, Package, MapPin } from 'lucide-react';
 import type { TimelineEvent } from '@/types';
+import { formatDate } from '@/lib/utils';
 
 interface TimelineProps {
   events: TimelineEvent[];
@@ -56,7 +57,7 @@ export function Timeline({ events }: TimelineProps) {
                   <h4 className={clsx(isCompleted ? 'text-foreground' : 'text-muted-foreground')}>
                     {event.title}
                   </h4>
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">{event.date}</span>
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">{formatDate(event.date)}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{event.description}</p>
 

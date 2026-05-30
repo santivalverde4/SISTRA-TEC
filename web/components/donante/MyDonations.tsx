@@ -10,6 +10,7 @@ import { ListCard } from '@/components/shared/ListCard';
 import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/DetailPanel';
 import { Search, Package, Calendar } from 'lucide-react';
 import type { CampaignStatus } from '@/types';
+import { formatDate } from '@/lib/utils';
 
 interface DonationItem {
   description: string;
@@ -98,7 +99,7 @@ export const MyDonations = () => {
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  {donation.date}
+                  {formatDate(donation.date)}
                 </span>
               </>
             }
@@ -124,11 +125,11 @@ export const MyDonations = () => {
             <DetailHeader
               icon={<Package className="w-7 h-7 text-primary" />}
               title={detailsDonation.campaignName}
-              subtitle={detailsDonation.date}
+              subtitle={formatDate(detailsDonation.date)}
             />
 
             <DetailGrid>
-              <DetailField label="Fecha" value={detailsDonation.date} />
+              <DetailField label="Fecha" value={formatDate(detailsDonation.date)} />
               <DetailField label="Estado campaña" value={<StatusBadge status={detailsDonation.campaignStatus} />} />
             </DetailGrid>
 

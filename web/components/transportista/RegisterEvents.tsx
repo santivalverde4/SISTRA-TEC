@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { Badge } from '@/components/ui-custom/Badge';
-import { Plus, FileText, Clock } from 'lucide-react';
+import { Plus, FileText, Clock, Calendar } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 interface LogisticEvent {
   id: string;
@@ -216,8 +217,8 @@ export const RegisterEvents = () => {
                     </p>
                   )}
                   <div className="flex gap-4 text-sm text-muted-foreground">
-                    <span>📅 {event.date}</span>
-                    <span>🕐 {event.time}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(event.date)}</span>
+                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{event.time}</span>
                   </div>
                 </div>
               </div>
