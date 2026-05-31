@@ -11,6 +11,7 @@ import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/Detai
 import { Search, Package, Calendar } from 'lucide-react';
 import type { CampaignStatus } from '@/types';
 import { formatDate } from '@/lib/utils';
+import { useT } from '@/lib/i18n/useT';
 
 interface DonationItem {
   description: string;
@@ -53,6 +54,7 @@ const mockDonations: Donation[] = [
 ];
 
 export const MyDonations = () => {
+  const { t } = useT();
   const [donations] = useState<Donation[]>(mockDonations);
   const [searchTerm, setSearchTerm] = useState('');
   const [detailsDonation, setDetailsDonation] = useState<Donation | null>(null);
@@ -64,10 +66,8 @@ export const MyDonations = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1>Mis Donaciones</h1>
-        <p className="text-muted-foreground mt-1">
-          Historial de tus donaciones realizadas
-        </p>
+        <h1>{t('donation.my_donations_title')}</h1>
+        <p className="text-muted-foreground mt-1">{t('donation.my_donations_subtitle')}</p>
       </div>
 
       <Card className="mb-6">
@@ -77,7 +77,7 @@ export const MyDonations = () => {
             <Input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nombre de campaña..."
+              placeholder={t('donation.search_placeholder')}
               className="pl-10"
             />
           </div>
@@ -95,7 +95,7 @@ export const MyDonations = () => {
               <>
                 <span className="flex items-center gap-1">
                   <Package className="w-3.5 h-3.5" />
-                  {donation.items.length} {donation.items.length === 1 ? 'artículo' : 'artículos'}
+                  {donation.items.length} {donation.items.length === 1 ? t('donation.item_singular') : t('donation.item_plural')}
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
@@ -103,7 +103,7 @@ export const MyDonations = () => {
                 </span>
               </>
             }
-            action={{ label: 'Ver detalles', onClick: () => setDetailsDonation(donation) }}
+            action={{ label: t('campaign.view_details'), onClick: () => setDetailsDonation(donation) }}
           />
         ))}
       </div>
@@ -113,14 +113,14 @@ export const MyDonations = () => {
           <CardContent>
             <div className="text-center py-12">
               <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">No tienes donaciones registradas</p>
+              <p className="text-muted-foreground">{t('donation.no_donations')}</p>
             </div>
           </CardContent>
         </Card>
       )}
 
       {detailsDonation && (
-        <Modal title="Detalle de Donación" onClose={() => setDetailsDonation(null)}>
+        <Modal title={t('donation.detail_title')} onClose={() => setDetailsDonation(null)}>
           <div className="space-y-4">
             <DetailHeader
               icon={<Package className="w-7 h-7 text-primary" />}
@@ -129,16 +129,16 @@ export const MyDonations = () => {
             />
 
             <DetailGrid>
-              <DetailField label="Fecha" value={formatDate(detailsDonation.date)} />
-              <DetailField label="Estado campaña" value={<StatusBadge status={detailsDonation.campaignStatus} />} />
+              <DetailField label={t('donation.date_label')} value={formatDate(detailsDonation.date)} />
+              <DetailField label={t('donation.campaign_status')} value={<StatusBadge status={detailsDonation.campaignStatus} />} />
             </DetailGrid>
 
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Artículos donados</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">{t('donation.items_donated')}</p>
               <div className="border border-border rounded-lg overflow-hidden">
                 <div className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2 bg-secondary/40 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  <span>Producto</span>
-                  <span>Cantidad</span>
+                  <span>{t('donation.column_product')}</span>
+                  <span>{t('donation.column_quantity')}</span>
                 </div>
                 {detailsDonation.items.map((item, i) => (
                   <div key={i} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2.5 text-sm border-t border-border">
@@ -151,13 +151,13 @@ export const MyDonations = () => {
 
             {detailsDonation.note && (
               <DetailField
-                label="Nota"
+                label={t('donation.note')}
                 value={<span className="block bg-secondary/50 rounded-lg px-3 py-2 text-sm">{detailsDonation.note}</span>}
               />
             )}
 
             <div className="flex justify-end pt-2">
-              <Button onClick={() => setDetailsDonation(null)}>Cerrar</Button>
+              <Button onClick={() => setDetailsDonation(null)}>{t('common.close')}</Button>
             </div>
           </div>
         </Modal>

@@ -9,9 +9,11 @@ import { Button } from '@/components/ui-custom/Button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
 import { setRole, getDefaultRoute } from '@/lib/auth';
 import type { UserRole } from '@/types';
+import { useT } from '@/lib/i18n/useT';
 
 export function RegisterForm() {
   const router = useRouter();
+  const { t } = useT();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,19 +27,19 @@ export function RegisterForm() {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name) newErrors.name = 'El nombre es requerido';
+    if (!formData.name) newErrors.name = t('auth.error_name_required');
     if (!formData.email) {
-      newErrors.email = 'El correo es requerido';
+      newErrors.email = t('auth.error_email_required');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'El correo no es válido';
+      newErrors.email = t('auth.error_email_invalid');
     }
     if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida';
+      newErrors.password = t('auth.error_password_required');
     } else if (formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+      newErrors.password = t('auth.error_password_min');
     }
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden';
+      newErrors.confirmPassword = t('auth.error_passwords_mismatch');
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -57,21 +59,21 @@ export function RegisterForm() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <div className="text-center space-y-1">
-          <h1 className="text-primary">SISTRA-TEC</h1>
-          <p className="text-muted-foreground text-sm">Crea tu cuenta para empezar</p>
+          <h1 className="text-primary">{t('auth.app_title')}</h1>
+          <p className="text-muted-foreground text-sm">{t('auth.create_account_subtitle')}</p>
         </div>
       </CardHeader>
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div>
-            <label className="block mb-2 text-sm">Nombre Completo</label>
+            <label className="block mb-2 text-sm">{t('auth.full_name')}</label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={formData.name}
                 onChange={(e) => field('name', e.target.value)}
-                placeholder="Juan Pérez"
+                placeholder={t('auth.full_name_placeholder')}
                 error={errors.name}
                 className="pl-10"
               />
@@ -79,7 +81,7 @@ export function RegisterForm() {
           </div>
 
           <div>
-            <label className="block mb-2 text-sm">Correo Electrónico</label>
+            <label className="block mb-2 text-sm">{t('auth.email')}</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -94,7 +96,7 @@ export function RegisterForm() {
           </div>
 
           <div>
-            <label className="block mb-2 text-sm">Rol</label>
+            <label className="block mb-2 text-sm">{t('auth.role')}</label>
             <div className="relative">
               <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
               <select
@@ -102,15 +104,15 @@ export function RegisterForm() {
                 onChange={(e) => field('role', e.target.value)}
                 className="w-full pl-10 pr-3 py-2 bg-input border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               >
-                <option value="donante">Donante</option>
-                <option value="transportista">Transportista</option>
-                <option value="administrador">Administrador</option>
+                <option value="donante">{t('auth.role_donor')}</option>
+                <option value="transportista">{t('auth.role_transporter')}</option>
+                <option value="administrador">{t('auth.role_admin')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block mb-2 text-sm">Contraseña</label>
+            <label className="block mb-2 text-sm">{t('auth.password')}</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -125,7 +127,7 @@ export function RegisterForm() {
           </div>
 
           <div>
-            <label className="block mb-2 text-sm">Confirmar Contraseña</label>
+            <label className="block mb-2 text-sm">{t('auth.confirm_password')}</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -141,11 +143,11 @@ export function RegisterForm() {
         </CardContent>
 
         <CardFooter className="flex-col gap-3">
-          <Button type="submit" className="w-full">Crear Cuenta</Button>
+          <Button type="submit" className="w-full">{t('auth.register')}</Button>
           <p className="text-sm text-muted-foreground">
-            ¿Ya tienes cuenta?{' '}
+            {t('auth.has_account')}{' '}
             <Link href="/login" className="text-primary hover:underline">
-              Inicia sesión aquí
+              {t('auth.login_link')}
             </Link>
           </p>
         </CardFooter>

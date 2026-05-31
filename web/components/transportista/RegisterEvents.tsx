@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { Badge } from '@/components/ui-custom/Badge';
-import { Plus, FileText, Clock, Calendar } from 'lucide-react';
+import { Plus, FileText, Clock, Calendar, Info, StickyNote } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { useT } from '@/lib/i18n/useT';
 
 interface LogisticEvent {
   id: string;
@@ -61,6 +62,7 @@ const eventTypes = [
 ];
 
 export const RegisterEvents = () => {
+  const { t } = useT();
   const [events, setEvents] = useState<LogisticEvent[]>(mockEvents);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -93,14 +95,12 @@ export const RegisterEvents = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1>Registro de Eventos Logísticos</h1>
-          <p className="text-muted-foreground mt-1">
-            Documenta cada paso del proceso de entrega
-          </p>
+          <h1>{t('transporter.register_event_title')}</h1>
+          <p className="text-muted-foreground mt-1">{t('transporter.register_event_subtitle')}</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)}>
           <Plus className="w-4 h-4" />
-          Nuevo Evento
+          {t('transporter.new_event')}
         </Button>
       </div>
 
@@ -108,14 +108,11 @@ export const RegisterEvents = () => {
         <CardContent>
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
-              ℹ️
+              <Info className="w-5 h-5 text-accent-foreground" />
             </div>
             <div className="flex-1">
-              <h4 className="mb-1">Importante</h4>
-              <p className="text-sm text-muted-foreground">
-                Los eventos logísticos NO cambian automáticamente el estado de la campaña.
-                Debes registrar al menos un evento antes de marcar una campaña como entregada.
-              </p>
+              <h4 className="mb-1">{t('transporter.important_title')}</h4>
+              <p className="text-sm text-muted-foreground">{t('transporter.important_message')}</p>
             </div>
           </div>
         </CardContent>
@@ -124,26 +121,26 @@ export const RegisterEvents = () => {
       {showForm && (
         <Card className="mb-6">
           <CardHeader>
-            <h3>Registrar Nuevo Evento</h3>
+            <h3>{t('transporter.register_new_event')}</h3>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block mb-2">Campaña</label>
+                <label className="block mb-2">{t('transporter.event_campaign')}</label>
                 <select
                   value={formData.campaignName}
                   onChange={(e) => setFormData({ ...formData, campaignName: e.target.value })}
                   className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
-                  <option value="">Selecciona una campaña</option>
+                  <option value="">{t('transporter.select_campaign')}</option>
                   <option value="Medicamentos para zonas rurales">Medicamentos para zonas rurales</option>
                   <option value="Alimentos para damnificados">Alimentos para damnificados</option>
                 </select>
               </div>
 
               <div>
-                <label className="block mb-2">Tipo de Evento</label>
+                <label className="block mb-2">{t('transporter.event_type')}</label>
                 <select
                   value={formData.eventType}
                   onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
@@ -158,30 +155,30 @@ export const RegisterEvents = () => {
               </div>
 
               <div>
-                <label className="block mb-2">Descripción del Evento</label>
+                <label className="block mb-2">{t('transporter.event_description')}</label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe lo que ocurrió"
+                  placeholder={t('transporter.event_description_placeholder')}
                   required
                 />
               </div>
 
               <div>
-                <label className="block mb-2">Notas Logísticas</label>
+                <label className="block mb-2">{t('transporter.event_notes')}</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Información adicional, observaciones..."
+                  placeholder={t('transporter.event_notes_placeholder')}
                   rows={3}
                   className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                 />
               </div>
 
               <div className="flex gap-2">
-                <Button type="submit">Registrar Evento</Button>
+                <Button type="submit">{t('transporter.event_submit')}</Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
               </div>
             </form>
@@ -192,7 +189,7 @@ export const RegisterEvents = () => {
       <div className="space-y-4">
         <h3 className="flex items-center gap-2">
           <FileText className="w-5 h-5" />
-          Historial de Eventos
+          {t('transporter.event_log')}
         </h3>
 
         {events.map((event) => (
@@ -208,12 +205,13 @@ export const RegisterEvents = () => {
                       <h4 className="mb-1">{event.eventType}</h4>
                       <p className="text-sm text-muted-foreground">{event.campaignName}</p>
                     </div>
-                    <Badge variant="info">Logístico</Badge>
+                    <Badge variant="info">{t('transporter.logistic_badge')}</Badge>
                   </div>
                   <p className="text-muted-foreground mb-2">{event.description}</p>
                   {event.notes && (
-                    <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mb-2">
-                      📝 {event.notes}
+                    <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mb-2 flex items-center gap-2">
+                      <StickyNote className="w-3.5 h-3.5 shrink-0" />
+                      {event.notes}
                     </p>
                   )}
                   <div className="flex gap-4 text-sm text-muted-foreground">

@@ -9,6 +9,7 @@ import {
 import { clsx } from 'clsx';
 import type { UserRole } from '@/types';
 import { clearSession } from '@/lib/auth';
+import { useT } from '@/lib/i18n/useT';
 
 interface SidebarProps {
   userRole: UserRole;
@@ -16,29 +17,31 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const menuItems: Record<UserRole, { path: string; label: string; icon: React.ElementType }[]> = {
-  donante: [
-    { path: '/dashboard/donante/campaigns', label: 'Campañas Disponibles', icon: HeartHandshake },
-    { path: '/dashboard/donante/donations', label: 'Mis Donaciones', icon: Package },
-    { path: '/dashboard/donante/traceability', label: 'Trazabilidad', icon: TrendingUp },
-    { path: '/dashboard/profile', label: 'Perfil', icon: User },
-  ],
-  transportista: [
-    { path: '/dashboard/transportista/campaigns', label: 'Campañas Asignadas', icon: Truck },
-    { path: '/dashboard/transportista/traceability', label: 'Trazabilidad de Transporte', icon: MapPin },
-    { path: '/dashboard/profile', label: 'Perfil', icon: User },
-  ],
-  administrador: [
-    { path: '/dashboard/admin/campaigns', label: 'Gestión de Campañas', icon: Package },
-    { path: '/dashboard/admin/campaigns/create', label: 'Crear Campaña', icon: HeartHandshake },
-    { path: '/dashboard/admin/transporters', label: 'Transportistas', icon: Truck },
-    { path: '/dashboard/profile', label: 'Perfil', icon: User },
-  ],
-};
-
 export function Sidebar({ userRole, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useT();
+
+  const menuItems: Record<UserRole, { path: string; label: string; icon: React.ElementType }[]> = {
+    donante: [
+      { path: '/dashboard/donante/campaigns', label: t('sidebar.available_campaigns'), icon: HeartHandshake },
+      { path: '/dashboard/donante/donations', label: t('sidebar.my_donations'), icon: Package },
+      { path: '/dashboard/donante/traceability', label: t('sidebar.donation_traceability'), icon: TrendingUp },
+      { path: '/dashboard/profile', label: t('sidebar.profile'), icon: User },
+    ],
+    transportista: [
+      { path: '/dashboard/transportista/campaigns', label: t('sidebar.assigned_campaigns'), icon: Truck },
+      { path: '/dashboard/transportista/traceability', label: t('sidebar.transport_traceability'), icon: MapPin },
+      { path: '/dashboard/profile', label: t('sidebar.profile'), icon: User },
+    ],
+    administrador: [
+      { path: '/dashboard/admin/campaigns', label: t('sidebar.manage_campaigns'), icon: Package },
+      { path: '/dashboard/admin/campaigns/create', label: t('sidebar.create_campaign'), icon: HeartHandshake },
+      { path: '/dashboard/admin/transporters', label: t('sidebar.transporters'), icon: Truck },
+      { path: '/dashboard/profile', label: t('sidebar.profile'), icon: User },
+    ],
+  };
+
   const items = menuItems[userRole] ?? [];
 
   function handleLogout() {
@@ -64,9 +67,7 @@ export function Sidebar({ userRole, isOpen, onClose }: SidebarProps) {
       <aside
         className={clsx(
           'h-screen bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-transform duration-300',
-          // Desktop: always visible, sticky
           'md:sticky md:top-0 md:translate-x-0 md:w-64',
-          // Mobile: fixed overlay, toggled
           'fixed top-0 left-0 z-40 w-64',
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
@@ -109,7 +110,7 @@ export function Sidebar({ userRole, isOpen, onClose }: SidebarProps) {
             className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200"
           >
             <LogOut className="w-5 h-5" />
-            <span>Cerrar Sesión</span>
+            <span>{t('sidebar.logout')}</span>
           </button>
         </div>
       </aside>

@@ -8,11 +8,12 @@ import { Input } from '@/components/ui-custom/Input';
 import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
 import { Search, Filter, Edit, Trash2, Plus, MoreVertical, Truck, Calendar, Package, Tag, MapPin, Route } from 'lucide-react';
-
-const today = new Date().toISOString().split('T')[0];
 import type { Campaign, CampaignStatus } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { DateInput } from '@/components/ui-custom/DateInput';
+import { useT } from '@/lib/i18n/useT';
+
+const today = new Date().toISOString().split('T')[0];
 
 interface Assignment {
   transportistaId: string;
@@ -62,6 +63,7 @@ const mockTransportistas = [
 
 export const ManageCampaigns = () => {
   const router = useRouter();
+  const { t } = useT();
   const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<CampaignStatus | 'all'>('all');
@@ -71,6 +73,7 @@ export const ManageCampaigns = () => {
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
   const [detailsTarget, setDetailsTarget] = useState<Campaign | null>(null);
   const [editForm, setEditForm] = useState<Campaign | null>(null);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [assignTarget, setAssignTarget] = useState<Campaign | null>(null);
   const [assignForm, setAssignForm] = useState<Assignment>({ transportistaId: '', destination: '', km: '' });
 
@@ -79,15 +82,13 @@ export const ManageCampaigns = () => {
     setEditForm({ ...c });
   };
 
-  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
-
   const saveEdit = () => {
     if (!editForm) return;
     const errs: Record<string, string> = {};
-    if (!editForm.startDate) errs.startDate = 'La fecha de inicio es requerida';
-    if (!editForm.endDate) errs.endDate = 'La fecha de fin es requerida';
+    if (!editForm.startDate) errs.startDate = t('campaign.error_start_required');
+    if (!editForm.endDate) errs.endDate = t('campaign.error_end_required');
     if (editForm.startDate && editForm.endDate && editForm.startDate > editForm.endDate) {
-      errs.endDate = 'La fecha de fin debe ser posterior a la fecha de inicio';
+      errs.endDate = t('campaign.error_end_before_start');
     }
     if (Object.keys(errs).length > 0) { setEditErrors(errs); return; }
     setEditErrors({});
@@ -123,14 +124,12 @@ export const ManageCampaigns = () => {
     <div className="p-6">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1>Gestión de Campañas</h1>
-          <p className="text-muted-foreground mt-1">
-            Administra y monitorea todas las campañas activas
-          </p>
+          <h1>{t('campaign.manage_title')}</h1>
+          <p className="text-muted-foreground mt-1">{t('campaign.manage_subtitle')}</p>
         </div>
         <Button onClick={() => router.push('/dashboard/admin/campaigns/create')}>
           <Plus className="w-4 h-4" />
-          Nueva Campaña
+          {t('campaign.new_campaign')}
         </Button>
       </div>
 
@@ -142,7 +141,7 @@ export const ManageCampaigns = () => {
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar campañas..."
+                placeholder={t('campaign.search_placeholder')}
                 className="pl-10"
               />
             </div>
@@ -153,13 +152,13 @@ export const ManageCampaigns = () => {
                 onChange={(e) => setFilterStatus(e.target.value as CampaignStatus | 'all')}
                 className="w-full pl-10 pr-8 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:min-w-[180px]"
               >
-                <option value="all">Todos los estados</option>
-                <option value="abierta">Abierta</option>
-                <option value="congelada">Congelada</option>
-                <option value="cerrada">Cerrada</option>
-                <option value="en-camino">En camino</option>
-                <option value="entregada">Entregada</option>
-                <option value="finalizada">Finalizada</option>
+                <option value="all">{t('campaign.all_statuses')}</option>
+                <option value="abierta">{t('campaign.status_open')}</option>
+                <option value="congelada">{t('campaign.status_frozen')}</option>
+                <option value="cerrada">{t('campaign.status_closed')}</option>
+                <option value="en-camino">{t('campaign.status_in_transit')}</option>
+                <option value="entregada">{t('campaign.status_delivered')}</option>
+                <option value="finalizada">{t('campaign.status_finalized')}</option>
               </select>
             </div>
           </div>
@@ -169,7 +168,7 @@ export const ManageCampaigns = () => {
       <div className="space-y-4">
         {filteredCampaigns.map((campaign) => {
           const asgn = assignments[campaign.id];
-          const transportista = asgn ? mockTransportistas.find(t => t.id === asgn.transportistaId) : null;
+          const transporter = asgn ? mockTransportistas.find(tr => tr.id === asgn.transportistaId) : null;
           return (
             <Card key={campaign.id} className="hover:shadow-md transition-shadow">
               <CardContent>
@@ -180,14 +179,14 @@ export const ManageCampaigns = () => {
                     <p className="text-muted-foreground mt-2 mb-3">{campaign.description}</p>
                     <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
-                      <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" />{campaign.donationsCount} donaciones</span>
+                      <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" />{campaign.donationsCount} {t('campaign.donations')}</span>
                       <span className="flex items-center gap-1"><Tag className="w-3.5 h-3.5" />{campaign.categories.join(', ')}</span>
                     </div>
-                    {transportista && (
+                    {transporter && (
                       <div className="mt-3 flex flex-wrap gap-3 text-sm">
                         <span className="flex items-center gap-1 text-primary font-medium">
                           <Truck className="w-4 h-4" />
-                          {transportista.name} · {transportista.vehicle}
+                          {transporter.name} · {transporter.vehicle}
                         </span>
                         <span className="flex items-center gap-1 text-muted-foreground"><MapPin className="w-3.5 h-3.5" />{asgn.destination}</span>
                         <span className="flex items-center gap-1 text-muted-foreground"><Route className="w-3.5 h-3.5" />{asgn.km} km</span>
@@ -195,16 +194,16 @@ export const ManageCampaigns = () => {
                     )}
                   </div>
                   <div className="flex flex-col gap-1 shrink-0 sm:flex-row sm:gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openAssign(campaign)} title="Asignar transportista">
+                    <Button variant="outline" size="sm" onClick={() => openAssign(campaign)} title={t('transporters.assign_title')}>
                       <Truck className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => openEdit(campaign)} title="Editar">
+                    <Button variant="outline" size="sm" onClick={() => openEdit(campaign)} title={t('common.edit')}>
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setDeleteTarget(campaign)} title="Eliminar">
+                    <Button variant="outline" size="sm" onClick={() => setDeleteTarget(campaign)} title={t('common.delete')}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setDetailsTarget(campaign)} title="Ver detalles">
+                    <Button variant="outline" size="sm" onClick={() => setDetailsTarget(campaign)} title={t('campaign.view_details')}>
                       <MoreVertical className="w-4 h-4" />
                     </Button>
                   </div>
@@ -219,74 +218,72 @@ export const ManageCampaigns = () => {
         <Card>
           <CardContent>
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No se encontraron campañas</p>
+              <p className="text-muted-foreground">{t('campaign.no_campaigns_manage')}</p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Modal Asignar Transportista */}
       {assignTarget && (
-        <Modal title="Asignar Transportista" onClose={() => setAssignTarget(null)}>
+        <Modal title={t('transporters.assign_title')} onClose={() => setAssignTarget(null)}>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Campaña: <span className="font-medium text-foreground">{assignTarget.name}</span></p>
+            <p className="text-sm text-muted-foreground">{t('transporters.assign_campaign_label')} <span className="font-medium text-foreground">{assignTarget.name}</span></p>
             <div>
-              <label className="block mb-1 text-sm font-medium">Transportista</label>
+              <label className="block mb-1 text-sm font-medium">{t('transporters.assign_transporter_label')}</label>
               <select
                 value={assignForm.transportistaId}
                 onChange={(e) => setAssignForm({ ...assignForm, transportistaId: e.target.value })}
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="">Seleccionar transportista...</option>
-                {mockTransportistas.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} — {t.vehicle}</option>
+                <option value="">{t('transporters.select_transporter')}</option>
+                {mockTransportistas.map(tr => (
+                  <option key={tr.id} value={tr.id}>{tr.name} — {tr.vehicle}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block mb-1 text-sm font-medium">Destino</label>
+              <label className="block mb-1 text-sm font-medium">{t('transporters.destination')}</label>
               <Input
                 value={assignForm.destination}
                 onChange={(e) => setAssignForm({ ...assignForm, destination: e.target.value })}
-                placeholder="Ej: Comunidad San Juan, Zona Norte"
+                placeholder={t('transporters.destination_placeholder')}
               />
             </div>
             <div>
-              <label className="block mb-1 text-sm font-medium">Distancia (km)</label>
+              <label className="block mb-1 text-sm font-medium">{t('transporters.distance_km')}</label>
               <Input
                 type="number"
                 min="0"
                 value={assignForm.km}
                 onChange={(e) => setAssignForm({ ...assignForm, km: e.target.value })}
-                placeholder="Ej: 120"
+                placeholder={t('transporters.distance_placeholder')}
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => setAssignTarget(null)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => setAssignTarget(null)}>{t('common.cancel')}</Button>
               <Button
                 onClick={saveAssignment}
                 disabled={!assignForm.transportistaId || !assignForm.destination || !assignForm.km}
               >
-                Asignar
+                {t('common.assign')}
               </Button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* Modal Editar */}
       {editTarget && editForm && (
-        <Modal title="Editar Campaña" onClose={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
+        <Modal title={t('campaign.edit_title')} onClose={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
           <div className="space-y-4">
             <div>
-              <label className="block mb-1 text-sm font-medium">Nombre</label>
+              <label className="block mb-1 text-sm font-medium">{t('campaign.name')}</label>
               <Input
                 value={editForm.name}
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
               />
             </div>
             <div>
-              <label className="block mb-1 text-sm font-medium">Descripción</label>
+              <label className="block mb-1 text-sm font-medium">{t('campaign.description')}</label>
               <textarea
                 value={editForm.description}
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
@@ -296,7 +293,7 @@ export const ManageCampaigns = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block mb-1 text-sm font-medium">Fecha inicio</label>
+                <label className="block mb-1 text-sm font-medium">{t('campaign.start_date_label')}</label>
                 <DateInput
                   value={editForm.startDate}
                   onChange={(v) => setEditForm({ ...editForm, startDate: v })}
@@ -306,7 +303,7 @@ export const ManageCampaigns = () => {
                 />
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium">Fecha fin</label>
+                <label className="block mb-1 text-sm font-medium">{t('campaign.end_date_label')}</label>
                 <DateInput
                   value={editForm.endDate}
                   onChange={(v) => setEditForm({ ...editForm, endDate: v })}
@@ -316,54 +313,52 @@ export const ManageCampaigns = () => {
               </div>
             </div>
             <div>
-              <label className="block mb-1 text-sm font-medium">Estado</label>
+              <label className="block mb-1 text-sm font-medium">{t('campaign.status')}</label>
               <select
                 value={editForm.status}
                 onChange={(e) => setEditForm({ ...editForm, status: e.target.value as CampaignStatus })}
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="abierta">Abierta</option>
-                <option value="congelada">Congelada</option>
-                <option value="cerrada">Cerrada</option>
-                <option value="en-camino">En camino</option>
-                <option value="entregada">Entregada</option>
-                <option value="finalizada">Finalizada</option>
+                <option value="abierta">{t('campaign.status_open')}</option>
+                <option value="congelada">{t('campaign.status_frozen')}</option>
+                <option value="cerrada">{t('campaign.status_closed')}</option>
+                <option value="en-camino">{t('campaign.status_in_transit')}</option>
+                <option value="entregada">{t('campaign.status_delivered')}</option>
+                <option value="finalizada">{t('campaign.status_finalized')}</option>
               </select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
-                Cancelar
+                {t('common.cancel')}
               </Button>
-              <Button onClick={saveEdit}>Guardar cambios</Button>
+              <Button onClick={saveEdit}>{t('common.save')}</Button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* Modal Eliminar */}
       {deleteTarget && (
-        <Modal title="Eliminar Campaña" onClose={() => setDeleteTarget(null)}>
+        <Modal title={t('campaign.delete_campaign')} onClose={() => setDeleteTarget(null)}>
           <div className="space-y-4">
             <p className="text-muted-foreground">
-              ¿Confirmas que deseas eliminar la campaña{' '}
-              <span className="font-semibold text-foreground">"{deleteTarget.name}"</span>?
-              Esta acción no se puede deshacer.
+              {t('campaign.delete_confirm')}{' '}
+              <span className="font-semibold text-foreground">"{deleteTarget.name}"</span>?{' '}
+              {t('campaign.delete_warning')}
             </p>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Eliminar
+                {t('common.delete')}
               </Button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* Modal Detalles */}
       {detailsTarget && (
-        <Modal title="Detalles de Campaña" onClose={() => setDetailsTarget(null)}>
+        <Modal title={t('campaign.details_title')} onClose={() => setDetailsTarget(null)}>
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <h3 className="flex-1">{detailsTarget.name}</h3>
@@ -372,48 +367,48 @@ export const ManageCampaigns = () => {
             <p className="text-muted-foreground">{detailsTarget.description}</p>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-1">
-                <p className="text-muted-foreground">Fecha inicio</p>
+                <p className="text-muted-foreground">{t('campaign.start_date_label')}</p>
                 <p className="font-medium">{formatDate(detailsTarget.startDate)}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-muted-foreground">Fecha fin</p>
+                <p className="text-muted-foreground">{t('campaign.end_date_label')}</p>
                 <p className="font-medium">{formatDate(detailsTarget.endDate)}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-muted-foreground">Donaciones</p>
+                <p className="text-muted-foreground">{t('donation.date_label')}</p>
                 <p className="font-medium">{detailsTarget.donationsCount}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-muted-foreground">Categorías</p>
+                <p className="text-muted-foreground">{t('campaign.categories_label')}</p>
                 <p className="font-medium">{detailsTarget.categories.join(', ')}</p>
               </div>
             </div>
             {assignments[detailsTarget.id] && (() => {
               const asgn = assignments[detailsTarget.id];
-              const t = mockTransportistas.find(t => t.id === asgn.transportistaId);
+              const transporter = mockTransportistas.find(tr => tr.id === asgn.transportistaId);
               return (
                 <div className="border border-border rounded-lg p-4 space-y-2 text-sm">
-                  <p className="font-medium text-foreground flex items-center gap-2"><Truck className="w-4 h-4" /> Asignación de transporte</p>
-                  <p className="text-muted-foreground">Transportista: <span className="text-foreground font-medium">{t?.name} — {t?.vehicle}</span></p>
-                  <p className="text-muted-foreground">Destino: <span className="text-foreground font-medium">{asgn.destination}</span></p>
-                  <p className="text-muted-foreground">Distancia: <span className="text-foreground font-medium">{asgn.km} km</span></p>
+                  <p className="font-medium text-foreground flex items-center gap-2"><Truck className="w-4 h-4" /> {t('transporters.assign_title')}</p>
+                  <p className="text-muted-foreground">{t('transporters.assign_transporter_label')}: <span className="text-foreground font-medium">{transporter?.name} — {transporter?.vehicle}</span></p>
+                  <p className="text-muted-foreground">{t('transporters.destination')}: <span className="text-foreground font-medium">{asgn.destination}</span></p>
+                  <p className="text-muted-foreground">{t('transporters.distance_km')}: <span className="text-foreground font-medium">{asgn.km} km</span></p>
                 </div>
               );
             })()}
             <div className="flex justify-end gap-3 pt-2 border-t border-border">
               <Button variant="outline" onClick={() => { setDetailsTarget(null); openAssign(detailsTarget); }}>
                 <Truck className="w-4 h-4" />
-                Asignar
+                {t('common.assign')}
               </Button>
               <Button variant="outline" onClick={() => { setDetailsTarget(null); openEdit(detailsTarget); }}>
                 <Edit className="w-4 h-4" />
-                Editar
+                {t('common.edit')}
               </Button>
               <Button variant="outline" onClick={() => { setDetailsTarget(null); setDeleteTarget(detailsTarget); }} className="text-destructive border-destructive hover:bg-destructive/10">
                 <Trash2 className="w-4 h-4" />
-                Eliminar
+                {t('common.delete')}
               </Button>
-              <Button onClick={() => setDetailsTarget(null)}>Cerrar</Button>
+              <Button onClick={() => setDetailsTarget(null)}>{t('common.close')}</Button>
             </div>
           </div>
         </Modal>

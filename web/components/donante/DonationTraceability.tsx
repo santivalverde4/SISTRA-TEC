@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Timeline } from '@/components/shared/Timeline';
 import { Search, TrendingUp, Calendar, Package } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { useT } from '@/lib/i18n/useT';
 
 interface DonationItem {
   description: string;
@@ -127,6 +128,7 @@ const mockDonations: TraceableDonation[] = [
 ];
 
 export const DonationTraceability = () => {
+  const { t } = useT();
   const [donations] = useState<TraceableDonation[]>(mockDonations);
   const [searchTerm, setSearchTerm] = useState('');
   const [selected, setSelected] = useState<TraceableDonation | null>(null);
@@ -138,14 +140,12 @@ export const DonationTraceability = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1>Trazabilidad de Donaciones</h1>
-        <p className="text-muted-foreground mt-1">
-          Rastrea el estado y progreso de tus donaciones
-        </p>
+        <h1>{t('traceability.donation_title')}</h1>
+        <p className="text-muted-foreground mt-1">{t('traceability.donation_subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Lista izquierda */}
+        {/* Left list */}
         <div className="lg:col-span-1">
           <Card className="mb-4">
             <CardContent>
@@ -154,7 +154,7 @@ export const DonationTraceability = () => {
                 <Input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar campaña..."
+                  placeholder={t('traceability.search_placeholder')}
                   className="pl-10"
                 />
               </div>
@@ -175,9 +175,12 @@ export const DonationTraceability = () => {
                 <CardContent>
                   <h4 className="mb-2">{donation.campaignName}</h4>
                   <StatusBadge status={donation.campaignStatus} />
-                  <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(donation.date)}</p>
+                  <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" />{formatDate(donation.date)}
+                  </p>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Package className="w-3.5 h-3.5" />{donation.items.length} {donation.items.length === 1 ? 'artículo' : 'artículos'} donados
+                    <Package className="w-3.5 h-3.5" />
+                    {donation.items.length} {donation.items.length === 1 ? t('donation.item_singular') : t('donation.item_plural')}
                   </p>
                 </CardContent>
               </Card>
@@ -185,7 +188,7 @@ export const DonationTraceability = () => {
           </div>
         </div>
 
-        {/* Detalle derecha */}
+        {/* Right detail */}
         <div className="lg:col-span-2">
           {selected ? (
             <Card>
@@ -193,18 +196,17 @@ export const DonationTraceability = () => {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2>{selected.campaignName}</h2>
-                    <p className="text-muted-foreground mt-1 text-sm">Donado el {formatDate(selected.date)}</p>
+                    <p className="text-muted-foreground mt-1 text-sm">{t('traceability.donated_on')} {formatDate(selected.date)}</p>
                   </div>
                   <StatusBadge status={selected.campaignStatus} />
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Items donados */}
                 <div>
-                  <h4 className="mb-3">Lo que donaste</h4>
+                  <h4 className="mb-3">{t('traceability.what_you_donated')}</h4>
                   <div className="grid grid-cols-[1fr_120px] gap-2 text-sm font-medium text-muted-foreground px-1 mb-2">
-                    <span>Producto / Descripción</span>
-                    <span>Cantidad</span>
+                    <span>{t('donation.column_product')}</span>
+                    <span>{t('donation.column_quantity')}</span>
                   </div>
                   <div className="border border-border rounded-lg overflow-hidden">
                     {selected.items.map((item, i) => (
@@ -226,11 +228,10 @@ export const DonationTraceability = () => {
                   )}
                 </div>
 
-                {/* Timeline */}
                 <div>
                   <h4 className="mb-4 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" />
-                    Historial de la Campaña
+                    {t('traceability.campaign_history')}
                   </h4>
                   <Timeline events={selected.timeline} />
                 </div>
@@ -241,9 +242,9 @@ export const DonationTraceability = () => {
               <CardContent>
                 <div className="text-center py-16">
                   <TrendingUp className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="mb-2">Selecciona una donación</h3>
+                  <h3 className="mb-2">{t('traceability.select_donation')}</h3>
                   <p className="text-muted-foreground">
-                    Haz clic en una campaña para ver su trazabilidad completa
+                    {t('traceability.select_donation_hint')}
                   </p>
                 </div>
               </CardContent>

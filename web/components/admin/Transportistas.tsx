@@ -8,6 +8,7 @@ import { Modal } from '@/components/shared/Modal';
 import { ListCard } from '@/components/shared/ListCard';
 import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/DetailPanel';
 import { Search, Truck, MapPin, Package, Phone, Mail } from 'lucide-react';
+import { useT } from '@/lib/i18n/useT';
 
 interface Assignment {
   campaignName: string;
@@ -94,19 +95,20 @@ const statusLabel: Record<string, { label: string; classes: string }> = {
 };
 
 export const Transportistas = () => {
+  const { t } = useT();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Transportista | null>(null);
 
-  const filtered = mockTransportistas.filter(t =>
-    t.name.toLowerCase().includes(search.toLowerCase()) ||
-    t.vehicle.toLowerCase().includes(search.toLowerCase())
+  const filtered = mockTransportistas.filter(tr =>
+    tr.name.toLowerCase().includes(search.toLowerCase()) ||
+    tr.vehicle.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1>Transportistas</h1>
-        <p className="text-muted-foreground mt-1">Lista de transportistas y sus asignaciones</p>
+        <h1>{t('transporters.title')}</h1>
+        <p className="text-muted-foreground mt-1">{t('transporters.subtitle')}</p>
       </div>
 
       <Card className="mb-6">
@@ -116,7 +118,7 @@ export const Transportistas = () => {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre o vehículo..."
+              placeholder={t('transporters.search_placeholder')}
               className="pl-10"
             />
           </div>
@@ -124,17 +126,17 @@ export const Transportistas = () => {
       </Card>
 
       <div className="space-y-4">
-        {filtered.map((t) => (
+        {filtered.map((tr) => (
           <ListCard
-            key={t.id}
+            key={tr.id}
             icon={<Truck className="w-6 h-6 text-primary" />}
-            title={t.name}
+            title={tr.name}
             badge={
-              t.assignments.length === 0 ? (
-                <span className="text-sm text-muted-foreground">Sin asignaciones activas</span>
+              tr.assignments.length === 0 ? (
+                <span className="text-sm text-muted-foreground">{t('transporters.no_active_assignments')}</span>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {t.assignments.map((a, i) => {
+                  {tr.assignments.map((a, i) => {
                     const s = statusLabel[a.status];
                     return (
                       <span key={i} className={`text-xs px-2 py-1 rounded-full font-medium ${s.classes}`}>
@@ -147,12 +149,12 @@ export const Transportistas = () => {
             }
             meta={
               <>
-                <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5" />{t.vehicle} · {t.plate}</span>
-                <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{t.phone}</span>
-                <span className="flex items-center gap-1 truncate"><Mail className="w-3.5 h-3.5 shrink-0" />{t.email}</span>
+                <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5" />{tr.vehicle} · {tr.plate}</span>
+                <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{tr.phone}</span>
+                <span className="flex items-center gap-1 truncate"><Mail className="w-3.5 h-3.5 shrink-0" />{tr.email}</span>
               </>
             }
-            action={{ label: 'Ver detalles', onClick: () => setSelected(t) }}
+            action={{ label: t('campaign.view_details'), onClick: () => setSelected(tr) }}
           />
         ))}
       </div>
@@ -161,14 +163,14 @@ export const Transportistas = () => {
         <Card>
           <CardContent>
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No se encontraron transportistas</p>
+              <p className="text-muted-foreground">{t('transporters.no_transporters')}</p>
             </div>
           </CardContent>
         </Card>
       )}
 
       {selected && (
-        <Modal title="Detalle de Transportista" onClose={() => setSelected(null)}>
+        <Modal title={t('transporters.detail_title')} onClose={() => setSelected(null)}>
           <div className="space-y-4">
             <DetailHeader
               icon={<Truck className="w-7 h-7 text-primary" />}
@@ -177,15 +179,15 @@ export const Transportistas = () => {
             />
 
             <DetailGrid>
-              <DetailField label="Teléfono" value={selected.phone} />
-              <DetailField label="Correo" value={<span className="truncate block">{selected.email}</span>} />
-              <DetailField label="Vehículo" value={selected.vehicle} />
-              <DetailField label="Placa" value={selected.plate} />
+              <DetailField label={t('transporters.phone')} value={selected.phone} />
+              <DetailField label={t('transporters.email')} value={<span className="truncate block">{selected.email}</span>} />
+              <DetailField label={t('transporters.vehicle')} value={selected.vehicle} />
+              <DetailField label={t('transporters.plate')} value={selected.plate} />
             </DetailGrid>
 
             {selected.assignments.length > 0 ? (
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Asignaciones</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">{t('transporters.assignments')}</p>
                 <div className="space-y-3">
                   {selected.assignments.map((a, i) => {
                     const s = statusLabel[a.status];
@@ -201,7 +203,7 @@ export const Transportistas = () => {
                           <MapPin className="w-3.5 h-3.5 shrink-0" /> {a.destination}
                         </p>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Package className="w-3.5 h-3.5 shrink-0" /> {a.km} km de recorrido
+                          <Package className="w-3.5 h-3.5 shrink-0" /> {a.km} {t('transporters.km_traveled')}
                         </p>
                       </div>
                     );
@@ -209,11 +211,11 @@ export const Transportistas = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">Sin asignaciones registradas</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{t('transporters.no_assignments')}</p>
             )}
 
             <div className="flex justify-end pt-2">
-              <Button onClick={() => setSelected(null)}>Cerrar</Button>
+              <Button onClick={() => setSelected(null)}>{t('common.close')}</Button>
             </div>
           </div>
         </Modal>

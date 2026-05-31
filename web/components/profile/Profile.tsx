@@ -5,21 +5,22 @@ import { Card, CardContent, CardHeader } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { Badge } from '@/components/ui-custom/Badge';
-import { Modal } from '@/components/shared/Modal';
 import { User, Mail, Lock, Shield, Truck, X } from 'lucide-react';
 import { getRole } from '@/lib/auth';
 import type { UserRole } from '@/types';
-
-const roleLabels: Record<UserRole, string> = {
-  donante: 'Donante',
-  transportista: 'Transportista',
-  administrador: 'Administrador',
-};
+import { useT } from '@/lib/i18n/useT';
 
 export const Profile = () => {
+  const { t } = useT();
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const userRole = (getRole() ?? 'donante') as UserRole;
+
+  const roleLabels: Record<UserRole, string> = {
+    donante: t('profile.role_donante'),
+    transportista: t('profile.role_transportista'),
+    administrador: t('profile.role_administrador'),
+  };
 
   const [formData, setFormData] = useState({
     name: 'Juan Pérez',
@@ -53,20 +54,18 @@ export const Profile = () => {
     <>
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1>Mi Perfil</h1>
-        <p className="text-muted-foreground mt-1">
-          Administra tu información personal y preferencias
-        </p>
+        <h1>{t('profile.title')}</h1>
+        <p className="text-muted-foreground mt-1">{t('profile.subtitle')}</p>
       </div>
 
       <div className="space-y-6">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h3>Información Personal</h3>
+              <h3>{t('profile.personal_info')}</h3>
               {!isEditing && (
                 <Button variant="outline" onClick={() => setIsEditing(true)}>
-                  Editar Perfil
+                  {t('profile.edit_profile')}
                 </Button>
               )}
             </div>
@@ -87,7 +86,7 @@ export const Profile = () => {
               </div>
 
               <div>
-                <label className="block mb-2">Nombre Completo</label>
+                <label className="block mb-2">{t('profile.full_name')}</label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -96,7 +95,7 @@ export const Profile = () => {
               </div>
 
               <div>
-                <label className="block mb-2">Correo Electrónico</label>
+                <label className="block mb-2">{t('profile.email')}</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
@@ -109,7 +108,7 @@ export const Profile = () => {
               </div>
 
               <div>
-                <label className="block mb-2">Teléfono</label>
+                <label className="block mb-2">{t('profile.phone')}</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -118,7 +117,7 @@ export const Profile = () => {
               </div>
 
               <div>
-                <label className="block mb-2">Dirección</label>
+                <label className="block mb-2">{t('profile.address')}</label>
                 <Input
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -128,13 +127,13 @@ export const Profile = () => {
 
               {isEditing && (
                 <div className="flex gap-2 pt-4">
-                  <Button type="submit">Guardar Cambios</Button>
+                  <Button type="submit">{t('profile.save_changes')}</Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsEditing(false)}
                   >
-                    Cancelar
+                    {t('profile.cancel')}
                   </Button>
                 </div>
               )}
@@ -145,10 +144,10 @@ export const Profile = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h3>Seguridad</h3>
+              <h3>{t('profile.security')}</h3>
               {!showPasswordForm && (
                 <Button variant="outline" onClick={() => setShowPasswordForm(true)}>
-                  Cambiar Contraseña
+                  {t('profile.change_password')}
                 </Button>
               )}
             </div>
@@ -157,7 +156,7 @@ export const Profile = () => {
             <CardContent>
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div>
-                  <label className="block mb-2">Contraseña Actual</label>
+                  <label className="block mb-2">{t('profile.current_password')}</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
@@ -172,7 +171,7 @@ export const Profile = () => {
                 </div>
 
                 <div>
-                  <label className="block mb-2">Nueva Contraseña</label>
+                  <label className="block mb-2">{t('profile.new_password')}</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
@@ -187,7 +186,7 @@ export const Profile = () => {
                 </div>
 
                 <div>
-                  <label className="block mb-2">Confirmar Nueva Contraseña</label>
+                  <label className="block mb-2">{t('profile.confirm_new_password')}</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
@@ -202,13 +201,13 @@ export const Profile = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button type="submit">Actualizar Contraseña</Button>
+                  <Button type="submit">{t('profile.update_password')}</Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowPasswordForm(false)}
                   >
-                    Cancelar
+                    {t('profile.cancel')}
                   </Button>
                 </div>
               </form>
@@ -220,9 +219,9 @@ export const Profile = () => {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h3>Información del Vehículo</h3>
+                <h3>{t('profile.vehicle_info')}</h3>
                 <Button variant="outline" onClick={() => { setVehicleForm(vehicleData); setShowVehicleModal(true); }}>
-                  Editar
+                  {t('common.edit')}
                 </Button>
               </div>
             </CardHeader>
@@ -233,11 +232,11 @@ export const Profile = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-6 text-sm flex-1">
                   <div>
-                    <p className="text-muted-foreground mb-1">Vehículo</p>
+                    <p className="text-muted-foreground mb-1">{t('transporters.vehicle')}</p>
                     <p className="font-medium">{vehicleData.vehicle}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground mb-1">Placa</p>
+                    <p className="text-muted-foreground mb-1">{t('transporters.plate')}</p>
                     <p className="font-medium">{vehicleData.plate}</p>
                   </div>
                 </div>
@@ -248,48 +247,48 @@ export const Profile = () => {
 
         <Card>
           <CardHeader>
-            <h3>Rol del Usuario</h3>
+            <h3>{t('profile.user_role')}</h3>
           </CardHeader>
           <CardContent>
             <div className="bg-muted/50 p-4 rounded-lg">
-              <p className="text-muted-foreground mb-2">Tu rol actual en el sistema:</p>
+              <p className="text-muted-foreground mb-2">{t('profile.current_role')}</p>
               <Badge variant="info" className="text-base px-4 py-2">
                 <Shield className="w-4 h-4 mr-2" />
                 {roleLabels[userRole]}
               </Badge>
               <p className="text-sm text-muted-foreground mt-3">
-                El rol determina las funciones y permisos disponibles en el sistema.
-                Contacta al administrador para cambiar tu rol.
+                {t('profile.role_description')}
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
+
       {showVehicleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-background rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-6 border-b border-border">
-              <h2 className="text-lg font-semibold">Información del Vehículo</h2>
+              <h2 className="text-lg font-semibold">{t('profile.vehicle_info')}</h2>
               <button onClick={() => setShowVehicleModal(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block mb-1 text-sm font-medium">Tipo de vehículo</label>
+                <label className="block mb-1 text-sm font-medium">{t('profile.vehicle_type')}</label>
                 <Input
                   value={vehicleForm.vehicle}
                   onChange={(e) => setVehicleForm({ ...vehicleForm, vehicle: e.target.value })}
-                  placeholder="Ej: Camión 3.5t, Furgoneta, Pickup..."
+                  placeholder={t('profile.vehicle_placeholder')}
                 />
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium">Placa</label>
+                <label className="block mb-1 text-sm font-medium">{t('transporters.plate')}</label>
                 <Input
                   value={vehicleForm.plate}
                   onChange={(e) => setVehicleForm({ ...vehicleForm, plate: e.target.value })}
-                  placeholder="Ej: ABC-1234"
+                  placeholder={t('profile.plate_placeholder')}
                 />
               </div>
               <div className="flex gap-3 pt-2">
@@ -298,9 +297,9 @@ export const Profile = () => {
                   onClick={() => { setVehicleData(vehicleForm); setShowVehicleModal(false); }}
                   disabled={!vehicleForm.vehicle || !vehicleForm.plate}
                 >
-                  Guardar
+                  {t('profile.save')}
                 </Button>
-                <Button variant="outline" onClick={() => setShowVehicleModal(false)}>Cancelar</Button>
+                <Button variant="outline" onClick={() => setShowVehicleModal(false)}>{t('profile.cancel')}</Button>
               </div>
             </div>
           </div>

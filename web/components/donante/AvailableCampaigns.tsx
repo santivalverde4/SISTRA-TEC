@@ -7,6 +7,7 @@ import { Input } from '@/components/ui-custom/Input';
 import { Badge } from '@/components/ui-custom/Badge';
 import { Search, Filter, Heart, Calendar, X, CheckCircle, Plus, Trash2, Package } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { useT } from '@/lib/i18n/useT';
 
 interface DonationRow {
   id: number;
@@ -34,7 +35,7 @@ const mockCampaigns: Campaign[] = [
     endDate: '2026-06-30',
     categories: ['Alimentos', 'Suministros'],
     donationsCount: 45,
-    banner: '🌊',
+    banner: '',
   },
   {
     id: '2',
@@ -44,7 +45,7 @@ const mockCampaigns: Campaign[] = [
     endDate: '2026-05-15',
     categories: ['Medicamentos'],
     donationsCount: 32,
-    banner: '💊',
+    banner: '',
   },
   {
     id: '3',
@@ -54,11 +55,9 @@ const mockCampaigns: Campaign[] = [
     endDate: '2026-04-30',
     categories: ['Ropa'],
     donationsCount: 78,
-    banner: '🧥',
+    banner: '',
   },
 ];
-
-const donationItems = ['Alimentos enlatados', 'Ropa', 'Medicamentos', 'Útiles escolares', 'Agua potable', 'Frazadas', 'Otro'];
 
 const Modal = ({ onClose, children }: { onClose: () => void; children: React.ReactNode }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -69,6 +68,7 @@ const Modal = ({ onClose, children }: { onClose: () => void; children: React.Rea
 );
 
 export const AvailableCampaigns = () => {
+  const { t } = useT();
   const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -100,7 +100,7 @@ export const AvailableCampaigns = () => {
   const submitDonation = () => {
     if (!donateCampaign || !donateRows.some(r => r.description && r.quantity)) return;
     setCampaigns(prev => prev.map(c =>
-      c.id === donateCampaign.id ? { ...c, progress: Math.min(100, c.progress + 5) } : c
+      c.id === donateCampaign.id ? { ...c, donationsCount: c.donationsCount + 1 } : c
     ));
     setDonateSuccess(true);
   };
@@ -108,10 +108,8 @@ export const AvailableCampaigns = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1>Campañas Disponibles</h1>
-        <p className="text-muted-foreground mt-1">
-          Descubre campañas activas y realiza tus donaciones
-        </p>
+        <h1>{t('campaign.available_title')}</h1>
+        <p className="text-muted-foreground mt-1">{t('campaign.available_subtitle')}</p>
       </div>
 
       <Card className="mb-6">
@@ -122,7 +120,7 @@ export const AvailableCampaigns = () => {
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar campañas..."
+                placeholder={t('campaign.search_placeholder')}
                 className="pl-10"
               />
             </div>
@@ -133,7 +131,7 @@ export const AvailableCampaigns = () => {
                 onChange={(e) => setFilterCategory(e.target.value)}
                 className="pl-10 pr-8 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[180px]"
               >
-                <option value="all">Todas las categorías</option>
+                <option value="all">{t('campaign.all_categories')}</option>
                 <option value="Alimentos">Alimentos</option>
                 <option value="Suministros">Suministros</option>
                 <option value="Medicamentos">Medicamentos</option>
@@ -165,16 +163,18 @@ export const AvailableCampaigns = () => {
                 </div>
                 <span>→</span>
                 <span>{formatDate(campaign.endDate)}</span>
-                <span className="ml-auto font-medium text-primary flex items-center gap-1"><Package className="w-3.5 h-3.5" />{campaign.donationsCount} donaciones</span>
+                <span className="ml-auto font-medium text-primary flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5" />{campaign.donationsCount} {t('campaign.donations')}
+                </span>
               </div>
 
               <div className="flex gap-2">
                 <Button className="flex-1" onClick={() => openDonate(campaign)}>
                   <Heart className="w-4 h-4" />
-                  Donar Ahora
+                  {t('campaign.donate_now')}
                 </Button>
                 <Button variant="outline" onClick={() => setDetailsCampaign(campaign)}>
-                  Ver Detalles
+                  {t('campaign.view_details')}
                 </Button>
               </div>
             </CardContent>
@@ -186,13 +186,13 @@ export const AvailableCampaigns = () => {
         <Card>
           <CardContent>
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No se encontraron campañas disponibles</p>
+              <p className="text-muted-foreground">{t('campaign.no_campaigns')}</p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Modal Ver Detalles */}
+      {/* Details modal */}
       {detailsCampaign && (
         <Modal onClose={() => setDetailsCampaign(null)}>
           <div className="p-6 border-b border-border flex items-center justify-between">
@@ -210,35 +210,37 @@ export const AvailableCampaigns = () => {
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Fecha inicio</p>
+                <p className="text-muted-foreground">{t('campaign.start_date_label')}</p>
                 <p className="font-medium">{formatDate(detailsCampaign.startDate)}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Fecha fin</p>
+                <p className="text-muted-foreground">{t('campaign.end_date_label')}</p>
                 <p className="font-medium">{formatDate(detailsCampaign.endDate)}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Donaciones recibidas</p>
-                <p className="font-medium text-primary flex items-center gap-1"><Package className="w-3.5 h-3.5" />{detailsCampaign.donationsCount}</p>
+                <p className="text-muted-foreground">{t('campaign.donations_received')}</p>
+                <p className="font-medium text-primary flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5" />{detailsCampaign.donationsCount}
+                </p>
               </div>
             </div>
             <div className="flex gap-3 pt-2">
               <Button className="flex-1" onClick={() => { setDetailsCampaign(null); openDonate(detailsCampaign); }}>
                 <Heart className="w-4 h-4" />
-                Donar a esta campaña
+                {t('campaign.donate_to')}
               </Button>
-              <Button variant="outline" onClick={() => setDetailsCampaign(null)}>Cerrar</Button>
+              <Button variant="outline" onClick={() => setDetailsCampaign(null)}>{t('common.close')}</Button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* Modal Donar */}
+      {/* Donate modal */}
       {donateCampaign && (
         <Modal onClose={() => setDonateCampaign(null)}>
           <div className="p-6 border-b border-border flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold">Realizar Donación</h2>
+              <h2 className="text-lg font-semibold">{t('donation.perform_donation')}</h2>
               <p className="text-sm text-muted-foreground mt-0.5">{donateCampaign.name}</p>
             </div>
             <button onClick={() => setDonateCampaign(null)} className="text-muted-foreground hover:text-foreground">
@@ -249,36 +251,34 @@ export const AvailableCampaigns = () => {
             {donateSuccess ? (
               <div className="text-center py-6 space-y-3">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
-                <h3 className="font-semibold text-lg">¡Donación registrada!</h3>
-                <p className="text-muted-foreground text-sm">Tu donación ha sido registrada exitosamente. Gracias por tu contribución.</p>
+                <h3 className="font-semibold text-lg">{t('donation.success_title')}</h3>
+                <p className="text-muted-foreground text-sm">{t('donation.success_message')}</p>
                 <div className="flex gap-3 justify-center pt-2">
-                  <Button variant="outline" onClick={() => setDonateCampaign(null)}>Cerrar</Button>
+                  <Button variant="outline" onClick={() => setDonateCampaign(null)}>{t('common.close')}</Button>
                   <Button onClick={() => { setDonateCampaign(null); openDonate(donateCampaign); }}>
-                    Donar otra vez
+                    {t('donation.donate_again')}
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Cabecera de columnas */}
                 <div className="grid grid-cols-[1fr_120px_32px] gap-2 text-sm font-medium text-muted-foreground px-1">
-                  <span>Producto / Descripción</span>
-                  <span>Cantidad</span>
+                  <span>{t('donation.column_product')}</span>
+                  <span>{t('donation.column_quantity')}</span>
                   <span />
                 </div>
-                {/* Filas de productos */}
                 <div className="space-y-2">
                   {donateRows.map((row) => (
                     <div key={row.id} className="grid grid-cols-[1fr_120px_32px] gap-2 items-center">
                       <Input
                         value={row.description}
                         onChange={(e) => updateRow(row.id, 'description', e.target.value)}
-                        placeholder="Ej: Arroz, Ropa de abrigo..."
+                        placeholder={t('donation.product_placeholder')}
                       />
                       <Input
                         value={row.quantity}
                         onChange={(e) => updateRow(row.id, 'quantity', e.target.value)}
-                        placeholder="5 kg, 3 uds..."
+                        placeholder={t('donation.quantity_placeholder')}
                       />
                       <button
                         type="button"
@@ -292,15 +292,17 @@ export const AvailableCampaigns = () => {
                 </div>
                 <Button variant="outline" size="sm" type="button" onClick={addRow} className="w-full">
                   <Plus className="w-4 h-4" />
-                  Agregar producto
+                  {t('donation.add_product')}
                 </Button>
                 <div>
-                  <label className="block mb-1 text-sm font-medium">Nota adicional <span className="text-muted-foreground font-normal">(opcional)</span></label>
+                  <label className="block mb-1 text-sm font-medium">
+                    {t('donation.additional_note')} <span className="text-muted-foreground font-normal">{t('common.optional')}</span>
+                  </label>
                   <textarea
                     value={donateNote}
                     onChange={(e) => setDonateNote(e.target.value)}
                     rows={2}
-                    placeholder="Información adicional sobre tu donación..."
+                    placeholder={t('donation.additional_note_placeholder')}
                     className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                   />
                 </div>
@@ -311,9 +313,9 @@ export const AvailableCampaigns = () => {
                     disabled={!donateRows.some(r => r.description && r.quantity)}
                   >
                     <Heart className="w-4 h-4" />
-                    Confirmar Donación
+                    {t('donation.confirm_donation')}
                   </Button>
-                  <Button variant="outline" onClick={() => setDonateCampaign(null)}>Cancelar</Button>
+                  <Button variant="outline" onClick={() => setDonateCampaign(null)}>{t('common.cancel')}</Button>
                 </div>
               </div>
             )}

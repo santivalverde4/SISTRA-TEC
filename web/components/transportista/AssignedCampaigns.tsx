@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
 import { MapPin, CheckCircle, Calendar, Truck, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { useT } from '@/lib/i18n/useT';
 
 interface AssignedCampaign {
   id: string;
@@ -68,6 +69,7 @@ type FilterStatus = 'all' | 'cerrada' | 'en-camino' | 'entregada';
 
 export const AssignedCampaigns = () => {
   const router = useRouter();
+  const { t } = useT();
   const [campaigns, setCampaigns] = useState<AssignedCampaign[]>(initialCampaigns);
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [eventTarget, setEventTarget] = useState<AssignedCampaign | null>(null);
@@ -102,16 +104,16 @@ export const AssignedCampaigns = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1>Campañas Asignadas</h1>
-        <p className="text-muted-foreground mt-1">Gestiona las campañas asignadas para transporte</p>
+        <h1>{t('transporter.assigned_title')}</h1>
+        <p className="text-muted-foreground mt-1">{t('transporter.assigned_subtitle')}</p>
       </div>
 
       <div className="flex gap-2 mb-6 flex-wrap">
         {([
-          { value: 'all', label: 'Todas' },
-          { value: 'cerrada', label: 'Pendientes' },
-          { value: 'en-camino', label: 'En tránsito' },
-          { value: 'entregada', label: 'Entregadas' },
+          { value: 'all', label: t('transporter.filter_all') },
+          { value: 'cerrada', label: t('transporter.filter_pending') },
+          { value: 'en-camino', label: t('transporter.filter_in_transit') },
+          { value: 'entregada', label: t('transporter.filter_delivered') },
         ] as { value: FilterStatus; label: string }[]).map((opt) => (
           <button
             key={opt.value}
@@ -157,18 +159,18 @@ export const AssignedCampaigns = () => {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 shrink-0" />
-                  {campaign.eventsCount} evento{campaign.eventsCount !== 1 ? 's' : ''} registrado{campaign.eventsCount !== 1 ? 's' : ''}
+                  {campaign.eventsCount} {campaign.eventsCount === 1 ? t('transporter.event_singular') : t('transporter.event_plural')}
                 </span>
               </div>
 
               <div className="flex gap-2">
                 {campaign.status === 'en-camino' && (
                   <Button onClick={() => openEventModal(campaign)}>
-                    Registrar Evento
+                    {t('transporter.register_event')}
                   </Button>
                 )}
                 <Button variant="outline" onClick={() => router.push('/dashboard/transportista/traceability')}>
-                  Ver Trazabilidad
+                  {t('transporter.view_traceability')}
                 </Button>
               </div>
             </CardContent>
@@ -177,41 +179,41 @@ export const AssignedCampaigns = () => {
       </div>
 
       {eventTarget && (
-        <Modal title={`Registrar Evento — ${eventTarget.name}`} onClose={() => setEventTarget(null)}>
+        <Modal title={`${t('transporter.register_event')} — ${eventTarget.name}`} onClose={() => setEventTarget(null)}>
           {delivered ? (
             <div className="text-center py-6 space-y-3">
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
-              <h3 className="font-semibold text-lg">¡Campaña marcada como entregada!</h3>
-              <p className="text-muted-foreground text-sm">El estado fue actualizado exitosamente.</p>
-              <Button onClick={() => setEventTarget(null)}>Cerrar</Button>
+              <h3 className="font-semibold text-lg">{t('transporter.delivered_modal_title')}</h3>
+              <p className="text-muted-foreground text-sm">{t('transporter.delivered_modal_message')}</p>
+              <Button onClick={() => setEventTarget(null)}>{t('common.close')}</Button>
             </div>
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block mb-1 text-sm font-medium">Tipo de evento</label>
+                <label className="block mb-1 text-sm font-medium">{t('transporter.event_type_label')}</label>
                 <select
                   value={eventForm.type}
                   onChange={(e) => setEventForm({ ...eventForm, type: e.target.value })}
                   className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  {eventTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  {eventTypes.map(et => <option key={et} value={et}>{et}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium">Descripción</label>
+                <label className="block mb-1 text-sm font-medium">{t('transporter.event_description_label')}</label>
                 <Input
                   value={eventForm.description}
                   onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
-                  placeholder="Describe lo que ocurrió"
+                  placeholder={t('transporter.select_type_placeholder')}
                 />
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium">Notas <span className="text-muted-foreground font-normal">(opcional)</span></label>
+                <label className="block mb-1 text-sm font-medium">{t('transporter.event_notes_label')} <span className="text-muted-foreground font-normal">{t('common.optional')}</span></label>
                 <textarea
                   value={eventForm.notes}
                   onChange={(e) => setEventForm({ ...eventForm, notes: e.target.value })}
                   rows={2}
-                  placeholder="Observaciones adicionales..."
+                  placeholder={t('transporter.event_notes_modal_placeholder')}
                   className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                 />
               </div>
@@ -221,14 +223,14 @@ export const AssignedCampaigns = () => {
                   onClick={submitEvent}
                   disabled={!eventForm.description}
                 >
-                  Registrar Evento
+                  {t('transporter.event_submit')}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={markDelivered}
                   className="text-green-600 border-green-600 hover:bg-green-50"
                 >
-                  Marcar Entregada
+                  {t('traceability.mark_delivered')}
                 </Button>
               </div>
             </div>
