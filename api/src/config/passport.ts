@@ -12,7 +12,7 @@ export const configurePassport = () => {
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {
-          // Pass the raw profile to the controller so it can decide onboarding / role selection
+         
           done(null, profile);
         } catch (error) {
           done(error as Error);
