@@ -5,7 +5,8 @@ import {
   login,
   logout,
   refresh,
-  register
+  register,
+  completeGoogleOnboard
 } from "../controllers/authController";
 
 export const authRoutes = Router();
@@ -22,3 +23,4 @@ authRoutes.get(
   })
 );
 authRoutes.get("/google/callback", googleCallback);
+authRoutes.post("/google/complete", completeGoogleOnboard);

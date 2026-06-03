@@ -3,7 +3,7 @@
     "_postman_id": "sistratec-auth-flow",
     "name": "SISTRA-TEC - Auth Flow",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Colección para probar register -> login -> protected -> refresh -> logout (usa cookies httpOnly para refresh)"
+    "description": "Colección para probar register -> login -> protected -> refresh -> logout. Incluye pasos para completar onboarding de Google (copiar token temporal desde la URL de redirección y completar con rol)."
   },
   "item": [
     {
@@ -94,6 +94,72 @@
           }
         }
       ]
+    },
+    {
+      "name": "Start Google OAuth (open in browser)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/google",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "google"
+          ]
+        },
+        "description": "Abrir en navegador. Completa el inicio de sesión en Google. Después de aceptar, Google redirigirá a FRONTEND_URL/auth/google/complete?t=<TOKEN>. Copia el valor de t para el siguiente paso."
+      },
+      "response": []
+    },
+    {
+      "name": "Complete Google Onboard",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tempToken\": \"<COPIA_AQUI_EL_TOKEN_T>\",\n  \"role\": \"TRANSPORTER\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/google/complete",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "google",
+            "complete"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Guarda accessToken si la respuesta es exitosa",
+              "if (pm.response.code === 200) {",
+              "  const json = pm.response.json();",
+              "  if (json.accessToken) {",
+              "    pm.environment.set('accessToken', json.accessToken);",
+              "  }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
     },
     {
       "name": "Create Inventory Item (protected)",

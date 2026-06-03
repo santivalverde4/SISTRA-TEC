@@ -1,14 +1,19 @@
 import type { Request, Response } from "express";
 import type { User } from "@prisma/client";
 import passport from "passport";
+import jwt from "jsonwebtoken";
+import type { Profile } from "passport-google-oauth20";
 import { asyncHandler } from "../utils/asyncHandler";
 import { HttpError } from "../utils/httpError";
+import { normalizeRole } from "../services/authService";
+import { Role } from "@prisma/client";
 import {
   issueTokensForUser,
   loginLocal,
   refreshTokens,
   registerLocal,
-  revokeRefreshToken
+  revokeRefreshToken,
+  upsertGoogleUser
 } from "../services/authService";
 import { env } from "../config/env";
 
@@ -83,18 +88,67 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const googleCallback = (req: Request, res: Response) => {
-  passport.authenticate("google", { session: false }, async (err, user) => {
-    if (err || !user) {
+  /
+  passport.authenticate("google", { session: false }, (err, profile: unknown) => {
+    if (err || !profile) {
       res.status(401).json({ error: "OAuth login failed" });
       return;
     }
 
     try {
-      const tokens = await issueTokensForUser(user as User);
-      setRefreshCookie(res, tokens.refreshToken);
-      res.json({ user: toPublicUser(user as User), accessToken: tokens.accessToken });
+      
+      const p = profile as Profile;
+      const payload = {
+        id: p.id,
+        displayName: p.displayName,
+        email: p.emails?.[0]?.value
+      };
+
+      
+      const tempToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: "10m" });
+
+      
+      redirectUrl.pathname = "/auth/google/complete"; 
+      redirectUrl.searchParams.set("t", tempToken);
+
+      res.redirect(302, redirectUrl.toString());
     } catch (error) {
       res.status(500).json({ error: "OAuth login failed" });
     }
   })(req, res);
 };
+
+export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Response) => {
+  const { tempToken, role } = req.body ?? {};
+  if (!tempToken) {
+    throw new HttpError(400, "Temp token required");
+  }
+
+  
+  if (!role) {
+    throw new HttpError(400, "Role required to complete onboarding");
+  }
+
+  
+  const normalizedRole = role ? normalizeRole(role) : undefined;
+
+  let payload: { id: string; displayName?: string; email?: string };
+  try {
+    payload = jwt.verify(tempToken, env.JWT_ACCESS_SECRET) as typeof payload;
+  } catch (error) {
+    throw new HttpError(401, "Invalid or expired temp token");
+  }
+
+  
+  const profile: Partial<Profile> = {
+    id: payload.id,
+    displayName: payload.displayName,
+    emails: payload.email ? [{ value: payload.email }] as any : undefined
+  };
+
+  const user = await upsertGoogleUser(profile as Profile, normalizedRole as unknown as string);
+  const tokens = await issueTokensForUser(user);
+
+  setRefreshCookie(res, tokens.refreshToken);
+  res.json({ user: toPublicUser(user), accessToken: tokens.accessToken });
+});

@@ -1,7 +1,6 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { env } from "./env";
-import { upsertGoogleUser } from "../services/authService";
 
 export const configurePassport = () => {
   passport.use(
@@ -13,8 +12,8 @@ export const configurePassport = () => {
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {
-          const user = await upsertGoogleUser(profile);
-          done(null, user);
+          // Pass the raw profile to the controller so it can decide onboarding / role selection
+          done(null, profile);
         } catch (error) {
           done(error as Error);
         }
