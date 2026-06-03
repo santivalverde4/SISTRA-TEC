@@ -11,6 +11,9 @@ import { healthRoutes } from "./routes/healthRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { attachUser } from "./middlewares/attachUser";
 
+import inventoryRoutes from "./routes/inventory.routes";
+import donationsRoutes from "./routes/donationsRoutes";
+
 export const app = express();
 
 configurePassport();
@@ -25,5 +28,7 @@ app.use(attachUser);
 
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/donations", donationsRoutes);
 
 app.use(errorHandler);

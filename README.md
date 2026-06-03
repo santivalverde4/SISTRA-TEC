@@ -102,4 +102,181 @@ Ejemplo de salida (OUT):
 }
 ```
 
+---
+
+## CRUD de Donaciones
+
+El sistema de donaciones permite registrar, seguir y gestionar el ciclo de vida de las donaciones desde su recepción hasta su entrega. Cada donación puede cambiar de estado: **Recibida → Clasificada → En Tránsito → Entregada**.
+
+### Tabla de Endpoints de Donaciones
+
+Se puede probar usando Postman apuntando a http://localhost:4000.
+
+|Método|Endpoint|Descripción|Body (JSON) requerido|
+|---|---|---|---|
+|POST|/api/donations|Crea una nueva donación e ingresa items a bodega (IN).|"{ ""campaignId"": ""ID"", ""donorId"": ""ID"", ""note"": ""Nota"", ""items"": [{ ""description"": ""Arroz"", ""quantity"": ""50"" }] }"
+|GET|/api/donations|Devuelve todas las donaciones con detalles relacionados.|No aplica
+|GET|/api/donations/:id|Devuelve los detalles completos de una donación con historial.|No aplica
+|PUT|/api/donations/:id|Actualiza la nota y/o items de una donación.|"{ ""note"": ""Nota actualizada"", ""items"": [{ ""description"": ""Frijoles"", ""quantity"": ""30"" }] }"
+|DELETE|/api/donations/:id|Elimina una donación y su historial.|No aplica
+|PUT|/api/donations/:id/status|Cambia el estado de la donación (valida transiciones y maneja inventario).|"{ ""status"": ""CLASSIFIED"", ""reason"": ""Clasificada"", ""changedBy"": ""USER_ID"" }"
+|GET|/api/donations/:id/history|Devuelve el historial completo de cambios de estado.|No aplica
+|GET|/api/donations/:id/tracking|Devuelve una vista simplificada del seguimiento para el donante.|No aplica
+
+### Estados de Donación
+
+- **RECEIVED**: Donación registrada en el sistema (estado inicial)
+- **CLASSIFIED**: Donación clasificada y lista para tránsito
+- **IN_TRANSIT**: Donación en camino hacia el beneficiario
+- **DELIVERED**: Donación entregada al beneficiario (estado final)
+
+> **Nota importante**: El sistema registra automáticamente transacciones de inventario:
+> - **RECEIVED**: Se crea transacción `IN` - entrada de stock a bodega
+> - **DELIVERED**: Se crea transacción `OUT` - salida de stock de bodega (con validación de disponibilidad)
+
+### Endpoints de Donaciones
+
+#### Crear una nueva donación
+```
+POST /api/donations
+```
+Body (JSON) requerido:
+```json
+{
+  "campaignId": "ID_CAMPAIGN",
+  "donorId": "ID_DONOR",
+  "note": "Nota adicional sobre la donación",
+  "items": [
+    {
+      "description": "Arroz",
+      "quantity": "50"
+    },
+    {
+      "description": "Frijoles",
+      "quantity": "30"
+    }
+  ]
+}
+```
+
+#### Obtener todas las donaciones
+```
+GET /api/donations
+```
+Respuesta: Array de donaciones con datos relacionados (campaña, donante, items, historial)
+
+#### Obtener donación específica por ID
+```
+GET /api/donations/:id
+```
+Respuesta: Donación completa con:
+- Información básica
+- Campaña relacionada
+- Datos del donante
+- Items donados
+- Historial completo de cambios de estado
+
+#### Actualizar información de donación
+```
+PUT /api/donations/:id
+```
+Body (JSON) - campos opcionales:
+```json
+{
+  "note": "Nueva nota",
+  "items": [
+    {
+      "description": "Arroz",
+      "quantity": "60"
+    }
+  ]
+}
+```
+
+#### Cambiar estado de donación
+```
+PUT /api/donations/:id/status
+```
+Body (JSON) requerido:
+```json
+{
+  "status": "CLASSIFIED",
+  "reason": "Donación clasificada correctamente",
+  "changedBy": "ID_USUARIO"
+}
+```
+
+Transiciones válidas:
+- `RECEIVED` → `CLASSIFIED` o `DELIVERED`
+- `CLASSIFIED` → `IN_TRANSIT` o `DELIVERED`
+- `IN_TRANSIT` → `DELIVERED`
+- `DELIVERED` → (ninguna, es estado final)
+
+#### Obtener historial de cambios de donación
+```
+GET /api/donations/:id/history
+```
+Respuesta: Array con todos los cambios de estado, incluyendo:
+- Estado anterior
+- Nuevo estado
+- Fecha del cambio
+- Razón del cambio
+- Usuario que realizó el cambio
+
+#### Obtener tracking completo de donación
+```
+GET /api/donations/:id/tracking
+```
+Respuesta: Vista simplificada del seguimiento con:
+- ID de donación
+- Nombre de campaña
+- Nombre del donante
+- Estado actual
+- Items donados
+- Historial de cambios
+
+#### Eliminar donación
+```
+DELETE /api/donations/:id
+```
+
+---
+
+## Integración Automática con Inventario
+
+El sistema maneja transacciones de inventario automáticamente en dos momentos clave:
+
+### 1. Al Recibir Donación (RECEIVED - IN)
+Cuando se crea una donación:
+1. **Busca automaticamente** los items en el inventario por nombre
+2. **Crea transacciones** de tipo `IN` (entrada)
+3. **Suma la cantidad** al stock existente en bodega
+4. **Registra la transacción** con referencia a la donación
+
+### 2. Al Entregar Donación (DELIVERED - OUT)
+Cuando una donación pasa a estado `DELIVERED`:
+1. **Valida disponibilidad** de stock en bodega
+2. **Crea transacciones** de tipo `OUT` (salida)
+3. **Resta la cantidad** del stock disponible
+4. **Registra la transacción** con referencia a la donación
+
+### Flujo de Ejemplo
+
+Suponga una donación recibida con:
+- 50 kg de Arroz
+- 30 kg de Frijoles
+
+**Al crear (RECEIVED)**:
+- Sistema busca "Arroz" en inventario
+- Si existe, suma 50 kg al stock actual
+- Crea transacción IN: `"Ingreso por recepción de donación #DONATION_ID"`
+- Repite para "Frijoles" con 30 kg
+
+**Al entregar (DELIVERED)**:
+- Sistema valida que hay ≥50 kg Arroz y ≥30 kg Frijoles
+- Si hay stock, resta 50 kg Arroz
+- Crea transacción OUT: `"Salida por entrega de donación #DONATION_ID"`
+- Repite para "Frijoles" con 30 kg
+- Si no hay stock suficiente, rechaza la operación
+
 

@@ -36,6 +36,13 @@ enum TransportEventType {
   OTHER
 }
 
+enum DonationStatus {
+  RECEIVED      // Recibido
+  CLASSIFIED    // Clasificado
+  IN_TRANSIT    // En Tránsito
+  DELIVERED     // Entregado
+}
+
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
@@ -102,19 +109,33 @@ model Donation {
   campaign   Campaign       @relation(fields: [campaignId], references: [id])
   donorId    String
   donor      User           @relation("DonorDonations", fields: [donorId], references: [id])
+  status     DonationStatus @default(RECEIVED)
   note       String?
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
   items      DonationItem[]
+  history    DonationHistory[]
 }
 
 model DonationItem {
   id          String   @id @default(cuid())
   donationId  String
-  donation    Donation @relation(fields: [donationId], references: [id])
+  donation    Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
   description String
-  quantity    String
+  quantity    Float
+
+  @@index([donationId])
+}
+
+model DonationHistory {
+  id        String         @id @default(cuid())
+  donationId String
+  donation  Donation       @relation(fields: [donationId], references: [id])
+  status    DonationStatus
+  reason    String?
+  changedBy String?        // ID del usuario que realizó el cambio
+  changedAt DateTime       @default(now())
 }
 
 model Transporter {
