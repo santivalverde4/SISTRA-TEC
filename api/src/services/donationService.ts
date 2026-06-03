@@ -7,7 +7,7 @@ export const createDonation = async (data: {
   campaignId: string;
   donorId: string;
   note?: string;
-  items: Array<{ description: string; quantity: string }>;
+  items: Array<{ description: string; quantity: string | number }>;
 }) => {
   try {
     const donation = await prisma.$transaction(async (tx) => {
@@ -27,7 +27,7 @@ export const createDonation = async (data: {
         data: data.items.map((item) => ({
           donationId: newDonation.id,
           description: item.description,
-          quantity: item.quantity,
+          quantity: parseFloat(String(item.quantity)) || 0,
         })),
       });
 
@@ -43,7 +43,10 @@ export const createDonation = async (data: {
 
       // Crear transacción IN en inventario para cada item
       for (const item of data.items) {
-        const inventoryItem = await tx.inventoryItem.findFirst({
+        const quantity = parseFloat(String(item.quantity)) || 0;
+        
+        // Buscar o crear el item de inventario
+        let inventoryItem = await tx.inventoryItem.findFirst({
           where: {
             name: {
               contains: item.description,
@@ -52,27 +55,37 @@ export const createDonation = async (data: {
           },
         });
 
-        if (inventoryItem) {
-          const quantity = parseInt(item.quantity) || 1;
-          await tx.inventoryTransaction.create({
+        // Si no existe, crear un nuevo item
+        if (!inventoryItem) {
+          inventoryItem = await tx.inventoryItem.create({
             data: {
-              inventoryItemId: inventoryItem.id,
-              type: 'IN',
-              amount: quantity,
-              reason: `Ingreso por recepción de donación #${newDonation.id}`,
-            },
-          });
-
-          // Actualizar cantidad en inventario
-          await tx.inventoryItem.update({
-            where: { id: inventoryItem.id },
-            data: {
-              quantity: {
-                increment: quantity,
-              },
+              name: item.description,
+              category: 'Otros',
+              unit: 'kg',
+              quantity: 0,
             },
           });
         }
+
+        // Crear transacción IN
+        await tx.inventoryTransaction.create({
+          data: {
+            inventoryItemId: inventoryItem.id,
+            type: 'IN',
+            amount: quantity,
+            reason: `Ingreso por recepción de donación #${newDonation.id}`,
+          },
+        });
+
+        // Actualizar cantidad en inventario
+        await tx.inventoryItem.update({
+          where: { id: inventoryItem.id },
+          data: {
+            quantity: {
+              increment: quantity,
+            },
+          },
+        });
       }
 
       return newDonation;
@@ -131,7 +144,7 @@ export const updateDonation = async (
   id: string,
   data: {
     note?: string;
-    items?: Array<{ description: string; quantity: string }>;
+    items?: Array<{ description: string; quantity: string | number }>;
   }
 ) => {
   try {
@@ -163,7 +176,7 @@ export const updateDonation = async (
           data: data.items.map((item) => ({
             donationId: id,
             description: item.description,
-            quantity: item.quantity,
+            quantity: parseFloat(String(item.quantity)) || 0,
           })),
         });
       }
@@ -229,7 +242,9 @@ export const changeDonationStatus = async (
       // Si la donación se entrega, restar el stock del inventario
       if (newStatus === 'DELIVERED') {
         for (const item of currentDonation.items) {
-          const inventoryItem = await tx.inventoryItem.findFirst({
+          const quantity = item.quantity; // Ya es Float desde la BD
+          
+          let inventoryItem = await tx.inventoryItem.findFirst({
             where: {
               name: {
                 contains: item.description,
@@ -238,36 +253,44 @@ export const changeDonationStatus = async (
             },
           });
 
-          if (inventoryItem) {
-            const quantity = parseInt(item.quantity) || 1;
-            
-            // Verificar que hay suficiente stock
-            if (inventoryItem.quantity < quantity) {
-              throw new Error(
-                `Stock insuficiente de ${item.description}. Disponible: ${inventoryItem.quantity}, Requerido: ${quantity}`
-              );
-            }
-
-            // Crear transacción de inventario (OUT)
-            await tx.inventoryTransaction.create({
+          // Si no existe, crear un nuevo item
+          if (!inventoryItem) {
+            inventoryItem = await tx.inventoryItem.create({
               data: {
-                inventoryItemId: inventoryItem.id,
-                type: 'OUT',
-                amount: quantity,
-                reason: `Salida por entrega de donación #${id}`,
-              },
-            });
-
-            // Actualizar cantidad en inventario
-            await tx.inventoryItem.update({
-              where: { id: inventoryItem.id },
-              data: {
-                quantity: {
-                  decrement: quantity,
-                },
+                name: item.description,
+                category: 'Otros',
+                unit: 'kg',
+                quantity: 0,
               },
             });
           }
+
+          // Verificar que hay suficiente stock
+          if (inventoryItem.quantity < quantity) {
+            throw new Error(
+              `Stock insuficiente de ${item.description}. Disponible: ${inventoryItem.quantity}, Requerido: ${quantity}`
+            );
+          }
+
+          // Crear transacción de inventario (OUT)
+          await tx.inventoryTransaction.create({
+            data: {
+              inventoryItemId: inventoryItem.id,
+              type: 'OUT',
+              amount: quantity,
+              reason: `Salida por entrega de donación #${id}`,
+            },
+          });
+
+          // Actualizar cantidad en inventario
+          await tx.inventoryItem.update({
+            where: { id: inventoryItem.id },
+            data: {
+              quantity: {
+                decrement: quantity,
+              },
+            },
+          });
         }
       }
 

@@ -121,9 +121,11 @@ model Donation {
 model DonationItem {
   id          String   @id @default(cuid())
   donationId  String
-  donation    Donation @relation(fields: [donationId], references: [id])
+  donation    Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
   description String
-  quantity    String
+  quantity    Float
+
+  @@index([donationId])
 }
 
 model DonationHistory {
