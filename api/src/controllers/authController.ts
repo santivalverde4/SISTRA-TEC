@@ -10,6 +10,7 @@ import {
   registerLocal,
   revokeRefreshToken
 } from "../services/authService";
+import { env } from "../config/env";
 
 const toPublicUser = (user: User) => ({
   id: user.id,
@@ -17,6 +18,17 @@ const toPublicUser = (user: User) => ({
   name: user.name,
   role: user.role
 });
+
+const setRefreshCookie = (res: Response, token: string) => {
+  const isProd = env.NODE_ENV === "production";
+  res.cookie("refreshToken", token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax",
+    path: "/api/auth",
+    maxAge: env.JWT_REFRESH_TTL_DAYS * 24 * 60 * 60 * 1000
+  });
+};
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, name, role } = req.body ?? {};
@@ -27,7 +39,9 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const user = await registerLocal({ email, password, name, role });
   const tokens = await issueTokensForUser(user);
 
-  res.status(201).json({ user: toPublicUser(user), ...tokens });
+  setRefreshCookie(res, tokens.refreshToken);
+
+  res.status(201).json({ user: toPublicUser(user), accessToken: tokens.accessToken });
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -39,26 +53,32 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const user = await loginLocal({ email, password });
   const tokens = await issueTokensForUser(user);
 
-  res.json({ user: toPublicUser(user), ...tokens });
+  setRefreshCookie(res, tokens.refreshToken);
+
+  res.json({ user: toPublicUser(user), accessToken: tokens.accessToken });
 });
 
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
-  const { refreshToken } = req.body ?? {};
+  const refreshToken = req.cookies?.refreshToken;
   if (!refreshToken) {
     throw new HttpError(400, "Refresh token required");
   }
 
   const tokens = await refreshTokens(refreshToken);
-  res.json(tokens);
+
+  setRefreshCookie(res, tokens.refreshToken);
+
+  res.json({ accessToken: tokens.accessToken });
 });
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  const { refreshToken } = req.body ?? {};
+  const refreshToken = req.cookies?.refreshToken;
   if (!refreshToken) {
     throw new HttpError(400, "Refresh token required");
   }
 
   await revokeRefreshToken(refreshToken);
+  res.clearCookie("refreshToken", { path: "/api/auth" });
   res.status(204).send();
 });
 
@@ -71,7 +91,8 @@ export const googleCallback = (req: Request, res: Response) => {
 
     try {
       const tokens = await issueTokensForUser(user as User);
-      res.json({ user: toPublicUser(user as User), ...tokens });
+      setRefreshCookie(res, tokens.refreshToken);
+      res.json({ user: toPublicUser(user as User), accessToken: tokens.accessToken });
     } catch (error) {
       res.status(500).json({ error: "OAuth login failed" });
     }

@@ -38,7 +38,7 @@ export const registerLocal = async (input: RegisterInput): Promise<User> => {
     throw new HttpError(409, "Email already registered");
   }
 
-  const passwordHash = await bcrypt.hash(input.password, 10);
+  const passwordHash = await bcrypt.hash(input.password, 12);
 
   return prisma.user.create({
     data: {

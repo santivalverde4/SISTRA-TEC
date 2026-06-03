@@ -1,4 +1,5 @@
-import type { RequestHandler } from "express";
+import type { RequestHandler, Request } from "express";
+import type { AuthTokenPayload } from "../types/auth";
 import { HttpError } from "../utils/httpError";
 import { verifyAccessToken } from "../services/tokenService";
 
@@ -14,6 +15,7 @@ export const authJwt: RequestHandler = (req, _res, next) => {
   }
 
   const payload = verifyAccessToken(token);
-  req.auth = { sub: payload.sub, role: payload.role };
+  const r = req as Request & { auth?: AuthTokenPayload };
+  r.auth = { sub: payload.sub, role: payload.role };
   next();
 };
