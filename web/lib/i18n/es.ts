@@ -52,6 +52,10 @@ const es = {
     error_network: 'Error de conexión. Intenta de nuevo.',
   },
 
+  errors: {
+    load_failed: 'Error al cargar los datos. Intenta de nuevo.',
+  },
+
   sidebar: {
     dashboard: 'Dashboard',
     my_donations: 'Mis Donaciones',

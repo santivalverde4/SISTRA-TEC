@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui-custom/Card';
 import { Input } from '@/components/ui-custom/Input';
 import { Button } from '@/components/ui-custom/Button';
@@ -12,10 +12,12 @@ import { Search, Package, Calendar } from 'lucide-react';
 import type { CampaignStatus } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { useT } from '@/lib/i18n/useT';
+import { api } from '@/lib/api';
+import { getUser } from '@/lib/auth';
 
 interface DonationItem {
   description: string;
-  quantity: string;
+  quantity: number;
 }
 
 interface Donation {
@@ -23,45 +25,80 @@ interface Donation {
   campaignName: string;
   campaignStatus: CampaignStatus;
   items: DonationItem[];
-  note: string;
+  note: string | null;
   date: string;
 }
 
-const mockDonations: Donation[] = [
-  {
-    id: '1',
-    campaignName: 'Ayuda para comunidades afectadas por inundaciones',
-    campaignStatus: 'abierta',
-    items: [
-      { description: 'Arroz', quantity: '10 kg' },
-      { description: 'Frijoles', quantity: '5 kg' },
-      { description: 'Aceite', quantity: '3 litros' },
-    ],
-    note: 'Productos en buen estado, empacados.',
-    date: '2026-05-08',
-  },
-  {
-    id: '2',
-    campaignName: 'Ropa de invierno para refugiados',
-    campaignStatus: 'en-camino',
-    items: [
-      { description: 'Chaquetas talla M', quantity: '8 prendas' },
-      { description: 'Suéteres talla L', quantity: '7 prendas' },
-    ],
-    note: '',
-    date: '2026-05-09',
-  },
-];
+type BackendDonationStatus = 'RECEIVED' | 'CLASSIFIED' | 'IN_TRANSIT' | 'DELIVERED';
+
+interface BackendDonation {
+  id: string;
+  donorId: string;
+  note: string | null;
+  status: BackendDonationStatus;
+  createdAt: string;
+  campaign: { name: string; status: string };
+  items: Array<{ description: string; quantity: number }>;
+}
+
+function mapDonationStatus(status: BackendDonationStatus): CampaignStatus {
+  switch (status) {
+    case 'RECEIVED': return 'abierta';
+    case 'CLASSIFIED': return 'congelada';
+    case 'IN_TRANSIT': return 'en-camino';
+    case 'DELIVERED': return 'entregada';
+  }
+}
+
+function toViewModel(d: BackendDonation): Donation {
+  return {
+    id: d.id,
+    campaignName: d.campaign.name,
+    campaignStatus: mapDonationStatus(d.status),
+    items: d.items,
+    note: d.note,
+    date: d.createdAt,
+  };
+}
 
 export const MyDonations = () => {
   const { t } = useT();
-  const [donations] = useState<Donation[]>(mockDonations);
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [detailsDonation, setDetailsDonation] = useState<Donation | null>(null);
+
+  useEffect(() => {
+    const user = getUser();
+    api.get<BackendDonation[]>('/api/donations')
+      .then((data) => {
+        const mine = user ? data.filter((d) => d.donorId === user.id) : data;
+        setDonations(mine.map(toViewModel));
+      })
+      .catch(() => setError(t('errors.load_failed')))
+      .finally(() => setLoading(false));
+  }, [t]);
 
   const filteredDonations = donations.filter((d) =>
     d.campaignName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-16 text-muted-foreground">{t('common.loading')}</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-16 text-destructive">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -146,6 +183,7 @@ export const MyDonations = () => {
                     <span className="text-muted-foreground whitespace-nowrap">{item.quantity}</span>
                   </div>
                 ))}
+
               </div>
             </div>
 

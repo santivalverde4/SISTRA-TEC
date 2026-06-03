@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui-custom/Card';
 import { Input } from '@/components/ui-custom/Input';
 import { StatusBadge } from '@/components/ui-custom/Badge';
@@ -8,13 +8,23 @@ import { Timeline } from '@/components/shared/Timeline';
 import { Search, TrendingUp, Calendar, Package } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useT } from '@/lib/i18n/useT';
+import { api } from '@/lib/api';
+import { getUser } from '@/lib/auth';
+import type { CampaignStatus } from '@/types';
 
 interface DonationItem {
   description: string;
-  quantity: string;
+  quantity: number;
 }
 
-type CampaignStatus = 'abierta' | 'congelada' | 'cerrada' | 'en-camino' | 'entregada' | 'finalizada';
+interface TimelineEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  type: 'status' | 'logistic';
+  status?: 'completed' | 'current' | 'pending';
+}
 
 interface TraceableDonation {
   id: string;
@@ -22,120 +32,139 @@ interface TraceableDonation {
   campaignStatus: CampaignStatus;
   date: string;
   items: DonationItem[];
-  note: string;
-  timeline: Array<{
-    id: string;
-    title: string;
-    description: string;
-    date: string;
-    type: 'status' | 'logistic';
-    status?: 'completed' | 'current' | 'pending';
-  }>;
+  note: string | null;
+  timeline: TimelineEvent[];
 }
 
-const mockDonations: TraceableDonation[] = [
-  {
-    id: '1',
-    campaignName: 'Ayuda para comunidades afectadas por inundaciones',
-    campaignStatus: 'abierta',
-    date: '2026-05-08',
-    items: [
-      { description: 'Arroz', quantity: '10 kg' },
-      { description: 'Frijoles', quantity: '5 kg' },
-      { description: 'Aceite', quantity: '3 litros' },
-    ],
-    note: 'Productos en buen estado, empacados.',
-    timeline: [
-      {
-        id: '1',
-        title: 'Donación registrada',
-        description: 'Tu donación fue recibida por la campaña',
-        date: '2026-05-08',
-        type: 'status',
-        status: 'completed',
-      },
-      {
-        id: '2',
-        title: 'En período de recolección',
-        description: 'La campaña sigue abierta y recolectando donaciones',
-        date: '2026-05-08',
-        type: 'status',
-        status: 'current',
-      },
-      {
-        id: '3',
-        title: 'Cierre y preparación de envío',
-        description: 'Pendiente de que la campaña cierre',
-        date: 'Próximamente',
-        type: 'status',
-        status: 'pending',
-      },
-    ],
-  },
-  {
-    id: '2',
-    campaignName: 'Ropa de invierno para refugiados',
-    campaignStatus: 'en-camino',
-    date: '2026-05-09',
-    items: [
-      { description: 'Chaquetas talla M', quantity: '8 prendas' },
-      { description: 'Suéteres talla L', quantity: '7 prendas' },
-    ],
-    note: '',
-    timeline: [
-      {
-        id: '1',
-        title: 'Donación registrada',
-        description: 'Tu donación fue recibida por la campaña',
-        date: '2026-05-09',
-        type: 'status',
-        status: 'completed',
-      },
-      {
-        id: '2',
-        title: 'Campaña cerrada para nuevas donaciones',
-        description: 'Se completó el período de recolección',
-        date: '2026-05-10',
-        type: 'status',
-        status: 'completed',
-      },
-      {
-        id: '3',
-        title: 'Donaciones empacadas y listas',
-        description: 'Transportista asignado y ruta confirmada',
-        date: '2026-05-11',
-        type: 'logistic',
-        status: 'completed',
-      },
-      {
-        id: '4',
-        title: 'En camino al destino',
-        description: 'El transporte está en ruta hacia los refugiados',
-        date: '2026-05-12',
-        type: 'status',
-        status: 'current',
-      },
-      {
-        id: '5',
-        title: 'Entrega programada',
-        description: 'Llegada estimada al punto de entrega',
-        date: '2026-05-15',
-        type: 'status',
-        status: 'pending',
-      },
-    ],
-  },
-];
+type BackendDonationStatus = 'RECEIVED' | 'CLASSIFIED' | 'IN_TRANSIT' | 'DELIVERED';
+
+interface BackendDonation {
+  id: string;
+  donorId: string;
+  note: string | null;
+  status: BackendDonationStatus;
+  createdAt: string;
+  campaign: { name: string };
+  items: Array<{ description: string; quantity: number }>;
+}
+
+interface BackendTracking {
+  donationId: string;
+  campaign: string;
+  currentStatus: BackendDonationStatus;
+  items: Array<{ description: string; quantity: number }>;
+  history: Array<{ status: string; changedAt: string; reason: string | null; changedBy: string | null }>;
+}
+
+const STATUS_ORDER: BackendDonationStatus[] = ['RECEIVED', 'CLASSIFIED', 'IN_TRANSIT', 'DELIVERED'];
+
+const STATUS_LABELS: Record<BackendDonationStatus, string> = {
+  RECEIVED: 'Donación recibida',
+  CLASSIFIED: 'Donación clasificada',
+  IN_TRANSIT: 'En camino al destino',
+  DELIVERED: 'Donación entregada',
+};
+
+function mapDonationStatus(status: BackendDonationStatus): CampaignStatus {
+  switch (status) {
+    case 'RECEIVED': return 'abierta';
+    case 'CLASSIFIED': return 'congelada';
+    case 'IN_TRANSIT': return 'en-camino';
+    case 'DELIVERED': return 'entregada';
+  }
+}
+
+function buildTimeline(tracking: BackendTracking): TimelineEvent[] {
+  const completedStatuses = new Set(tracking.history.map((h) => h.status as BackendDonationStatus));
+  const currentIndex = STATUS_ORDER.indexOf(tracking.currentStatus);
+
+  return STATUS_ORDER.map((s, i) => {
+    const historyEntry = tracking.history.find((h) => h.status === s);
+    let eventStatus: 'completed' | 'current' | 'pending';
+    if (i < currentIndex) eventStatus = 'completed';
+    else if (i === currentIndex) eventStatus = completedStatuses.has(s) && i < STATUS_ORDER.length - 1 ? 'current' : (i === currentIndex ? 'current' : 'completed');
+    else eventStatus = 'pending';
+
+    // Simplify: anything before current = completed, current = current, after = pending
+    if (i < currentIndex) eventStatus = 'completed';
+    else if (i === currentIndex) eventStatus = 'current';
+    else eventStatus = 'pending';
+
+    return {
+      id: String(i),
+      title: STATUS_LABELS[s],
+      description: historyEntry?.reason ?? '',
+      date: historyEntry ? formatDate(historyEntry.changedAt) : 'Pendiente',
+      type: 'status' as const,
+      status: eventStatus,
+    };
+  });
+}
 
 export const DonationTraceability = () => {
   const { t } = useT();
-  const [donations] = useState<TraceableDonation[]>(mockDonations);
+  const [donations, setDonations] = useState<TraceableDonation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selected, setSelected] = useState<TraceableDonation | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+
+  useEffect(() => {
+    const user = getUser();
+    api.get<BackendDonation[]>('/api/donations')
+      .then((data) => {
+        const mine = user ? data.filter((d) => d.donorId === user.id) : data;
+        setDonations(mine.map((d) => ({
+          id: d.id,
+          campaignName: d.campaign.name,
+          campaignStatus: mapDonationStatus(d.status),
+          items: d.items,
+          note: d.note,
+          date: d.createdAt,
+          timeline: [],
+        })));
+      })
+      .catch(() => setError(t('errors.load_failed')))
+      .finally(() => setLoading(false));
+  }, [t]);
+
+  function handleSelect(donation: TraceableDonation) {
+    setSelected(donation);
+    if (donation.timeline.length > 0) return;
+
+    setTrackingLoading(true);
+    api.get<BackendTracking>(`/api/donations/${donation.id}/tracking`)
+      .then((tracking) => {
+        const timeline = buildTimeline(tracking);
+        setDonations((prev) =>
+          prev.map((d) => d.id === donation.id ? { ...d, timeline } : d)
+        );
+        setSelected((prev) => prev?.id === donation.id ? { ...prev, timeline } : prev);
+      })
+      .catch(() => {})
+      .finally(() => setTrackingLoading(false));
+  }
 
   const filtered = donations.filter((d) =>
     d.campaignName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-16 text-muted-foreground">{t('common.loading')}</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-16 text-destructive">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -170,7 +199,7 @@ export const DonationTraceability = () => {
                     ? 'ring-2 ring-primary shadow-md'
                     : 'hover:shadow-md'
                 }`}
-                onClick={() => setSelected(donation)}
+                onClick={() => handleSelect(donation)}
               >
                 <CardContent>
                   <h4 className="mb-2">{donation.campaignName}</h4>
@@ -233,7 +262,10 @@ export const DonationTraceability = () => {
                     <TrendingUp className="w-5 h-5" />
                     {t('traceability.campaign_history')}
                   </h4>
-                  <Timeline events={selected.timeline} />
+                  {trackingLoading
+                    ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+                    : <Timeline events={selected.timeline} />
+                  }
                 </div>
               </CardContent>
             </Card>
