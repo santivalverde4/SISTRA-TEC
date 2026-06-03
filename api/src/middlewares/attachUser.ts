@@ -7,7 +7,7 @@ export const attachUser: RequestHandler = async (req, _res, next) => {
   const r = req as Request & { auth?: AuthTokenPayload; user?: { id: string; email?: string; name?: string; role?: string } };
 
   if (!r.auth) {
-    // Not authenticated — nothing to attach
+    
     return next();
   }
 
