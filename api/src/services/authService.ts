@@ -22,9 +22,11 @@ type LoginInput = {
   password: string;
 };
 
-const normalizeRole = (role?: string) => {
-  if (role && Object.values(Role).includes(role as Role)) {
-    return role as Role;
+export const normalizeRole = (role?: string): Role => {
+  if (!role) return Role.DONOR;
+  const candidate = role.toString().trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_");
+  if (Object.values(Role).includes(candidate as Role)) {
+    return candidate as Role;
   }
   return Role.DONOR;
 };
@@ -38,7 +40,7 @@ export const registerLocal = async (input: RegisterInput): Promise<User> => {
     throw new HttpError(409, "Email already registered");
   }
 
-  const passwordHash = await bcrypt.hash(input.password, 10);
+  const passwordHash = await bcrypt.hash(input.password, 12);
 
   return prisma.user.create({
     data: {
@@ -93,7 +95,7 @@ export const revokeRefreshToken = async (refreshToken: string) => {
   await revokeRefreshTokenRecord(refreshToken);
 };
 
-export const upsertGoogleUser = async (profile: Profile): Promise<User> => {
+export const upsertGoogleUser = async (profile: Profile, role?: string): Promise<User> => {
   const email = profile.emails?.[0]?.value;
   if (!email) {
     throw new HttpError(400, "Google profile missing email");
@@ -110,6 +112,14 @@ export const upsertGoogleUser = async (profile: Profile): Promise<User> => {
   });
 
   if (existingAccount) {
+    if (role) {
+      const newRole = normalizeRole(role);
+      if (existingAccount.user.role !== newRole) {
+        await prisma.user.update({ where: { id: existingAccount.user.id }, data: { role: newRole } });
+        existingAccount.user.role = newRole;
+      }
+    }
+
     return existingAccount.user;
   }
 
@@ -119,7 +129,7 @@ export const upsertGoogleUser = async (profile: Profile): Promise<User> => {
     create: {
       email,
       name: profile.displayName || undefined,
-      role: Role.DONOR
+      role: role ? normalizeRole(role) : Role.DONOR
     }
   });
 
