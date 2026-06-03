@@ -88,7 +88,6 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const googleCallback = (req: Request, res: Response) => {
-  /
   passport.authenticate("google", { session: false }, (err, profile: unknown) => {
     if (err || !profile) {
       res.status(401).json({ error: "OAuth login failed" });
@@ -96,7 +95,6 @@ export const googleCallback = (req: Request, res: Response) => {
     }
 
     try {
-      
       const p = profile as Profile;
       const payload = {
         id: p.id,
@@ -104,11 +102,10 @@ export const googleCallback = (req: Request, res: Response) => {
         email: p.emails?.[0]?.value
       };
 
-      
       const tempToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: "10m" });
 
-      
-      redirectUrl.pathname = "/auth/google/complete"; 
+      const redirectUrl = new URL(env.FRONTEND_URL);
+      redirectUrl.pathname = "/auth/google/complete";
       redirectUrl.searchParams.set("t", tempToken);
 
       res.redirect(302, redirectUrl.toString());
