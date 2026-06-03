@@ -1,13 +1,32 @@
 {
   "info": {
-    "_postman_id": "sistratec-auth-flow",
+    "_postman_id": "8103ce73-1167-4a9b-92f0-770c65e17891",
     "name": "SISTRA-TEC - Auth Flow",
+    "description": "Colección para probar register -> login -> protected -> refresh -> logout. Incluye pasos para completar onboarding de Google (copiar token temporal desde la URL de redirección y completar con rol).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Colección para probar register -> login -> protected -> refresh -> logout. Incluye pasos para completar onboarding de Google (copiar token temporal desde la URL de redirección y completar con rol)."
+    "_exporter_id": "45753786",
+    "_collection_link": "https://go.postman.co/collection/45753786-8103ce73-1167-4a9b-92f0-770c65e17891?source=collection_link"
   },
   "item": [
     {
       "name": "Register",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Guardar accessToken en environment variable para llamadas protegidas",
+              "if (pm.response.code === 201 || pm.response.code === 200) {",
+              "  const json = pm.response.json();",
+              "  if (json.accessToken) {",
+              "    pm.environment.set('accessToken', json.accessToken);",
+              "  }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -32,14 +51,16 @@
           ]
         }
       },
-      "response": [],
+      "response": []
+    },
+    {
+      "name": "Login",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "// Guardar accessToken en environment variable para llamadas protegidas",
-              "if (pm.response.code === 201 || pm.response.code === 200) {",
+              "if (pm.response.code === 200) {",
               "  const json = pm.response.json();",
               "  if (json.accessToken) {",
               "    pm.environment.set('accessToken', json.accessToken);",
@@ -49,10 +70,7 @@
             "type": "text/javascript"
           }
         }
-      ]
-    },
-    {
-      "name": "Login",
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -77,23 +95,7 @@
           ]
         }
       },
-      "response": [],
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "if (pm.response.code === 200) {",
-              "  const json = pm.response.json();",
-              "  if (json.accessToken) {",
-              "    pm.environment.set('accessToken', json.accessToken);",
-              "  }",
-              "}"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ]
+      "response": []
     },
     {
       "name": "Start Google OAuth (open in browser)",
@@ -117,6 +119,23 @@
     },
     {
       "name": "Complete Google Onboard",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Guarda accessToken si la respuesta es exitosa",
+              "if (pm.response.code === 200) {",
+              "  const json = pm.response.json();",
+              "  if (json.accessToken) {",
+              "    pm.environment.set('accessToken', json.accessToken);",
+              "  }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -142,23 +161,6 @@
           ]
         }
       },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "// Guarda accessToken si la respuesta es exitosa",
-              "if (pm.response.code === 200) {",
-              "  const json = pm.response.json();",
-              "  if (json.accessToken) {",
-              "    pm.environment.set('accessToken', json.accessToken);",
-              "  }",
-              "}"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
       "response": []
     },
     {
@@ -194,21 +196,6 @@
     },
     {
       "name": "Refresh Token",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/refresh",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "refresh"
-          ]
-        }
-      },
       "event": [
         {
           "listen": "test",
@@ -225,6 +212,21 @@
           }
         }
       ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/refresh",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "refresh"
+          ]
+        }
+      },
       "response": []
     },
     {
@@ -245,13 +247,259 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Ver Tracking",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/tracking",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4000",
+          "path": [
+            "api",
+            "donations",
+            "cmpxgd4of000djaojc0dl1pyo",
+            "tracking"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cambiar Status DELIVERED",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"DELIVERED\",\n  \"reason\": \"Entregado al beneficiario final\",\n  \"changedBy\": \"clyyy_DONOR_ID\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/status",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4000",
+          "path": [
+            "api",
+            "donations",
+            "cmpxgd4of000djaojc0dl1pyo",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cambiar Status IN_TRANSIT",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"IN_TRANSIT\",\n  \"reason\": \"En camino hacia el beneficiario\",\n  \"changedBy\": \"cmpxg2xoq0006var2ewwwt1zq\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:4000/api/donations/cmpxg2xoq0006var2ewwwt1zq/status",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4000",
+          "path": [
+            "api",
+            "donations",
+            "cmpxg2xoq0006var2ewwwt1zq",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cambiar Status CLASSIFIED",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"CLASSIFIED\",\n  \"reason\": \"Donación clasificada y validada\",\n  \"changedBy\": \"cmpxg2xoq0006var2ewwwt1zq\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/status",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4000",
+          "path": [
+            "api",
+            "donations",
+            "cmpxgd4of000djaojc0dl1pyo",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ver Historial",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/history",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4000",
+          "path": [
+            "api",
+            "donations",
+            "cmpxgd4of000djaojc0dl1pyo",
+            "history"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ver Donación por ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4000",
+          "path": [
+            "api",
+            "donations",
+            "cmpxgd4of000djaojc0dl1pyo"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear Donación",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"campaignId\": \"cmpxg9ftl000848x9fujn1mq4\",\n  \"donorId\": \"cmpxg2xoq0006var2ewwwt1zq\",\n  \"note\": \"Donación de arroz y frijoles para familias afectadas\",\n  \"items\": [\n    {\n      \"description\": \"Arroz\",\n      \"quantity\": 100\n    },\n    {\n      \"description\": \"Frijoles\",\n      \"quantity\": 35\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:4000/api/donations",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4000",
+          "path": [
+            "api",
+            "donations"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener el Inventario",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:4000/api/inventory",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4000",
+          "path": [
+            "api",
+            "inventory"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener Donaciones",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:4000/api/donations",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "4000",
+          "path": [
+            "api",
+            "donations"
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:4000",
-      "type": "string"
+      "value": "http://localhost:4000"
     }
   ]
 }
