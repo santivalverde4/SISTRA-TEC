@@ -7,9 +7,15 @@ import { User, Mail, Lock, UserCircle } from 'lucide-react';
 import { Input } from '@/components/ui-custom/Input';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
-import { setRole, getDefaultRoute } from '@/lib/auth';
+import { setToken, setUser, mapRole, mapRoleToBackend, getDefaultRoute, type BackendRole } from '@/lib/auth';
+import { api } from '@/lib/api';
 import type { UserRole } from '@/types';
 import { useT } from '@/lib/i18n/useT';
+
+interface RegisterResponse {
+  accessToken: string;
+  user: { id: string; email: string; name: string | null; role: BackendRole };
+}
 
 export function RegisterForm() {
   const router = useRouter();
@@ -21,9 +27,10 @@ export function RegisterForm() {
     confirmPassword: '',
     role: 'donante' as UserRole,
   });
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -47,8 +54,27 @@ export function RegisterForm() {
       return;
     }
 
-    setRole(formData.role);
-    router.push(getDefaultRoute(formData.role));
+    setLoading(true);
+    try {
+      const data = await api.post<RegisterResponse>('/api/auth/register', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: mapRoleToBackend(formData.role),
+      });
+      const role = mapRole(data.user.role);
+      setToken(data.accessToken);
+      setUser({ id: data.user.id, email: data.user.email, name: data.user.name, role });
+      router.push(getDefaultRoute(role));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      const translated =
+        msg === 'Email already registered' ? t('auth.error_email_taken') :
+        msg ? msg : t('auth.error_network');
+      setErrors({ general: translated });
+    } finally {
+      setLoading(false);
+    }
   }
 
   function field(key: keyof typeof formData, value: string) {
@@ -69,7 +95,7 @@ export function RegisterForm() {
           <div>
             <label className="block mb-2 text-sm">{t('auth.full_name')}</label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <User className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 value={formData.name}
                 onChange={(e) => field('name', e.target.value)}
@@ -83,7 +109,7 @@ export function RegisterForm() {
           <div>
             <label className="block mb-2 text-sm">{t('auth.email')}</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Mail className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="email"
                 value={formData.email}
@@ -114,7 +140,7 @@ export function RegisterForm() {
           <div>
             <label className="block mb-2 text-sm">{t('auth.password')}</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Lock className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="password"
                 value={formData.password}
@@ -129,7 +155,7 @@ export function RegisterForm() {
           <div>
             <label className="block mb-2 text-sm">{t('auth.confirm_password')}</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Lock className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="password"
                 value={formData.confirmPassword}
@@ -143,7 +169,12 @@ export function RegisterForm() {
         </CardContent>
 
         <CardFooter className="flex-col gap-3">
-          <Button type="submit" className="w-full">{t('auth.register')}</Button>
+          {errors.general && (
+            <p className="text-sm text-destructive w-full">{errors.general}</p>
+          )}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? t('common.loading') : t('auth.register')}
+          </Button>
           <p className="text-sm text-muted-foreground">
             {t('auth.has_account')}{' '}
             <Link href="/login" className="text-primary hover:underline">

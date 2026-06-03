@@ -36,8 +36,10 @@ const es = {
     role_donor: 'Donante',
     role_transporter: 'Transportista',
     role_admin: 'Administrador',
-    test_users: 'Usuarios de prueba (contraseña: 123456):',
-    test_users_list: 'donante@test.com · transportista@test.com · admin@test.com',
+    or: 'o',
+    login_with_google: 'Continuar con Google',
+    google_complete_subtitle: 'Selecciona tu rol para completar el registro',
+    google_complete_button: 'Completar registro',
 
     error_email_required: 'El correo es requerido',
     error_email_invalid: 'El correo no es válido',
@@ -45,7 +47,9 @@ const es = {
     error_password_min: 'La contraseña debe tener al menos 6 caracteres',
     error_passwords_mismatch: 'Las contraseñas no coinciden',
     error_name_required: 'El nombre es requerido',
-    error_invalid_credentials: 'Credenciales incorrectas. Usa los usuarios de prueba.',
+    error_invalid_credentials: 'Correo o contraseña incorrectos',
+    error_email_taken: 'Este correo ya está registrado',
+    error_network: 'Error de conexión. Intenta de nuevo.',
   },
 
   sidebar: {
