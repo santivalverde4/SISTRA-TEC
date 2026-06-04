@@ -13,6 +13,7 @@ import { attachUser } from "./middlewares/attachUser";
 
 import inventoryRoutes from "./routes/inventory.routes";
 import donationsRoutes from "./routes/donationsRoutes";
+import usersRoutes from "./routes/usersRoutes";
 
 export const app = express();
 
@@ -30,5 +31,6 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/donations", donationsRoutes);
+app.use("/api/users", usersRoutes);
 
 app.use(errorHandler);

@@ -172,6 +172,51 @@
       "response": []
     },
     {
+      "name": "Change Password (self)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currentPassword\": \"Passw0rd!\",\n  \"newPassword\": \"NewPassw0rd!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/me/change-password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "me",
+            "change-password"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status is 200', function() { pm.expect(pm.response.code).to.eql(200); });",
+              "if (pm.response.code === 200) { pm.environment.set('passwordChanged', 'true'); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
+    },
+    {
       "name": "Create Inventory Item (protected)",
       "request": {
         "method": "POST",
@@ -501,6 +546,60 @@
           ]
         }
       },
+      "response": []
+    },
+    {
+      "name": "Get My Profile (me)",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","users","me"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status is 200', function() { pm.expect(pm.response.code).to.eql(200); });",
+              "if (pm.response.code === 200) { pm.environment.set('profileFetched', 'true'); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "Update My Profile (me)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Nombre desde Postman\"\n}" },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","users","me"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status is 200', function() { pm.expect(pm.response.code).to.eql(200); });",
+              "if (pm.response.code === 200) { pm.environment.set('profileUpdated', 'true'); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "response": []
     }
   ],
