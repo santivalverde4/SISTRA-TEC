@@ -15,6 +15,13 @@ interface CompleteResponse {
   user: { id: string; email: string; name: string | null; role: BackendRole };
 }
 
+function finish(data: CompleteResponse, router: ReturnType<typeof useRouter>) {
+  const mappedRole = mapRole(data.user.role);
+  setToken(data.accessToken);
+  setUser({ id: data.user.id, email: data.user.email, name: data.user.name, role: mappedRole });
+  router.replace(getDefaultRoute(mappedRole));
+}
+
 export default function GoogleCompletePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,13 +31,32 @@ export default function GoogleCompletePage() {
 
   const [role, setRole] = useState<UserRole>('donante');
   const [loading, setLoading] = useState(false);
+  const [needsRole, setNeedsRole] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+
     if (!tempToken) {
       router.replace('/login');
+      return;
     }
-  }, [tempToken, router]);
+
+    setLoading(true);
+    // Attempt login without role — succeeds if user already has an OAuth account
+    api.post<CompleteResponse>('/api/auth/google/complete', { tempToken })
+      .then((data) => finish(data, router))
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : '';
+        if (msg.includes('Role required')) {
+          setNeedsRole(true);
+        } else {
+          setError(msg || t('auth.error_network'));
+        }
+        setLoading(false);
+      });
+  }, [tempToken, router, t]);
 
   async function handleComplete() {
     if (!tempToken) return;
@@ -48,18 +74,16 @@ export default function GoogleCompletePage() {
         role: backendRole,
       });
 
-      const mappedRole = mapRole(data.user.role);
-      setToken(data.accessToken);
-      setUser({ id: data.user.id, email: data.user.email, name: data.user.name, role: mappedRole });
-      router.push(getDefaultRoute(mappedRole));
+      finish(data, router);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('auth.error_network'));
-    } finally {
       setLoading(false);
     }
   }
 
+  if (!mounted) return null;
   if (!tempToken) return null;
+  if (loading && !needsRole) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -99,7 +123,7 @@ export default function GoogleCompletePage() {
 
         <CardFooter className="flex-col gap-3">
           {error && <p className="text-sm text-destructive w-full">{error}</p>}
-          <Button className="w-full" onClick={handleComplete} disabled={loading}>
+          <Button className="w-full" onClick={handleComplete} disabled={loading || !needsRole}>
             {loading ? t('common.loading') : t('auth.google_complete_button')}
           </Button>
         </CardFooter>
