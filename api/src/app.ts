@@ -14,6 +14,10 @@ import { attachUser } from "./middlewares/attachUser";
 import inventoryRoutes from "./routes/inventory.routes";
 import donationsRoutes from "./routes/donationsRoutes";
 import usersRoutes from "./routes/usersRoutes";
+import campaignsRoutes from "./routes/campaignsRoutes";
+import transportersRoutes from "./routes/transportersRoutes";
+import transportAssignmentsRoutes from "./routes/transportAssignmentsRoutes";
+import transportEventsRoutes from "./routes/transportEventsRoutes";
 
 export const app = express();
 
@@ -32,5 +36,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/donations", donationsRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/campaigns", campaignsRoutes);
+app.use("/api/transporters", transportersRoutes);
+app.use("/api/transport-assignments", transportAssignmentsRoutes);
+app.use("/api/transport-events", transportEventsRoutes);
 
 app.use(errorHandler);

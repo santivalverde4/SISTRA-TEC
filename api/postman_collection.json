@@ -9,6 +9,985 @@
   },
   "item": [
     {
+      "name": "Donaciones",
+      "item": [
+        {
+          "name": "Ver Tracking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/tracking",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "donations",
+                "cmpxgd4of000djaojc0dl1pyo",
+                "tracking"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar Status DELIVERED",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DELIVERED\",\n  \"reason\": \"Entregado al beneficiario final\",\n  \"changedBy\": \"clyyy_DONOR_ID\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "donations",
+                "cmpxgd4of000djaojc0dl1pyo",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar Status IN_TRANSIT",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_TRANSIT\",\n  \"reason\": \"En camino hacia el beneficiario\",\n  \"changedBy\": \"cmpxg2xoq0006var2ewwwt1zq\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/donations/cmpxg2xoq0006var2ewwwt1zq/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "donations",
+                "cmpxg2xoq0006var2ewwwt1zq",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar Status CLASSIFIED",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CLASSIFIED\",\n  \"reason\": \"Donación clasificada y validada\",\n  \"changedBy\": \"cmpxg2xoq0006var2ewwwt1zq\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "donations",
+                "cmpxgd4of000djaojc0dl1pyo",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ver Historial",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/history",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "donations",
+                "cmpxgd4of000djaojc0dl1pyo",
+                "history"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ver Donación por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "donations",
+                "cmpxgd4of000djaojc0dl1pyo"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Donación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaignId\": \"cmpxg9ftl000848x9fujn1mq4\",\n  \"donorId\": \"cmpxg2xoq0006var2ewwwt1zq\",\n  \"note\": \"Donación de arroz y frijoles para familias afectadas\",\n  \"items\": [\n    {\n      \"description\": \"Arroz\",\n      \"quantity\": 100\n    },\n    {\n      \"description\": \"Frijoles\",\n      \"quantity\": 35\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/donations",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "donations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener el Inventario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/inventory",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Donaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/donations",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "donations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mis Donaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/donations/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "donations",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Campañas",
+      "item": [
+        {
+          "name": "Obtener Campañas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/campaigns",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "campaigns"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Campañas con filtros",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/campaigns?status=OPEN&category=Tenis&search=postman",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "campaigns"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "OPEN"
+                },
+                {
+                  "key": "category",
+                  "value": "Tenis"
+                },
+                {
+                  "key": "search",
+                  "value": "postman",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Campaña por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/campaigns/cmpxg9ftl000848x9fujn1mq4",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "campaigns",
+                "cmpxg9ftl000848x9fujn1mq4"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Campaña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Campaña Postman\",\"description\":\"Prueba desde Postman\",\"startDate\":\"2026-06-10\",\"endDate\":\"2026-07-10\",\"categories\":[\"Tenis\"],\"status\":\"OPEN\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/campaigns",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "campaigns"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Campaña",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Campaña editada\",\"description\":\"Descripción editada\",\"startDate\":\"2026-06-10\",\"endDate\":\"2026-07-20\",\"categories\":[\"Alimentos\",\"Ropa\"],\"status\":\"CLOSED\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/campaigns/cmpztylo000024y1zjk9od2tg",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "campaigns",
+                "cmpztylo000024y1zjk9od2tg"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Status",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"IN_TRANSIT\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/campaigns/cmpztylo000024y1zjk9od2tg/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "campaigns",
+                "cmpztylo000024y1zjk9od2tg",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Asignar Transportador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"transporterId\":\"TRANSPORTER_ID\",\"destination\":\"Comunidad San Juan\",\"distanceKm\":120,\"departureDate\":\"2026-05-12\",\"estimatedArrival\":\"2026-05-15\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/campaigns/cmpztylo000024y1zjk9od2tg/assignment",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "campaigns",
+                "cmpztylo000024y1zjk9od2tg",
+                "assignment"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transportistas",
+      "item": [
+        {
+          "name": "Obtener Transportistas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transporters",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transporters"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Transportistas por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transporters/cmpxg2xaz0005var2inazgw45",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transporters",
+                "cmpxg2xaz0005var2inazgw45"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener mi información de transportista",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transporters/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transporters",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar mi información",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"vehicle\":\"Camión 3.5t\",\"plate\":\"DEV-002\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/transporters/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transporters",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Transportista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"userId\":\"USER_ID\",\"vehicle\":\"Furgoneta\",\"plate\":\"ABC-123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/transporters",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transporters"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Transportista",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"vehicle\":\"Camión 7t\",\"plate\":\"XYZ-789\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/transporters/TRANSPORTER_ID",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transporters",
+                "TRANSPORTER_ID"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener mis asignacions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transporters/me/assignments",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transporters",
+                "me",
+                "assignments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener mis eventos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transporters/me/events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transporters",
+                "me",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Asignaciones Transportista",
+      "item": [
+        {
+          "name": "Obtener asignaciones de transportistas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transport-assignments",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transport-assignments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Asignar transportista a una campaña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"transporterId\":\"cmpztyljr00014y1z79rtqn9l\",\"destination\":\"Comunidad San Juan\",\"distanceKm\":120,\"departureDate\":\"2026-05-12\",\"estimatedArrival\":\"2026-05-15\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/campaigns/cmpztylo000024y1zjk9od2tg/assignment",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "campaigns",
+                "cmpztylo000024y1zjk9od2tg",
+                "assignment"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Asignacion por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transport-assignments/cmpzumk36001h4y1zudrdju02",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transport-assignments",
+                "cmpzumk36001h4y1zudrdju02"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Asignación",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"destination\":\"Comunidad actualizada\",\"distanceKm\":140,\"departureDate\":\"2026-05-13\",\"estimatedArrival\":\"2026-05-16\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/transport-assignments/cmpzumk36001h4y1zudrdju02",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transport-assignments",
+                "cmpzumk36001h4y1zudrdju02"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Asignacion",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transport-assignments/cmpzumk36001h4y1zudrdju02",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transport-assignments",
+                "cmpzumk36001h4y1zudrdju02"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Eventos de transporte",
+      "item": [
+        {
+          "name": "Eventos por transportista",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transport-assignments/cmpzumk36001h4y1zudrdju02/events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transport-assignments",
+                "cmpzumk36001h4y1zudrdju02",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear evento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"type\":\"Camión salió\",\"description\":\"Inicio de ruta hacia comunidad\",\"notes\":\"Salida puntual\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/transport-assignments/cmpzumk36001h4y1zudrdju02/events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transport-assignments",
+                "cmpzumk36001h4y1zudrdju02",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Trazabilidad de la donación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transport-assignments/cmpzumk36001h4y1zudrdju02/traceability",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transport-assignments",
+                "cmpzumk36001h4y1zudrdju02",
+                "traceability"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Donación entregada",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transport-assignments/cmpzumk36001h4y1zudrdju02/deliver",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transport-assignments",
+                "cmpzumk36001h4y1zudrdju02",
+                "deliver"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mis Eventos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/transport-events/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "transport-events",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Register",
       "event": [
         {
@@ -119,6 +1098,23 @@
     },
     {
       "name": "Complete Google Onboard",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Guarda accessToken si la respuesta es exitosa",
+              "if (pm.response.code === 200) {",
+              "  const json = pm.response.json();",
+              "  if (json.accessToken) {",
+              "    pm.environment.set('accessToken', json.accessToken);",
+              "  }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -129,7 +1125,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"tempToken\": \"<COPIA_AQUI_EL_TOKEN_T>\",\n  \"role\": \"<OPTIONAL_ROLE_O_EMPTY_PARA_LOGIN_EXISTENTE>\"\n}"
+          "raw": "{\n  \"tempToken\": \"<COPIA_AQUI_EL_TOKEN_T>\",\n  \"role\": \"TRANSPORTER\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/auth/google/complete",
@@ -144,76 +1140,6 @@
           ]
         }
       },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "// Guarda accessToken si la respuesta es exitosa",
-              "if (pm.response.code === 200) {",
-              "  const json = pm.response.json();",
-              "  if (json.accessToken) {",
-              "    pm.environment.set('accessToken', json.accessToken);",
-              "  }",
-              "  if (json.user && json.user.role) {",
-              "    pm.environment.set('userRole', json.user.role);",
-              "  }",
-              "  // Comprueba que el header Set-Cookie contiene refreshToken",
-              "  const setCookie = pm.response.headers.get('Set-Cookie') || '';",
-              "  pm.test('refresh cookie set', function() { pm.expect(setCookie).to.include('refreshToken'); });",
-              "} else {",
-              "  pm.test('expected 200', function() { pm.expect(pm.response.code).to.eql(200); });",
-              "}"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "response": []
-    },
-    {
-      "name": "Change Password (self)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          },
-          {
-            "key": "Authorization",
-            "value": "Bearer {{accessToken}}"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"currentPassword\": \"Passw0rd!\",\n  \"newPassword\": \"NewPassw0rd!\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/users/me/change-password",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "users",
-            "me",
-            "change-password"
-          ]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('status is 200', function() { pm.expect(pm.response.code).to.eql(200); });",
-              "if (pm.response.code === 200) { pm.environment.set('passwordChanged', 'true'); }"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
       "response": []
     },
     {
@@ -299,307 +1225,6 @@
           ]
         }
       },
-      "response": []
-    },
-    {
-      "name": "Ver Tracking",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/tracking",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "4000",
-          "path": [
-            "api",
-            "donations",
-            "cmpxgd4of000djaojc0dl1pyo",
-            "tracking"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Cambiar Status DELIVERED",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"status\": \"DELIVERED\",\n  \"reason\": \"Entregado al beneficiario final\",\n  \"changedBy\": \"clyyy_DONOR_ID\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/status",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "4000",
-          "path": [
-            "api",
-            "donations",
-            "cmpxgd4of000djaojc0dl1pyo",
-            "status"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Cambiar Status IN_TRANSIT",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"status\": \"IN_TRANSIT\",\n  \"reason\": \"En camino hacia el beneficiario\",\n  \"changedBy\": \"cmpxg2xoq0006var2ewwwt1zq\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:4000/api/donations/cmpxg2xoq0006var2ewwwt1zq/status",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "4000",
-          "path": [
-            "api",
-            "donations",
-            "cmpxg2xoq0006var2ewwwt1zq",
-            "status"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Cambiar Status CLASSIFIED",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"status\": \"CLASSIFIED\",\n  \"reason\": \"Donación clasificada y validada\",\n  \"changedBy\": \"cmpxg2xoq0006var2ewwwt1zq\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/status",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "4000",
-          "path": [
-            "api",
-            "donations",
-            "cmpxgd4of000djaojc0dl1pyo",
-            "status"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Ver Historial",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/history",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "4000",
-          "path": [
-            "api",
-            "donations",
-            "cmpxgd4of000djaojc0dl1pyo",
-            "history"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Ver Donación por ID",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "4000",
-          "path": [
-            "api",
-            "donations",
-            "cmpxgd4of000djaojc0dl1pyo"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Crear Donación",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"campaignId\": \"cmpxg9ftl000848x9fujn1mq4\",\n  \"donorId\": \"cmpxg2xoq0006var2ewwwt1zq\",\n  \"note\": \"Donación de arroz y frijoles para familias afectadas\",\n  \"items\": [\n    {\n      \"description\": \"Arroz\",\n      \"quantity\": 100\n    },\n    {\n      \"description\": \"Frijoles\",\n      \"quantity\": 35\n    }\n  ]\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:4000/api/donations",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "4000",
-          "path": [
-            "api",
-            "donations"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Obtener el Inventario",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:4000/api/inventory",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "4000",
-          "path": [
-            "api",
-            "inventory"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Obtener Donaciones",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:4000/api/donations",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "4000",
-          "path": [
-            "api",
-            "donations"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Get My Profile (me)",
-      "request": {
-        "method": "GET",
-        "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
-        "url": {
-          "raw": "{{baseUrl}}/api/users/me",
-          "host": ["{{baseUrl}}"],
-          "path": ["api","users","me"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('status is 200', function() { pm.expect(pm.response.code).to.eql(200); });",
-              "if (pm.response.code === 200) { pm.environment.set('profileFetched', 'true'); }"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "response": []
-    },
-    {
-      "name": "Update My Profile (me)",
-      "request": {
-        "method": "PUT",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-        ],
-        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Nombre desde Postman\"\n}" },
-        "url": {
-          "raw": "{{baseUrl}}/api/users/me",
-          "host": ["{{baseUrl}}"],
-          "path": ["api","users","me"]
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('status is 200', function() { pm.expect(pm.response.code).to.eql(200); });",
-              "if (pm.response.code === 200) { pm.environment.set('profileUpdated', 'true'); }"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
       "response": []
     }
   ],

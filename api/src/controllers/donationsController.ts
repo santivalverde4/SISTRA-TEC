@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Role } from '@prisma/client';
 import * as donationService from '../services/donationService';
 
 // Crear una nueva donación
@@ -33,6 +34,29 @@ export const getAllDonations = async (req: Request, res: Response) => {
     res.json(donations);
   } catch (error) {
     res.status(500).json({ error: String(error) });
+  }
+};
+
+// Obtener donaciones del usuario autenticado
+export const getMyDonations = async (req: Request, res: Response) => {
+  try {
+    if (!req.auth) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (req.auth.role === Role.ADMIN_CENTER) {
+      const donations = await donationService.getAllDonations();
+      return res.json(donations);
+    }
+
+    if (req.auth.role !== Role.DONOR) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const donations = await donationService.getDonationsByDonorId(req.auth.sub);
+    return res.json(donations);
+  } catch (error) {
+    return res.status(500).json({ error: String(error) });
   }
 };
 
@@ -124,6 +148,14 @@ export const getDonationTracking = async (req: Request, res: Response) => {
     }
 
     const donation = await donationService.getDonationById(id);
+
+    if (!req.auth) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (req.auth.role === Role.DONOR && donation.donorId !== req.auth.sub) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
     const tracking = {
       donationId: donation.id,
