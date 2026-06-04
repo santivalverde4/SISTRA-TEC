@@ -119,23 +119,6 @@
     },
     {
       "name": "Complete Google Onboard",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "// Guarda accessToken si la respuesta es exitosa",
-              "if (pm.response.code === 200) {",
-              "  const json = pm.response.json();",
-              "  if (json.accessToken) {",
-              "    pm.environment.set('accessToken', json.accessToken);",
-              "  }",
-              "}"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
       "request": {
         "method": "POST",
         "header": [
@@ -146,7 +129,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"tempToken\": \"<COPIA_AQUI_EL_TOKEN_T>\",\n  \"role\": \"TRANSPORTER\"\n}"
+          "raw": "{\n  \"tempToken\": \"<COPIA_AQUI_EL_TOKEN_T>\",\n  \"role\": \"<OPTIONAL_ROLE_O_EMPTY_PARA_LOGIN_EXISTENTE>\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/auth/google/complete",
@@ -161,6 +144,31 @@
           ]
         }
       },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Guarda accessToken si la respuesta es exitosa",
+              "if (pm.response.code === 200) {",
+              "  const json = pm.response.json();",
+              "  if (json.accessToken) {",
+              "    pm.environment.set('accessToken', json.accessToken);",
+              "  }",
+              "  if (json.user && json.user.role) {",
+              "    pm.environment.set('userRole', json.user.role);",
+              "  }",
+              "  // Comprueba que el header Set-Cookie contiene refreshToken",
+              "  const setCookie = pm.response.headers.get('Set-Cookie') || '';",
+              "  pm.test('refresh cookie set', function() { pm.expect(setCookie).to.include('refreshToken'); });",
+              "} else {",
+              "  pm.test('expected 200', function() { pm.expect(pm.response.code).to.eql(200); });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "response": []
     },
     {

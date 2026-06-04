@@ -16,6 +16,7 @@ import {
   upsertGoogleUser
 } from "../services/authService";
 import { env } from "../config/env";
+import { prisma } from "../db/prisma";
 
 const toPublicUser = (user: User) => ({
   id: user.id,
@@ -122,11 +123,6 @@ export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Resp
   }
 
   
-  if (!role) {
-    throw new HttpError(400, "Role required to complete onboarding");
-  }
-
-  
   const normalizedRole = role ? normalizeRole(role) : undefined;
 
   let payload: { id: string; displayName?: string; email?: string };
@@ -134,6 +130,21 @@ export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Resp
     payload = jwt.verify(tempToken, env.JWT_ACCESS_SECRET) as typeof payload;
   } catch (error) {
     throw new HttpError(401, "Invalid or expired temp token");
+  }
+
+  
+  const existingAccount = await prisma.oauthAccount.findUnique({
+    where: {
+      provider_providerUserId: {
+        provider: "google",
+        providerUserId: payload.id
+      }
+    }
+  });
+
+  
+  if (!existingAccount && !normalizedRole) {
+    throw new HttpError(400, "Role required to complete onboarding for new users");
   }
 
   
