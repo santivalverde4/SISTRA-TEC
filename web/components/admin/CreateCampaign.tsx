@@ -9,21 +9,22 @@ import { DateInput } from '@/components/ui-custom/DateInput';
 import { Plus } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useT } from '@/lib/i18n/useT';
-import { api } from '@/lib/api';
+import { createCampaign } from '@/services/campaignService';
+import { resolveErrorKey } from '@/lib/apiError';
 
 const categoryOptions = ['Alimentos', 'Ropa', 'Medicamentos', 'Suministros', 'Educación', 'Vivienda', 'Otro'];
 
-const today = new Date().toISOString().split('T')[0];
-
 const nextDay = (date: string): string => {
-  const d = new Date(date);
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().split('T')[0];
+  // Parse as local date to avoid UTC offset shifting the day
+  const [y, m, d] = date.split('-').map(Number);
+  const next = new Date(y, m - 1, d + 1);
+  return next.toLocaleDateString('en-CA');
 };
 
 export const CreateCampaign = () => {
   const router = useRouter();
   const { t } = useT();
+  const today = new Date().toLocaleDateString('en-CA');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -65,7 +66,7 @@ export const CreateCampaign = () => {
     setLoading(true);
     setSubmitError(null);
     try {
-      await api.post('/api/campaigns', {
+      await createCampaign({
         name: formData.name,
         description: formData.description,
         startDate: formData.startDate,
@@ -73,8 +74,8 @@ export const CreateCampaign = () => {
         categories: formData.categories,
       });
       router.push('/dashboard/admin/campaigns');
-    } catch {
-      setSubmitError(t('errors.load_failed'));
+    } catch (err) {
+      setSubmitError(t(resolveErrorKey(err, 'campaign') as Parameters<typeof t>[0]));
     } finally {
       setLoading(false);
     }

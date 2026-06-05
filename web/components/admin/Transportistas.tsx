@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
@@ -9,83 +9,7 @@ import { ListCard } from '@/components/shared/ListCard';
 import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/DetailPanel';
 import { Search, Truck, MapPin, Package, Phone, Mail } from 'lucide-react';
 import { useT } from '@/lib/i18n/useT';
-
-interface Assignment {
-  campaignName: string;
-  destination: string;
-  km: string;
-  status: 'pendiente' | 'en-camino' | 'entregada' | 'finalizada';
-}
-
-interface Transportista {
-  id: string;
-  name: string;
-  vehicle: string;
-  plate: string;
-  phone: string;
-  email: string;
-  assignments: Assignment[];
-}
-
-const mockTransportistas: Transportista[] = [
-  {
-    id: 't1',
-    name: 'Carlos Méndez',
-    vehicle: 'Camión 3.5t',
-    plate: 'ABC-1234',
-    phone: '+506 8800-0001',
-    email: 'carlos.mendez@sistra.com',
-    assignments: [
-      {
-        campaignName: 'Ropa de invierno para refugiados',
-        destination: 'Comunidad San Juan, Zona Norte',
-        km: '120',
-        status: 'en-camino',
-      },
-    ],
-  },
-  {
-    id: 't2',
-    name: 'Laura Soto',
-    vehicle: 'Furgoneta',
-    plate: 'DEF-5678',
-    phone: '+506 8800-0002',
-    email: 'laura.soto@sistra.com',
-    assignments: [
-      {
-        campaignName: 'Medicamentos para zonas rurales',
-        destination: 'Centro de Salud Rural, Zona Sur',
-        km: '85',
-        status: 'pendiente',
-      },
-    ],
-  },
-  {
-    id: 't3',
-    name: 'Roberto Díaz',
-    vehicle: 'Camión 7t',
-    plate: 'GHI-9012',
-    phone: '+506 8800-0003',
-    email: 'roberto.diaz@sistra.com',
-    assignments: [],
-  },
-  {
-    id: 't4',
-    name: 'Ana Flores',
-    vehicle: 'Pickup',
-    plate: 'JKL-3456',
-    phone: '+506 8800-0004',
-    email: 'ana.flores@sistra.com',
-    assignments: [
-      {
-        campaignName: 'Ayuda para comunidades afectadas por inundaciones',
-        destination: 'Aldea Río Verde',
-        km: '45',
-        status: 'finalizada',
-      },
-    ],
-  },
-];
+import { getTransporters, type Transporter as Transportista } from '@/services/transporterService';
 
 const statusLabel: Record<string, { label: string; classes: string }> = {
   'pendiente': { label: 'Pendiente', classes: 'bg-yellow-100 text-yellow-700' },
@@ -96,13 +20,31 @@ const statusLabel: Record<string, { label: string; classes: string }> = {
 
 export const Transportistas = () => {
   const { t } = useT();
+  const [transporters, setTransporters] = useState<Transportista[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Transportista | null>(null);
 
-  const filtered = mockTransportistas.filter(tr =>
+  useEffect(() => {
+    getTransporters()
+      .then(setTransporters)
+      .catch(() => setError(t('errors.load_failed')))
+      .finally(() => setLoading(false));
+  }, [t]);
+
+  const filtered = transporters.filter(tr =>
     tr.name.toLowerCase().includes(search.toLowerCase()) ||
     tr.vehicle.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) {
+    return <div className="p-6 text-center py-16 text-muted-foreground">{t('common.loading')}</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-center py-16 text-destructive">{error}</div>;
+  }
 
   return (
     <div className="p-6">

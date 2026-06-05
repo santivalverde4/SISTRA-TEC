@@ -16,40 +16,20 @@ import type { CampaignStatus } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { DateInput } from '@/components/ui-custom/DateInput';
 import { useT } from '@/lib/i18n/useT';
-import { api } from '@/lib/api';
+import { resolveErrorKey } from '@/lib/apiError';
+import {
+  getCampaigns, getTransporters, updateCampaign, deleteCampaign, assignTransporter,
+  type Campaign as BackendCampaign,
+  type BackendTransporter,
+} from '@/services/campaignService';
 
-const PAGE_SIZE = 8;
-const today = new Date().toISOString().split('T')[0];
+const PAGE_SIZE = 5;
 
-interface BackendTransporter {
-  id: string;
-  name: string;
-  vehicle: string;
-  plate: string;
-  email: string;
-}
-
-interface BackendAssignment {
-  id: string;
-  transporterId: string;
-  transporter: BackendTransporter;
-  destination: string;
-  distanceKm: number;
-  departureDate: string;
-  estimatedArrival: string;
-}
-
-interface BackendCampaign {
-  id: string;
-  name: string;
-  description: string;
-  status: CampaignStatus;
-  startDate: string;
-  endDate: string;
-  categories: string[];
-  donationsCount: number;
-  assignment?: BackendAssignment;
-}
+const nextDay = (date: string): string => {
+  const [y, m, d] = date.split('-').map(Number);
+  const next = new Date(y, m - 1, d + 1);
+  return next.toLocaleDateString('en-CA');
+};
 
 interface AssignForm {
   transporterId: string;
@@ -71,6 +51,7 @@ interface EditForm {
 export const ManageCampaigns = () => {
   const router = useRouter();
   const { t } = useT();
+  const today = new Date().toLocaleDateString('en-CA');
 
   const [campaigns, setCampaigns] = useState<BackendCampaign[]>([]);
   const [transporters, setTransporters] = useState<BackendTransporter[]>([]);
@@ -99,10 +80,7 @@ export const ManageCampaigns = () => {
   const [assignError, setAssignError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      api.get<BackendCampaign[]>('/api/campaigns'),
-      api.get<BackendTransporter[]>('/api/transporters'),
-    ])
+    Promise.all([getCampaigns(), getTransporters()])
       .then(([camps, trans]) => {
         setCampaigns(camps);
         setTransporters(trans);
@@ -147,7 +125,7 @@ export const ManageCampaigns = () => {
 
     setEditLoading(true);
     try {
-      const updated = await api.put<BackendCampaign>(`/api/campaigns/${editTarget.id}`, {
+      const updated = await updateCampaign(editTarget.id, {
         name: editForm.name,
         description: editForm.description,
         startDate: editForm.startDate,
@@ -159,7 +137,7 @@ export const ManageCampaigns = () => {
       setEditTarget(null);
       setEditForm(null);
     } catch (err) {
-      setEditErrors({ general: err instanceof Error ? err.message : t('errors.load_failed') });
+      setEditErrors({ general: t(resolveErrorKey(err, 'campaign') as Parameters<typeof t>[0]) });
     } finally {
       setEditLoading(false);
     }
@@ -170,14 +148,11 @@ export const ManageCampaigns = () => {
     setDeleteLoading(true);
     setDeleteError(null);
     try {
-      await api.delete(`/api/campaigns/${deleteTarget.id}`);
+      await deleteCampaign(deleteTarget.id);
       setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      setDeleteError(
-        msg.includes('donations') ? t('errors.campaign_has_donations') : t('errors.load_failed')
-      );
+      setDeleteError(t(resolveErrorKey(err, 'campaign') as Parameters<typeof t>[0]));
     } finally {
       setDeleteLoading(false);
     }
@@ -197,21 +172,31 @@ export const ManageCampaigns = () => {
   };
 
   const saveAssignment = async () => {
-    if (!assignTarget || !assignForm.transporterId || !assignForm.destination || !assignForm.distanceKm) return;
+    if (!assignTarget) return;
+    if (!assignForm.transporterId || !assignForm.destination || !assignForm.distanceKm) return;
+    if (!assignForm.departureDate) {
+      setAssignError(t('errors.departure_date_required'));
+      return;
+    }
+    if (!assignForm.estimatedArrival) {
+      setAssignError(t('errors.arrival_date_required'));
+      return;
+    }
     setAssignLoading(true);
     setAssignError(null);
     try {
-      const updated = await api.post<BackendCampaign>(`/api/campaigns/${assignTarget.id}/assignment`, {
+      await assignTransporter(assignTarget.id, {
         transporterId: assignForm.transporterId,
         destination: assignForm.destination,
         distanceKm: Number(assignForm.distanceKm),
-        departureDate: assignForm.departureDate || undefined,
-        estimatedArrival: assignForm.estimatedArrival || undefined,
+        departureDate: assignForm.departureDate,
+        estimatedArrival: assignForm.estimatedArrival,
       });
-      setCampaigns((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+      const refreshed = await getCampaigns();
+      setCampaigns(refreshed);
       setAssignTarget(null);
     } catch (err) {
-      setAssignError(err instanceof Error ? err.message : t('errors.load_failed'));
+      setAssignError(t(resolveErrorKey(err, 'assignment') as Parameters<typeof t>[0]));
     } finally {
       setAssignLoading(false);
     }
@@ -385,9 +370,11 @@ export const ManageCampaigns = () => {
               <label className="block mb-1 text-sm font-medium">{t('transporters.destination')}</label>
               <Input
                 value={assignForm.destination}
-                onChange={(e) => setAssignForm({ ...assignForm, destination: e.target.value })}
+                onChange={(e) => setAssignForm({ ...assignForm, destination: e.target.value.slice(0, 250) })}
                 placeholder={t('transporters.destination_placeholder')}
+                maxLength={250}
               />
+              <p className="mt-1 text-xs text-muted-foreground text-right">{assignForm.destination.length}/250</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -407,6 +394,7 @@ export const ManageCampaigns = () => {
                 <DateInput
                   value={assignForm.departureDate}
                   onChange={(v) => setAssignForm({ ...assignForm, departureDate: v })}
+                  min={today}
                 />
               </div>
               <div>
