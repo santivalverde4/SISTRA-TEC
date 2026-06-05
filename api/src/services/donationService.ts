@@ -1,6 +1,5 @@
-import { PrismaClient, DonationStatus } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { DonationStatus } from '@prisma/client';
+import { prisma } from '../db/prisma';
 
 // Crear una nueva donación
 export const createDonation = async (data: {
@@ -111,6 +110,27 @@ export const getAllDonations = async () => {
     return donations;
   } catch (error) {
     throw new Error(`Error al obtener las donaciones: ${error}`);
+  }
+};
+
+// Obtener donaciones de un donante autenticado
+export const getDonationsByDonorId = async (donorId: string) => {
+  try {
+    const donations = await prisma.donation.findMany({
+      where: { donorId },
+      include: {
+        campaign: true,
+        donor: true,
+        items: true,
+        history: {
+          orderBy: { changedAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return donations;
+  } catch (error) {
+    throw new Error(`Error al obtener las donaciones del usuario: ${error}`);
   }
 };
 

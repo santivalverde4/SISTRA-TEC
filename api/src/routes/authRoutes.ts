@@ -24,3 +24,5 @@ authRoutes.get(
 );
 authRoutes.get("/google/callback", googleCallback);
 authRoutes.post("/google/complete", completeGoogleOnboard);
+authRoutes.post("/forgot-password", require("../controllers/authForgotController").forgotPassword);
+authRoutes.post("/reset-password", require("../controllers/authForgotController").resetPassword);
