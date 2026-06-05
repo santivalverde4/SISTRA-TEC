@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
@@ -8,56 +8,17 @@ import { Badge } from '@/components/ui-custom/Badge';
 import { Search, Filter, Heart, Calendar, X, CheckCircle, Plus, Trash2, Package } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useT } from '@/lib/i18n/useT';
+import { resolveErrorKey } from '@/lib/apiError';
+import {
+  getAvailableCampaigns, submitDonation as submitDonationApi,
+  type AvailableCampaign as Campaign,
+} from '@/services/donationService';
 
 interface DonationRow {
   id: number;
   description: string;
   quantity: string;
 }
-
-interface Campaign {
-  id: string;
-  name: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  categories: string[];
-  donationsCount: number;
-  banner: string;
-}
-
-const mockCampaigns: Campaign[] = [
-  {
-    id: '1',
-    name: 'Ayuda para comunidades afectadas por inundaciones',
-    description: 'Recolección de alimentos y suministros básicos para familias damnificadas por las recientes inundaciones.',
-    startDate: '2026-05-01',
-    endDate: '2026-06-30',
-    categories: ['Alimentos', 'Suministros'],
-    donationsCount: 45,
-    banner: '',
-  },
-  {
-    id: '2',
-    name: 'Medicamentos para zonas rurales',
-    description: 'Provisión de medicamentos esenciales para comunidades rurales sin acceso a servicios de salud.',
-    startDate: '2026-04-15',
-    endDate: '2026-05-15',
-    categories: ['Medicamentos'],
-    donationsCount: 32,
-    banner: '',
-  },
-  {
-    id: '3',
-    name: 'Ropa de invierno para refugiados',
-    description: 'Recolección de ropa abrigada para personas en situación de refugio.',
-    startDate: '2026-03-01',
-    endDate: '2026-04-30',
-    categories: ['Ropa'],
-    donationsCount: 78,
-    banner: '',
-  },
-];
 
 const Modal = ({ onClose, children }: { onClose: () => void; children: React.ReactNode }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -69,9 +30,20 @@ const Modal = ({ onClose, children }: { onClose: () => void; children: React.Rea
 
 export const AvailableCampaigns = () => {
   const { t } = useT();
-  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [donateLoading, setDonateLoading] = useState(false);
+  const [donateError, setDonateError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  useEffect(() => {
+    getAvailableCampaigns()
+      .then(setCampaigns)
+      .catch((err) => setError(t(resolveErrorKey(err) as Parameters<typeof t>[0])))
+      .finally(() => setLoading(false));
+  }, [t]);
 
   const [detailsCampaign, setDetailsCampaign] = useState<Campaign | null>(null);
   const [donateCampaign, setDonateCampaign] = useState<Campaign | null>(null);
@@ -97,13 +69,36 @@ export const AvailableCampaigns = () => {
     setDonateSuccess(false);
   };
 
-  const submitDonation = () => {
+  const handleSubmitDonation = async () => {
     if (!donateCampaign || !donateRows.some(r => r.description && r.quantity)) return;
-    setCampaigns(prev => prev.map(c =>
-      c.id === donateCampaign.id ? { ...c, donationsCount: c.donationsCount + 1 } : c
-    ));
-    setDonateSuccess(true);
+    setDonateLoading(true);
+    setDonateError(null);
+    try {
+      await submitDonationApi({
+        campaignId: donateCampaign.id,
+        items: donateRows
+          .filter(r => r.description && r.quantity)
+          .map(r => ({ description: r.description, quantity: Number(r.quantity) })),
+        note: donateNote || undefined,
+      });
+      setCampaigns(prev => prev.map(c =>
+        c.id === donateCampaign.id ? { ...c, donationsCount: c.donationsCount + 1 } : c
+      ));
+      setDonateSuccess(true);
+    } catch (err) {
+      setDonateError(t(resolveErrorKey(err, 'donation') as Parameters<typeof t>[0]));
+    } finally {
+      setDonateLoading(false);
+    }
   };
+
+  if (loading) {
+    return <div className="p-6 text-center py-16 text-muted-foreground">{t('common.loading')}</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-center py-16 text-destructive">{error}</div>;
+  }
 
   return (
     <div className="p-6">
@@ -306,14 +301,15 @@ export const AvailableCampaigns = () => {
                     className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                   />
                 </div>
+                {donateError && <p className="text-sm text-destructive">{donateError}</p>}
                 <div className="flex gap-3 pt-2">
                   <Button
                     className="flex-1"
-                    onClick={submitDonation}
-                    disabled={!donateRows.some(r => r.description && r.quantity)}
+                    onClick={handleSubmitDonation}
+                    disabled={donateLoading || !donateRows.some(r => r.description && r.quantity)}
                   >
                     <Heart className="w-4 h-4" />
-                    {t('donation.confirm_donation')}
+                    {donateLoading ? t('common.loading') : t('donation.confirm_donation')}
                   </Button>
                   <Button variant="outline" onClick={() => setDonateCampaign(null)}>{t('common.cancel')}</Button>
                 </div>

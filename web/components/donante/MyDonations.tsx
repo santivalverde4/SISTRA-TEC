@@ -9,57 +9,11 @@ import { Modal } from '@/components/shared/Modal';
 import { ListCard } from '@/components/shared/ListCard';
 import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/DetailPanel';
 import { Search, Package, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { CampaignStatus } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { useT } from '@/lib/i18n/useT';
-import { api } from '@/lib/api';
+import { getMyDonations, type Donation } from '@/services/donationService';
 
 const PAGE_SIZE = 8;
-
-interface DonationItem {
-  description: string;
-  quantity: number;
-}
-
-interface Donation {
-  id: string;
-  campaignName: string;
-  campaignStatus: CampaignStatus;
-  items: DonationItem[];
-  note: string | null;
-  date: string;
-}
-
-type BackendDonationStatus = 'RECEIVED' | 'CLASSIFIED' | 'IN_TRANSIT' | 'DELIVERED';
-
-interface BackendDonation {
-  id: string;
-  note: string | null;
-  status: BackendDonationStatus;
-  createdAt: string;
-  campaign: { name: string; status: string };
-  items: Array<{ description: string; quantity: number }>;
-}
-
-function mapDonationStatus(status: BackendDonationStatus): CampaignStatus {
-  switch (status) {
-    case 'RECEIVED': return 'abierta';
-    case 'CLASSIFIED': return 'congelada';
-    case 'IN_TRANSIT': return 'en-camino';
-    case 'DELIVERED': return 'entregada';
-  }
-}
-
-function toViewModel(d: BackendDonation): Donation {
-  return {
-    id: d.id,
-    campaignName: d.campaign.name,
-    campaignStatus: mapDonationStatus(d.status),
-    items: d.items,
-    note: d.note,
-    date: d.createdAt,
-  };
-}
 
 export const MyDonations = () => {
   const { t } = useT();
@@ -71,8 +25,8 @@ export const MyDonations = () => {
   const [detailsDonation, setDetailsDonation] = useState<Donation | null>(null);
 
   useEffect(() => {
-    api.get<BackendDonation[]>('/api/donations/me')
-      .then((data) => setDonations(data.map(toViewModel)))
+    getMyDonations()
+      .then(setDonations)
       .catch(() => setError(t('errors.load_failed')))
       .finally(() => setLoading(false));
   }, [t]);
