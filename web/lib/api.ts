@@ -1,10 +1,33 @@
-import { getToken, clearSession } from './auth';
+import { getToken, setToken, clearSession } from './auth';
 import { logger } from './logger';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-// Prevents multiple concurrent 401s from triggering multiple redirects
+// Prevents multiple concurrent refresh attempts
+let refreshPromise: Promise<string | null> | null = null;
+// Prevents multiple concurrent redirects to login
 let redirecting = false;
+
+async function attemptTokenRefresh(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = fetch(`${BASE_URL}/api/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+  })
+    .then(async (res) => {
+      if (!res.ok) return null;
+      const data = await res.json();
+      const newToken: string = data.accessToken;
+      setToken(newToken);
+      return newToken;
+    })
+    .catch(() => null)
+    .finally(() => { refreshPromise = null; });
+
+  return refreshPromise;
+}
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const method = options.method ?? 'GET';
@@ -12,15 +35,18 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   logger.debug(`${method} ${path}`, undefined, 'api');
 
+  const buildHeaders = (t: string | null) => ({
+    'Content-Type': 'application/json',
+    ...(t ? { Authorization: `Bearer ${t}` } : {}),
+    ...(options.headers as Record<string, string> ?? {}),
+  });
+
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
-      },
+      credentials: 'include',
+      headers: buildHeaders(token),
     });
   } catch (networkErr) {
     logger.error(`${method} ${path} — network error`, networkErr, 'api');
@@ -30,7 +56,37 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   logger.debug(`${method} ${path} → ${response.status}`, undefined, 'api');
 
   if (response.status === 401 && !path.startsWith('/api/auth/')) {
-    logger.warn(`${method} ${path} → 401 session expired`, undefined, 'api');
+    logger.warn(`${method} ${path} → 401, attempting token refresh`, undefined, 'api');
+
+    const newToken = await attemptTokenRefresh();
+
+    if (newToken) {
+      const retried = await fetch(`${BASE_URL}${path}`, {
+        ...options,
+        credentials: 'include',
+        headers: buildHeaders(newToken),
+      });
+
+      if (retried.ok) {
+        return retried.json() as Promise<T>;
+      }
+
+      if (retried.status === 401) {
+        // Refresh succeeded but request still 401 — genuine auth failure
+        if (!redirecting) {
+          redirecting = true;
+          clearSession();
+          window.location.href = '/login';
+        }
+        throw new Error('session_expired');
+      }
+
+      const retryBody = await retried.json().catch(() => null);
+      const retryMessage = retryBody?.message ?? retryBody?.error ?? retried.statusText;
+      throw new Error(retryMessage);
+    }
+
+    // Refresh failed — session is truly expired
     if (!redirecting) {
       redirecting = true;
       clearSession();
