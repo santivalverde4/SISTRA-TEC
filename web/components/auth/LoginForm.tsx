@@ -1,19 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Mail } from 'lucide-react';
 import { Input } from '@/components/ui-custom/Input';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
-import { getDefaultRoute } from '@/lib/auth';
+import { getDefaultRoute, isAuthenticated, getRole } from '@/lib/auth';
 import { login } from '@/services/authService';
 import { resolveErrorKey } from '@/lib/apiError';
 import { useT } from '@/lib/i18n/useT';
 
 export function LoginForm() {
   const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const role = getRole();
+      if (role) router.replace(getDefaultRoute(role));
+    }
+  }, [router]);
   const { t } = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
