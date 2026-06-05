@@ -1,89 +1,142 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
-import { Search, Filter, Edit, Trash2, Plus, MoreVertical, Truck, Calendar, Package, Tag, MapPin, Route } from 'lucide-react';
-import type { Campaign, CampaignStatus } from '@/types';
+import {
+  Search, Filter, Edit, Trash2, Plus, MoreVertical,
+  Truck, Calendar, Package, Tag, MapPin, Route,
+  ChevronLeft, ChevronRight,
+} from 'lucide-react';
+import type { CampaignStatus } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { DateInput } from '@/components/ui-custom/DateInput';
 import { useT } from '@/lib/i18n/useT';
+import { api } from '@/lib/api';
 
+const PAGE_SIZE = 8;
 const today = new Date().toISOString().split('T')[0];
 
-interface Assignment {
-  transportistaId: string;
-  destination: string;
-  km: string;
+interface BackendTransporter {
+  id: string;
+  name: string;
+  vehicle: string;
+  plate: string;
+  email: string;
 }
 
-const mockCampaigns: Campaign[] = [
-  {
-    id: '1',
-    name: 'Ayuda para comunidades afectadas por inundaciones',
-    description: 'Recolección de alimentos y suministros básicos',
-    status: 'abierta',
-    startDate: '2026-05-01',
-    endDate: '2026-06-30',
-    donationsCount: 45,
-    categories: ['Alimentos', 'Suministros'],
-  },
-  {
-    id: '2',
-    name: 'Medicamentos para zonas rurales',
-    description: 'Provisión de medicamentos esenciales',
-    status: 'cerrada',
-    startDate: '2026-04-15',
-    endDate: '2026-05-15',
-    donationsCount: 32,
-    categories: ['Medicamentos'],
-  },
-  {
-    id: '3',
-    name: 'Ropa de invierno para refugiados',
-    description: 'Donación de ropa abrigada',
-    status: 'en-camino',
-    startDate: '2026-03-01',
-    endDate: '2026-04-30',
-    donationsCount: 78,
-    categories: ['Ropa'],
-  },
-];
+interface BackendAssignment {
+  id: string;
+  transporterId: string;
+  transporter: BackendTransporter;
+  destination: string;
+  distanceKm: number;
+  departureDate: string;
+  estimatedArrival: string;
+}
 
-const mockTransportistas = [
-  { id: 't1', name: 'Carlos Méndez', vehicle: 'Camión 3.5t' },
-  { id: 't2', name: 'Laura Soto', vehicle: 'Furgoneta' },
-  { id: 't3', name: 'Roberto Díaz', vehicle: 'Camión 7t' },
-  { id: 't4', name: 'Ana Flores', vehicle: 'Pickup' },
-];
+interface BackendCampaign {
+  id: string;
+  name: string;
+  description: string;
+  status: CampaignStatus;
+  startDate: string;
+  endDate: string;
+  categories: string[];
+  donationsCount: number;
+  assignment?: BackendAssignment;
+}
+
+interface AssignForm {
+  transporterId: string;
+  destination: string;
+  distanceKm: string;
+  departureDate: string;
+  estimatedArrival: string;
+}
+
+interface EditForm {
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  status: CampaignStatus;
+  categories: string[];
+}
 
 export const ManageCampaigns = () => {
   const router = useRouter();
   const { t } = useT();
-  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
+
+  const [campaigns, setCampaigns] = useState<BackendCampaign[]>([]);
+  const [transporters, setTransporters] = useState<BackendTransporter[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<CampaignStatus | 'all'>('all');
-  const [assignments, setAssignments] = useState<Record<string, Assignment>>({});
+  const [page, setPage] = useState(1);
 
-  const [editTarget, setEditTarget] = useState<Campaign | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
-  const [detailsTarget, setDetailsTarget] = useState<Campaign | null>(null);
-  const [editForm, setEditForm] = useState<Campaign | null>(null);
+  const [editTarget, setEditTarget] = useState<BackendCampaign | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
-  const [assignTarget, setAssignTarget] = useState<Campaign | null>(null);
-  const [assignForm, setAssignForm] = useState<Assignment>({ transportistaId: '', destination: '', km: '' });
+  const [editLoading, setEditLoading] = useState(false);
 
-  const openEdit = (c: Campaign) => {
+  const [deleteTarget, setDeleteTarget] = useState<BackendCampaign | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [detailsTarget, setDetailsTarget] = useState<BackendCampaign | null>(null);
+
+  const [assignTarget, setAssignTarget] = useState<BackendCampaign | null>(null);
+  const [assignForm, setAssignForm] = useState<AssignForm>({
+    transporterId: '', destination: '', distanceKm: '', departureDate: '', estimatedArrival: '',
+  });
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [assignError, setAssignError] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      api.get<BackendCampaign[]>('/api/campaigns'),
+      api.get<BackendTransporter[]>('/api/transporters'),
+    ])
+      .then(([camps, trans]) => {
+        setCampaigns(camps);
+        setTransporters(trans);
+      })
+      .catch(() => setError(t('errors.load_failed')))
+      .finally(() => setLoading(false));
+  }, [t]);
+
+  useEffect(() => { setPage(1); }, [searchTerm, filterStatus]);
+
+  const filtered = campaigns.filter((c) => {
+    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || c.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const openEdit = (c: BackendCampaign) => {
     setEditTarget(c);
-    setEditForm({ ...c });
+    setEditForm({
+      name: c.name,
+      description: c.description,
+      startDate: c.startDate.split('T')[0],
+      endDate: c.endDate.split('T')[0],
+      status: c.status,
+      categories: c.categories,
+    });
+    setEditErrors({});
   };
 
-  const saveEdit = () => {
-    if (!editForm) return;
+  const saveEdit = async () => {
+    if (!editTarget || !editForm) return;
     const errs: Record<string, string> = {};
     if (!editForm.startDate) errs.startDate = t('campaign.error_start_required');
     if (!editForm.endDate) errs.endDate = t('campaign.error_end_required');
@@ -91,37 +144,97 @@ export const ManageCampaigns = () => {
       errs.endDate = t('campaign.error_end_before_start');
     }
     if (Object.keys(errs).length > 0) { setEditErrors(errs); return; }
-    setEditErrors({});
-    setCampaigns(prev => prev.map(c => c.id === editForm.id ? editForm : c));
-    setEditTarget(null);
-    setEditForm(null);
+
+    setEditLoading(true);
+    try {
+      const updated = await api.put<BackendCampaign>(`/api/campaigns/${editTarget.id}`, {
+        name: editForm.name,
+        description: editForm.description,
+        startDate: editForm.startDate,
+        endDate: editForm.endDate,
+        status: editForm.status,
+        categories: editForm.categories,
+      });
+      setCampaigns((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+      setEditTarget(null);
+      setEditForm(null);
+    } catch (err) {
+      setEditErrors({ general: err instanceof Error ? err.message : t('errors.load_failed') });
+    } finally {
+      setEditLoading(false);
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    setCampaigns(prev => prev.filter(c => c.id !== deleteTarget.id));
-    setDeleteTarget(null);
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      await api.delete(`/api/campaigns/${deleteTarget.id}`);
+      setCampaigns((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      setDeleteError(
+        msg.includes('donations') ? t('errors.campaign_has_donations') : t('errors.load_failed')
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
-  const openAssign = (c: Campaign) => {
+  const openAssign = (c: BackendCampaign) => {
     setAssignTarget(c);
-    setAssignForm(assignments[c.id] ?? { transportistaId: '', destination: '', km: '' });
+    setAssignError(null);
+    const existing = c.assignment;
+    setAssignForm({
+      transporterId: existing?.transporterId ?? '',
+      destination: existing?.destination ?? '',
+      distanceKm: existing ? String(existing.distanceKm) : '',
+      departureDate: existing?.departureDate ? existing.departureDate.split('T')[0] : '',
+      estimatedArrival: existing?.estimatedArrival ? existing.estimatedArrival.split('T')[0] : '',
+    });
   };
 
-  const saveAssignment = () => {
-    if (!assignTarget || !assignForm.transportistaId || !assignForm.destination || !assignForm.km) return;
-    setAssignments(prev => ({ ...prev, [assignTarget.id]: assignForm }));
-    setAssignTarget(null);
+  const saveAssignment = async () => {
+    if (!assignTarget || !assignForm.transporterId || !assignForm.destination || !assignForm.distanceKm) return;
+    setAssignLoading(true);
+    setAssignError(null);
+    try {
+      const updated = await api.post<BackendCampaign>(`/api/campaigns/${assignTarget.id}/assignment`, {
+        transporterId: assignForm.transporterId,
+        destination: assignForm.destination,
+        distanceKm: Number(assignForm.distanceKm),
+        departureDate: assignForm.departureDate || undefined,
+        estimatedArrival: assignForm.estimatedArrival || undefined,
+      });
+      setCampaigns((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+      setAssignTarget(null);
+    } catch (err) {
+      setAssignError(err instanceof Error ? err.message : t('errors.load_failed'));
+    } finally {
+      setAssignLoading(false);
+    }
   };
 
-  const filteredCampaigns = campaigns.filter((campaign) => {
-    const matchesSearch = campaign.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || campaign.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="text-center py-16 text-muted-foreground">{t('common.loading')}</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="text-center py-16 text-destructive">{error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
           <h1>{t('campaign.manage_title')}</h1>
@@ -166,9 +279,8 @@ export const ManageCampaigns = () => {
       </Card>
 
       <div className="space-y-4">
-        {filteredCampaigns.map((campaign) => {
-          const asgn = assignments[campaign.id];
-          const transporter = asgn ? mockTransportistas.find(tr => tr.id === asgn.transportistaId) : null;
+        {paginated.map((campaign) => {
+          const asgn = campaign.assignment;
           return (
             <Card key={campaign.id} className="hover:shadow-md transition-shadow">
               <CardContent>
@@ -178,18 +290,31 @@ export const ManageCampaigns = () => {
                     <StatusBadge status={campaign.status} />
                     <p className="text-muted-foreground mt-2 mb-3">{campaign.description}</p>
                     <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
-                      <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" />{campaign.donationsCount} {t('campaign.donations')}</span>
-                      <span className="flex items-center gap-1"><Tag className="w-3.5 h-3.5" />{campaign.categories.join(', ')}</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Package className="w-3.5 h-3.5" />
+                        {campaign.donationsCount} {t('campaign.donations')}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Tag className="w-3.5 h-3.5" />
+                        {campaign.categories.join(', ')}
+                      </span>
                     </div>
-                    {transporter && (
+                    {asgn && (
                       <div className="mt-3 flex flex-wrap gap-3 text-sm">
                         <span className="flex items-center gap-1 text-primary font-medium">
                           <Truck className="w-4 h-4" />
-                          {transporter.name} · {transporter.vehicle}
+                          {asgn.transporter.name} · {asgn.transporter.vehicle}
                         </span>
-                        <span className="flex items-center gap-1 text-muted-foreground"><MapPin className="w-3.5 h-3.5" />{asgn.destination}</span>
-                        <span className="flex items-center gap-1 text-muted-foreground"><Route className="w-3.5 h-3.5" />{asgn.km} km</span>
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <MapPin className="w-3.5 h-3.5" />{asgn.destination}
+                        </span>
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Route className="w-3.5 h-3.5" />{asgn.distanceKm} km
+                        </span>
                       </div>
                     )}
                   </div>
@@ -214,7 +339,7 @@ export const ManageCampaigns = () => {
         })}
       </div>
 
-      {filteredCampaigns.length === 0 && (
+      {filtered.length === 0 && (
         <Card>
           <CardContent>
             <div className="text-center py-12">
@@ -224,19 +349,34 @@ export const ManageCampaigns = () => {
         </Card>
       )}
 
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground">{page} / {totalPages}</span>
+          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Assign transporter modal */}
       {assignTarget && (
         <Modal title={t('transporters.assign_title')} onClose={() => setAssignTarget(null)}>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{t('transporters.assign_campaign_label')} <span className="font-medium text-foreground">{assignTarget.name}</span></p>
+            <p className="text-sm text-muted-foreground">
+              {t('transporters.assign_campaign_label')} <span className="font-medium text-foreground">{assignTarget.name}</span>
+            </p>
             <div>
               <label className="block mb-1 text-sm font-medium">{t('transporters.assign_transporter_label')}</label>
               <select
-                value={assignForm.transportistaId}
-                onChange={(e) => setAssignForm({ ...assignForm, transportistaId: e.target.value })}
+                value={assignForm.transporterId}
+                onChange={(e) => setAssignForm({ ...assignForm, transporterId: e.target.value })}
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">{t('transporters.select_transporter')}</option>
-                {mockTransportistas.map(tr => (
+                {transporters.map((tr) => (
                   <option key={tr.id} value={tr.id}>{tr.name} — {tr.vehicle}</option>
                 ))}
               </select>
@@ -249,38 +389,56 @@ export const ManageCampaigns = () => {
                 placeholder={t('transporters.destination_placeholder')}
               />
             </div>
-            <div>
-              <label className="block mb-1 text-sm font-medium">{t('transporters.distance_km')}</label>
-              <Input
-                type="number"
-                min="0"
-                value={assignForm.km}
-                onChange={(e) => setAssignForm({ ...assignForm, km: e.target.value })}
-                placeholder={t('transporters.distance_placeholder')}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block mb-1 text-sm font-medium">{t('transporters.distance_km')}</label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={assignForm.distanceKm}
+                  onChange={(e) => setAssignForm({ ...assignForm, distanceKm: e.target.value })}
+                  placeholder={t('transporters.distance_placeholder')}
+                />
+              </div>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block mb-1 text-sm font-medium">{t('campaign.start_date_label')}</label>
+                <DateInput
+                  value={assignForm.departureDate}
+                  onChange={(v) => setAssignForm({ ...assignForm, departureDate: v })}
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium">{t('campaign.end_date_label')}</label>
+                <DateInput
+                  value={assignForm.estimatedArrival}
+                  onChange={(v) => setAssignForm({ ...assignForm, estimatedArrival: v })}
+                  min={assignForm.departureDate || undefined}
+                />
+              </div>
+            </div>
+            {assignError && <p className="text-sm text-destructive">{assignError}</p>}
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => setAssignTarget(null)}>{t('common.cancel')}</Button>
               <Button
                 onClick={saveAssignment}
-                disabled={!assignForm.transportistaId || !assignForm.destination || !assignForm.km}
+                disabled={assignLoading || !assignForm.transporterId || !assignForm.destination || !assignForm.distanceKm}
               >
-                {t('common.assign')}
+                {assignLoading ? t('common.loading') : t('common.assign')}
               </Button>
             </div>
           </div>
         </Modal>
       )}
 
+      {/* Edit modal */}
       {editTarget && editForm && (
         <Modal title={t('campaign.edit_title')} onClose={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
           <div className="space-y-4">
             <div>
               <label className="block mb-1 text-sm font-medium">{t('campaign.name')}</label>
-              <Input
-                value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-              />
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
             </div>
             <div>
               <label className="block mb-1 text-sm font-medium">{t('campaign.description')}</label>
@@ -291,7 +449,7 @@ export const ManageCampaigns = () => {
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium">{t('campaign.start_date_label')}</label>
                 <DateInput
@@ -327,36 +485,42 @@ export const ManageCampaigns = () => {
                 <option value="finalizada">{t('campaign.status_finalized')}</option>
               </select>
             </div>
+            {editErrors.general && <p className="text-sm text-destructive">{editErrors.general}</p>}
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
                 {t('common.cancel')}
               </Button>
-              <Button onClick={saveEdit}>{t('common.save')}</Button>
+              <Button onClick={saveEdit} disabled={editLoading}>
+                {editLoading ? t('common.loading') : t('common.save')}
+              </Button>
             </div>
           </div>
         </Modal>
       )}
 
+      {/* Delete modal */}
       {deleteTarget && (
-        <Modal title={t('campaign.delete_campaign')} onClose={() => setDeleteTarget(null)}>
+        <Modal title={t('campaign.delete_campaign')} onClose={() => { setDeleteTarget(null); setDeleteError(null); }}>
           <div className="space-y-4">
             <p className="text-muted-foreground">
               {t('campaign.delete_confirm')}{' '}
               <span className="font-semibold text-foreground">"{deleteTarget.name}"</span>?{' '}
               {t('campaign.delete_warning')}
             </p>
+            {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              <Button variant="outline" onClick={() => { setDeleteTarget(null); setDeleteError(null); }}>
                 {t('common.cancel')}
               </Button>
-              <Button onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                {t('common.delete')}
+              <Button onClick={confirmDelete} disabled={deleteLoading} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {deleteLoading ? t('common.loading') : t('common.delete')}
               </Button>
             </div>
           </div>
         </Modal>
       )}
 
+      {/* Details modal */}
       {detailsTarget && (
         <Modal title={t('campaign.details_title')} onClose={() => setDetailsTarget(null)}>
           <div className="space-y-4">
@@ -375,38 +539,50 @@ export const ManageCampaigns = () => {
                 <p className="font-medium">{formatDate(detailsTarget.endDate)}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-muted-foreground">{t('donation.date_label')}</p>
-                <p className="font-medium">{detailsTarget.donationsCount}</p>
+                <p className="text-muted-foreground">{t('campaign.donations_received')}</p>
+                <p className="font-medium text-primary flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5" />{detailsTarget.donationsCount}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-muted-foreground">{t('campaign.categories_label')}</p>
                 <p className="font-medium">{detailsTarget.categories.join(', ')}</p>
               </div>
             </div>
-            {assignments[detailsTarget.id] && (() => {
-              const asgn = assignments[detailsTarget.id];
-              const transporter = mockTransportistas.find(tr => tr.id === asgn.transportistaId);
-              return (
-                <div className="border border-border rounded-lg p-4 space-y-2 text-sm">
-                  <p className="font-medium text-foreground flex items-center gap-2"><Truck className="w-4 h-4" /> {t('transporters.assign_title')}</p>
-                  <p className="text-muted-foreground">{t('transporters.assign_transporter_label')}: <span className="text-foreground font-medium">{transporter?.name} — {transporter?.vehicle}</span></p>
-                  <p className="text-muted-foreground">{t('transporters.destination')}: <span className="text-foreground font-medium">{asgn.destination}</span></p>
-                  <p className="text-muted-foreground">{t('transporters.distance_km')}: <span className="text-foreground font-medium">{asgn.km} km</span></p>
-                </div>
-              );
-            })()}
-            <div className="flex justify-end gap-3 pt-2 border-t border-border">
+            {detailsTarget.assignment && (
+              <div className="border border-border rounded-lg p-4 space-y-2 text-sm">
+                <p className="font-medium text-foreground flex items-center gap-2">
+                  <Truck className="w-4 h-4" /> {t('transporters.assign_title')}
+                </p>
+                <p className="text-muted-foreground">
+                  {t('transporters.assign_transporter_label')}:{' '}
+                  <span className="text-foreground font-medium">
+                    {detailsTarget.assignment.transporter.name} — {detailsTarget.assignment.transporter.vehicle}
+                  </span>
+                </p>
+                <p className="text-muted-foreground">
+                  {t('transporters.destination')}:{' '}
+                  <span className="text-foreground font-medium">{detailsTarget.assignment.destination}</span>
+                </p>
+                <p className="text-muted-foreground">
+                  {t('transporters.distance_km')}:{' '}
+                  <span className="text-foreground font-medium">{detailsTarget.assignment.distanceKm} km</span>
+                </p>
+              </div>
+            )}
+            <div className="flex flex-wrap justify-end gap-3 pt-2 border-t border-border">
               <Button variant="outline" onClick={() => { setDetailsTarget(null); openAssign(detailsTarget); }}>
-                <Truck className="w-4 h-4" />
-                {t('common.assign')}
+                <Truck className="w-4 h-4" />{t('common.assign')}
               </Button>
               <Button variant="outline" onClick={() => { setDetailsTarget(null); openEdit(detailsTarget); }}>
-                <Edit className="w-4 h-4" />
-                {t('common.edit')}
+                <Edit className="w-4 h-4" />{t('common.edit')}
               </Button>
-              <Button variant="outline" onClick={() => { setDetailsTarget(null); setDeleteTarget(detailsTarget); }} className="text-destructive border-destructive hover:bg-destructive/10">
-                <Trash2 className="w-4 h-4" />
-                {t('common.delete')}
+              <Button
+                variant="outline"
+                onClick={() => { setDetailsTarget(null); setDeleteTarget(detailsTarget); }}
+                className="text-destructive border-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="w-4 h-4" />{t('common.delete')}
               </Button>
               <Button onClick={() => setDetailsTarget(null)}>{t('common.close')}</Button>
             </div>

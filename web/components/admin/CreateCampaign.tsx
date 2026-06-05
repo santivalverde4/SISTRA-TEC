@@ -9,10 +9,17 @@ import { DateInput } from '@/components/ui-custom/DateInput';
 import { Plus } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useT } from '@/lib/i18n/useT';
+import { api } from '@/lib/api';
 
 const categoryOptions = ['Alimentos', 'Ropa', 'Medicamentos', 'Suministros', 'Educación', 'Vivienda', 'Otro'];
 
 const today = new Date().toISOString().split('T')[0];
+
+const nextDay = (date: string): string => {
+  const d = new Date(date);
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
+};
 
 export const CreateCampaign = () => {
   const router = useRouter();
@@ -22,10 +29,11 @@ export const CreateCampaign = () => {
     description: '',
     startDate: '',
     endDate: '',
-    banner: '',
     categories: [] as string[],
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const toggleCategory = (category: string) => {
     setFormData({
@@ -36,7 +44,7 @@ export const CreateCampaign = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -44,7 +52,7 @@ export const CreateCampaign = () => {
     if (!formData.description) newErrors.description = t('campaign.error_description_required');
     if (!formData.startDate) newErrors.startDate = t('campaign.error_start_required');
     if (!formData.endDate) newErrors.endDate = t('campaign.error_end_required');
-    if (formData.startDate && formData.endDate && formData.startDate > formData.endDate) {
+    if (formData.startDate && formData.endDate && formData.endDate <= formData.startDate) {
       newErrors.endDate = t('campaign.error_end_before_start');
     }
     if (formData.categories.length === 0) newErrors.categories = t('campaign.error_categories_required');
@@ -54,15 +62,34 @@ export const CreateCampaign = () => {
       return;
     }
 
-    router.push('/dashboard/admin/campaigns');
+    setLoading(true);
+    setSubmitError(null);
+    try {
+      await api.post('/api/campaigns', {
+        name: formData.name,
+        description: formData.description,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        categories: formData.categories,
+      });
+      router.push('/dashboard/admin/campaigns');
+    } catch {
+      setSubmitError(t('errors.load_failed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <div className="mb-6">
         <h1>{t('campaign.create_title')}</h1>
         <p className="text-muted-foreground mt-1">{t('campaign.create_subtitle')}</p>
       </div>
+
+      {submitError && (
+        <p className="mb-4 text-sm text-destructive">{submitError}</p>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Card>
@@ -91,7 +118,7 @@ export const CreateCampaign = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block mb-2">{t('campaign.start_date')}</label>
                 <DateInput
@@ -107,7 +134,7 @@ export const CreateCampaign = () => {
                 <DateInput
                   value={formData.endDate}
                   onChange={(v) => setFormData({ ...formData, endDate: v })}
-                  min={formData.startDate || today}
+                  min={formData.startDate ? nextDay(formData.startDate) : nextDay(today)}
                   error={errors.endDate}
                 />
               </div>
@@ -138,9 +165,9 @@ export const CreateCampaign = () => {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button type="submit">
+              <Button type="submit" disabled={loading}>
                 <Plus className="w-4 h-4" />
-                {t('campaign.create_button')}
+                {loading ? t('common.loading') : t('campaign.create_button')}
               </Button>
               <Button
                 type="button"

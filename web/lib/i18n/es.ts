@@ -54,6 +54,7 @@ const es = {
 
   errors: {
     load_failed: 'Error al cargar los datos. Intenta de nuevo.',
+    campaign_has_donations: 'No se puede eliminar una campaña que tiene donaciones asociadas.',
   },
 
   sidebar: {

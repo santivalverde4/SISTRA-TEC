@@ -8,12 +8,13 @@ import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
 import { ListCard } from '@/components/shared/ListCard';
 import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/DetailPanel';
-import { Search, Package, Calendar } from 'lucide-react';
+import { Search, Package, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CampaignStatus } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { useT } from '@/lib/i18n/useT';
 import { api } from '@/lib/api';
-import { getUser } from '@/lib/auth';
+
+const PAGE_SIZE = 8;
 
 interface DonationItem {
   description: string;
@@ -33,7 +34,6 @@ type BackendDonationStatus = 'RECEIVED' | 'CLASSIFIED' | 'IN_TRANSIT' | 'DELIVER
 
 interface BackendDonation {
   id: string;
-  donorId: string;
   note: string | null;
   status: BackendDonationStatus;
   createdAt: string;
@@ -67,26 +67,28 @@ export const MyDonations = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
   const [detailsDonation, setDetailsDonation] = useState<Donation | null>(null);
 
   useEffect(() => {
-    const user = getUser();
-    api.get<BackendDonation[]>('/api/donations')
-      .then((data) => {
-        const mine = user ? data.filter((d) => d.donorId === user.id) : data;
-        setDonations(mine.map(toViewModel));
-      })
+    api.get<BackendDonation[]>('/api/donations/me')
+      .then((data) => setDonations(data.map(toViewModel)))
       .catch(() => setError(t('errors.load_failed')))
       .finally(() => setLoading(false));
   }, [t]);
 
-  const filteredDonations = donations.filter((d) =>
+  useEffect(() => { setPage(1); }, [searchTerm]);
+
+  const filtered = donations.filter((d) =>
     d.campaignName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="text-center py-16 text-muted-foreground">{t('common.loading')}</div>
       </div>
     );
@@ -94,14 +96,14 @@ export const MyDonations = () => {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="text-center py-16 text-destructive">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-6">
         <h1>{t('donation.my_donations_title')}</h1>
         <p className="text-muted-foreground mt-1">{t('donation.my_donations_subtitle')}</p>
@@ -122,7 +124,7 @@ export const MyDonations = () => {
       </Card>
 
       <div className="space-y-4">
-        {filteredDonations.map((donation) => (
+        {paginated.map((donation) => (
           <ListCard
             key={donation.id}
             icon={<Package className="w-6 h-6 text-primary" />}
@@ -145,7 +147,7 @@ export const MyDonations = () => {
         ))}
       </div>
 
-      {filteredDonations.length === 0 && (
+      {filtered.length === 0 && (
         <Card>
           <CardContent>
             <div className="text-center py-12">
@@ -154,6 +156,30 @@ export const MyDonations = () => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            {page} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
       )}
 
       {detailsDonation && (
@@ -183,7 +209,6 @@ export const MyDonations = () => {
                     <span className="text-muted-foreground whitespace-nowrap">{item.quantity}</span>
                   </div>
                 ))}
-
               </div>
             </div>
 
