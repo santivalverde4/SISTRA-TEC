@@ -54,7 +54,14 @@ const es = {
 
   errors: {
     load_failed: 'Error al cargar los datos. Intenta de nuevo.',
+    save_failed: 'No se pudo guardar. Intenta de nuevo.',
+    generic: 'Ocurrió un error inesperado. Intenta de nuevo.',
+    session_expired: 'Tu sesión ha expirado. Redirigiendo al inicio de sesión...',
     campaign_has_donations: 'No se puede eliminar una campaña que tiene donaciones asociadas.',
+    departure_date_required: 'La fecha de salida es requerida.',
+    arrival_date_required: 'La fecha de llegada estimada es requerida.',
+    tracking_failed: 'No se pudo cargar el historial de trazabilidad.',
+    destination_max_length: 'El destino no puede superar los 250 caracteres.',
   },
 
   sidebar: {
