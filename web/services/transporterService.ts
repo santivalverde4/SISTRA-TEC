@@ -8,11 +8,13 @@ const log = createLogger('transporterService');
 
 interface BackendAssignment {
   id: string;
+  campaignName: string;
   destination: string;
   distanceKm: number;
+  km: string;
+  status: string;
   departureDate: string;
   estimatedArrival: string;
-  campaign: { id: string; name: string; status: string };
 }
 
 interface BackendTransporter {
@@ -20,7 +22,6 @@ interface BackendTransporter {
   name: string;
   vehicle: string;
   plate: string;
-  phone: string;
   email: string;
   assignments: BackendAssignment[];
 }
@@ -73,7 +74,6 @@ export interface Transporter {
   name: string;
   vehicle: string;
   plate: string;
-  phone: string;
   email: string;
   assignments: TransporterAssignment[];
 }
@@ -117,13 +117,12 @@ function mapTransporter(t: BackendTransporter): Transporter {
     name: t.name,
     vehicle: t.vehicle,
     plate: t.plate,
-    phone: t.phone,
     email: t.email,
     assignments: t.assignments.map((a) => ({
-      campaignName: a.campaign.name,
+      campaignName: a.campaignName,
       destination: a.destination,
-      km: String(a.distanceKm),
-      status: a.campaign.status,
+      km: a.km ?? String(a.distanceKm),
+      status: a.status,
     })),
   };
 }

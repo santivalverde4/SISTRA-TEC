@@ -7,7 +7,7 @@ import { Input } from '@/components/ui-custom/Input';
 import { Modal } from '@/components/shared/Modal';
 import { ListCard } from '@/components/shared/ListCard';
 import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/DetailPanel';
-import { Search, Truck, MapPin, Package, Phone, Mail } from 'lucide-react';
+import { Search, Truck, MapPin, Package, Mail } from 'lucide-react';
 import { useT } from '@/lib/i18n/useT';
 import { getTransporters, type Transporter as Transportista } from '@/services/transporterService';
 
@@ -94,7 +94,6 @@ export const Transportistas = () => {
             meta={
               <>
                 <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5" />{tr.vehicle} · {tr.plate}</span>
-                <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{tr.phone}</span>
                 <span className="flex items-center gap-1 truncate"><Mail className="w-3.5 h-3.5 shrink-0" />{tr.email}</span>
               </>
             }
@@ -123,7 +122,6 @@ export const Transportistas = () => {
             />
 
             <DetailGrid>
-              <DetailField label={t('transporters.phone')} value={selected.phone} />
               <DetailField label={t('transporters.email')} value={<span className="truncate block">{selected.email}</span>} />
               <DetailField label={t('transporters.vehicle')} value={selected.vehicle} />
               <DetailField label={t('transporters.plate')} value={selected.plate} />
