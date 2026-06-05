@@ -7,15 +7,11 @@ import { User, Mail, Lock, UserCircle } from 'lucide-react';
 import { Input } from '@/components/ui-custom/Input';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
-import { setToken, setUser, mapRole, mapRoleToBackend, getDefaultRoute, type BackendRole } from '@/lib/auth';
-import { api } from '@/lib/api';
+import { getDefaultRoute } from '@/lib/auth';
+import { register } from '@/services/authService';
+import { resolveErrorKey } from '@/lib/apiError';
 import type { UserRole } from '@/types';
 import { useT } from '@/lib/i18n/useT';
-
-interface RegisterResponse {
-  accessToken: string;
-  user: { id: string; email: string; name: string | null; role: BackendRole };
-}
 
 export function RegisterForm() {
   const router = useRouter();
@@ -56,22 +52,15 @@ export function RegisterForm() {
 
     setLoading(true);
     try {
-      const data = await api.post<RegisterResponse>('/api/auth/register', {
+      const user = await register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: mapRoleToBackend(formData.role),
+        role: formData.role,
       });
-      const role = mapRole(data.user.role);
-      setToken(data.accessToken);
-      setUser({ id: data.user.id, email: data.user.email, name: data.user.name, role });
-      router.push(getDefaultRoute(role));
+      router.push(getDefaultRoute(user.role));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      const translated =
-        msg === 'Email already registered' ? t('auth.error_email_taken') :
-        msg ? msg : t('auth.error_network');
-      setErrors({ general: translated });
+      setErrors({ general: t(resolveErrorKey(err, 'auth') as Parameters<typeof t>[0]) });
     } finally {
       setLoading(false);
     }

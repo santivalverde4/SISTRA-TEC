@@ -7,14 +7,10 @@ import { Lock, Mail } from 'lucide-react';
 import { Input } from '@/components/ui-custom/Input';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
-import { setToken, setUser, mapRole, getDefaultRoute, type BackendRole } from '@/lib/auth';
-import { api } from '@/lib/api';
+import { getDefaultRoute } from '@/lib/auth';
+import { login } from '@/services/authService';
+import { resolveErrorKey } from '@/lib/apiError';
 import { useT } from '@/lib/i18n/useT';
-
-interface LoginResponse {
-  accessToken: string;
-  user: { id: string; email: string; name: string | null; role: BackendRole };
-}
 
 export function LoginForm() {
   const router = useRouter();
@@ -44,17 +40,10 @@ export function LoginForm() {
 
     setLoading(true);
     try {
-      const data = await api.post<LoginResponse>('/api/auth/login', { email, password });
-      const role = mapRole(data.user.role);
-      setToken(data.accessToken);
-      setUser({ id: data.user.id, email: data.user.email, name: data.user.name, role });
-      router.push(getDefaultRoute(role));
+      const user = await login(email, password);
+      router.push(getDefaultRoute(user.role));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      const translated =
-        msg === 'Invalid credentials' ? t('auth.error_invalid_credentials') :
-        msg ? msg : t('auth.error_network');
-      setErrors({ general: translated });
+      setErrors({ general: t(resolveErrorKey(err, 'auth') as Parameters<typeof t>[0]) });
     } finally {
       setLoading(false);
     }
