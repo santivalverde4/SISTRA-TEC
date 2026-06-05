@@ -202,7 +202,7 @@ export async function registerEvent(payload: RegisterEventPayload): Promise<void
 
 export async function markDelivered(campaignId: string): Promise<void> {
   try {
-    await api.patch(`/api/campaigns/${campaignId}/status`, { status: 'entregada' });
+    await api.patch(`/api/campaigns/${campaignId}/status`, { status: 'DELIVERED' });
   } catch (err) {
     log.error(`markDelivered(${campaignId}) failed`, err);
     throw err;

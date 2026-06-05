@@ -93,10 +93,10 @@ const STATUS_LABELS: Record<BackendDonationStatus, string> = {
 
 function mapDonationStatus(status: BackendDonationStatus): CampaignStatus {
   switch (status) {
-    case 'RECEIVED':   return 'abierta';
-    case 'CLASSIFIED': return 'congelada';
-    case 'IN_TRANSIT': return 'en-camino';
-    case 'DELIVERED':  return 'entregada';
+    case 'RECEIVED':   return 'OPEN';
+    case 'CLASSIFIED': return 'FROZEN';
+    case 'IN_TRANSIT': return 'IN_TRANSIT';
+    case 'DELIVERED':  return 'DELIVERED';
   }
 }
 
@@ -155,7 +155,7 @@ export async function getDonationTracking(donationId: string): Promise<TimelineE
 
 export async function getAvailableCampaigns(): Promise<AvailableCampaign[]> {
   try {
-    return await api.get<BackendAvailableCampaign[]>('/api/campaigns?status=abierta');
+    return await api.get<BackendAvailableCampaign[]>('/api/campaigns?status=OPEN');
   } catch (err) {
     log.error('getAvailableCampaigns failed', err);
     throw err;

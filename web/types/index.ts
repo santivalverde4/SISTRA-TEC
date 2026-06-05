@@ -1,14 +1,14 @@
 export type UserRole = 'donante' | 'transportista' | 'administrador';
 
 export type CampaignStatus =
-  | 'abierta'
-  | 'congelada'
-  | 'cerrada'
-  | 'en-camino'
-  | 'entregada'
-  | 'finalizada';
+  | 'OPEN'
+  | 'FROZEN'
+  | 'CLOSED'
+  | 'IN_TRANSIT'
+  | 'DELIVERED'
+  | 'FINALIZED';
 
-export type TransportStatus = 'pendiente' | 'en-camino' | 'entregada' | 'finalizada';
+export type TransportStatus = 'OPEN' | 'CLOSED' | 'IN_TRANSIT' | 'DELIVERED' | 'FINALIZED';
 
 export interface User {
   id: string;
