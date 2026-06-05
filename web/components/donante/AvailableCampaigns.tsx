@@ -52,9 +52,13 @@ export const AvailableCampaigns = () => {
   const [donateRows, setDonateRows] = useState<DonationRow[]>([{ id: 1, description: '', quantity: '' }]);
   const [donateNote, setDonateNote] = useState('');
   const [donateSuccess, setDonateSuccess] = useState(false);
+  const [rowErrors, setRowErrors] = useState<Record<number, { description?: string; quantity?: string }>>({});
 
   const addRow = () => setDonateRows(prev => [...prev, { id: Date.now(), description: '', quantity: '' }]);
-  const removeRow = (id: number) => setDonateRows(prev => prev.length > 1 ? prev.filter(r => r.id !== id) : prev);
+  const removeRow = (id: number) => {
+    setDonateRows(prev => prev.length > 1 ? prev.filter(r => r.id !== id) : prev);
+    setRowErrors(prev => { const n = { ...prev }; delete n[id]; return n; });
+  };
   const updateRow = (id: number, field: 'description' | 'quantity', value: string) =>
     setDonateRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
 
@@ -72,10 +76,25 @@ export const AvailableCampaigns = () => {
     setDonateRows([{ id: 1, description: '', quantity: '' }]);
     setDonateNote('');
     setDonateSuccess(false);
+    setRowErrors({});
+  };
+
+  const validateRows = (): boolean => {
+    const errors: Record<number, { description?: string; quantity?: string }> = {};
+    donateRows.forEach((row) => {
+      const rowErr: { description?: string; quantity?: string } = {};
+      if (!row.description.trim()) rowErr.description = t('donation.error_description_required');
+      const qty = Number(row.quantity);
+      if (!row.quantity.trim()) rowErr.quantity = t('donation.error_quantity_required');
+      else if (isNaN(qty) || qty <= 0) rowErr.quantity = t('donation.error_quantity_positive');
+      if (Object.keys(rowErr).length > 0) errors[row.id] = rowErr;
+    });
+    setRowErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmitDonation = async () => {
-    if (!donateCampaign || !donateRows.some(r => r.description && r.quantity)) return;
+    if (!donateCampaign || !validateRows()) return;
     setDonateLoading(true);
     setDonateError(null);
     try {
@@ -294,16 +313,18 @@ export const AvailableCampaigns = () => {
                 </div>
                 <div className="space-y-2">
                   {donateRows.map((row) => (
-                    <div key={row.id} className="grid grid-cols-[1fr_120px_32px] gap-2 items-center">
+                    <div key={row.id} className="grid grid-cols-[1fr_120px_32px] gap-2 items-start">
                       <Input
                         value={row.description}
-                        onChange={(e) => updateRow(row.id, 'description', e.target.value)}
+                        onChange={(e) => { updateRow(row.id, 'description', e.target.value); setRowErrors((prev) => { const n = { ...prev }; if (n[row.id]) delete n[row.id].description; return n; }); }}
                         placeholder={t('donation.product_placeholder')}
+                        error={rowErrors[row.id]?.description}
                       />
                       <Input
                         value={row.quantity}
-                        onChange={(e) => updateRow(row.id, 'quantity', e.target.value)}
+                        onChange={(e) => { updateRow(row.id, 'quantity', e.target.value); setRowErrors((prev) => { const n = { ...prev }; if (n[row.id]) delete n[row.id].quantity; return n; }); }}
                         placeholder={t('donation.quantity_placeholder')}
+                        error={rowErrors[row.id]?.quantity}
                       />
                       <button
                         type="button"
@@ -336,7 +357,7 @@ export const AvailableCampaigns = () => {
                   <Button
                     className="flex-1"
                     onClick={handleSubmitDonation}
-                    disabled={donateLoading || !donateRows.some(r => r.description && r.quantity)}
+                    disabled={donateLoading}
                   >
                     <Heart className="w-4 h-4" />
                     {donateLoading ? t('common.loading') : t('donation.confirm_donation')}

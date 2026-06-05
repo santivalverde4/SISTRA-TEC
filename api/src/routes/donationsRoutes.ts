@@ -15,7 +15,7 @@ import {
 const router = Router();
 
 // Rutas generales
-router.post('/', createDonation); // Crear donación
+router.post('/', authJwt, createDonation); // Crear donación
 router.get('/', getAllDonations); // Obtener todas las donaciones
 router.get('/me', authJwt, getMyDonations); // Obtener donaciones del usuario autenticado
 
