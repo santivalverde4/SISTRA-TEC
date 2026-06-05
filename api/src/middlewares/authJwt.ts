@@ -4,6 +4,7 @@ import { prisma } from "../db/prisma";
 import type { AuthTokenPayload } from "../types/auth";
 import { HttpError } from "../utils/httpError";
 import { verifyAccessToken } from "../services/tokenService";
+import { asyncHandler } from "../utils/asyncHandler";
 
 const devUser = {
   id: "dev-user-id",
@@ -14,7 +15,7 @@ const devUser = {
   role: Role.ADMIN_CENTER,
 };
 
-export const authJwt: RequestHandler = async (req, _res, next) => {
+export const authJwt: RequestHandler = asyncHandler(async (req, _res, next) => {
   if (process.env.BYPASS_AUTH === "true") {
     // DEV ONLY: allows testing protected endpoints from Postman without JWT
     await prisma.user.upsert({
@@ -76,4 +77,4 @@ export const authJwt: RequestHandler = async (req, _res, next) => {
   const r = req as Request & { auth?: AuthTokenPayload };
   r.auth = { sub: payload.sub, role: payload.role };
   next();
-};
+});

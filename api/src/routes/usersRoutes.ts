@@ -5,11 +5,12 @@ import {
   updateUser,
   changePassword
 } from "../controllers/usersController";
+import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
 const forwardToWithAuthId = (handler: any) => {
-  return (req: any, res: any, next: any) => {
+  return asyncHandler((req: any, res: any, next: any) => {
     req.params = req.params || {};
     const auth = (req as any).auth;
     if (!auth || !auth.sub) {
@@ -17,7 +18,7 @@ const forwardToWithAuthId = (handler: any) => {
     }
     req.params.id = auth.sub;
     return handler(req, res, next);
-  };
+  });
 };
 
 router.get("/me", authJwt, forwardToWithAuthId(getUserById));

@@ -3,6 +3,7 @@
 import { HTMLAttributes, forwardRef } from 'react';
 import { clsx } from 'clsx';
 import type { CampaignStatus, TransportStatus } from '@/types';
+import { useT } from '@/lib/i18n/useT';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: 'default' | 'success' | 'warning' | 'destructive' | 'info' | 'secondary';
@@ -33,22 +34,36 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 
 Badge.displayName = 'Badge';
 
-const statusVariants: Record<string, { label: string; color: string }> = {
-  abierta: { label: 'Abierta', color: 'bg-[var(--status-open)] text-white' },
-  congelada: { label: 'Congelada', color: 'bg-[var(--status-frozen)] text-white' },
-  cerrada: { label: 'Cerrada para donaciones', color: 'bg-[var(--status-closed)] text-white' },
-  'en-camino': { label: 'En camino a ser entregada', color: 'bg-[var(--status-transit)] text-white' },
-  entregada: { label: 'Entregada', color: 'bg-[var(--status-delivered)] text-white' },
-  finalizada: { label: 'Finalizada', color: 'bg-[var(--status-completed)] text-white' },
-  pendiente: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700' },
+const statusBgColors: Record<string, string> = {
+  'abierta':   '#10b981',
+  'congelada': '#3b82f6',
+  'cerrada':   '#f59e0b',
+  'en-camino': '#8b5cf6',
+  'entregada': '#059669',
+  'finalizada':'#64748b',
 };
 
 export function StatusBadge({ status }: { status: CampaignStatus | TransportStatus | string }) {
-  const config = statusVariants[status] ?? statusVariants['abierta'];
+  const { t } = useT();
+
+  const statusLabels: Record<string, string> = {
+    'abierta':   t('campaign.status_open'),
+    'congelada': t('campaign.status_frozen'),
+    'cerrada':   t('campaign.status_closed'),
+    'en-camino': t('campaign.status_in_transit'),
+    'entregada': t('campaign.status_delivered'),
+    'finalizada':t('campaign.status_finalized'),
+  };
+
+  const bg = statusBgColors[status] ?? statusBgColors['OPEN'];
+  const label = statusLabels[status] ?? status;
 
   return (
-    <span className={clsx('inline-flex items-center rounded-full px-3 py-1', config.color)}>
-      {config.label}
+    <span
+      className="inline-flex items-center rounded-full px-3 py-1 text-white text-sm font-medium"
+      style={{ backgroundColor: bg }}
+    >
+      {label}
     </span>
   );
 }

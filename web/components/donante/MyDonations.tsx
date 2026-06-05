@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui-custom/Card';
 import { Input } from '@/components/ui-custom/Input';
 import { Button } from '@/components/ui-custom/Button';
@@ -8,63 +8,56 @@ import { StatusBadge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
 import { ListCard } from '@/components/shared/ListCard';
 import { DetailHeader, DetailGrid, DetailField } from '@/components/shared/DetailPanel';
-import { Search, Package, Calendar } from 'lucide-react';
-import type { CampaignStatus } from '@/types';
+import { Search, Package, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useT } from '@/lib/i18n/useT';
+import { getMyDonations, type Donation } from '@/services/donationService';
 
-interface DonationItem {
-  description: string;
-  quantity: string;
-}
-
-interface Donation {
-  id: string;
-  campaignName: string;
-  campaignStatus: CampaignStatus;
-  items: DonationItem[];
-  note: string;
-  date: string;
-}
-
-const mockDonations: Donation[] = [
-  {
-    id: '1',
-    campaignName: 'Ayuda para comunidades afectadas por inundaciones',
-    campaignStatus: 'abierta',
-    items: [
-      { description: 'Arroz', quantity: '10 kg' },
-      { description: 'Frijoles', quantity: '5 kg' },
-      { description: 'Aceite', quantity: '3 litros' },
-    ],
-    note: 'Productos en buen estado, empacados.',
-    date: '2026-05-08',
-  },
-  {
-    id: '2',
-    campaignName: 'Ropa de invierno para refugiados',
-    campaignStatus: 'en-camino',
-    items: [
-      { description: 'Chaquetas talla M', quantity: '8 prendas' },
-      { description: 'Suéteres talla L', quantity: '7 prendas' },
-    ],
-    note: '',
-    date: '2026-05-09',
-  },
-];
+const PAGE_SIZE = 8;
 
 export const MyDonations = () => {
   const { t } = useT();
-  const [donations] = useState<Donation[]>(mockDonations);
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
   const [detailsDonation, setDetailsDonation] = useState<Donation | null>(null);
 
-  const filteredDonations = donations.filter((d) =>
+  useEffect(() => {
+    getMyDonations()
+      .then(setDonations)
+      .catch(() => setError(t('errors.load_failed')))
+      .finally(() => setLoading(false));
+  }, [t]);
+
+  useEffect(() => { setPage(1); }, [searchTerm]);
+
+  const filtered = donations.filter((d) =>
     d.campaignName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="text-center py-16 text-muted-foreground">{t('common.loading')}</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="text-center py-16 text-destructive">{error}</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-6">
         <h1>{t('donation.my_donations_title')}</h1>
         <p className="text-muted-foreground mt-1">{t('donation.my_donations_subtitle')}</p>
@@ -85,7 +78,7 @@ export const MyDonations = () => {
       </Card>
 
       <div className="space-y-4">
-        {filteredDonations.map((donation) => (
+        {paginated.map((donation) => (
           <ListCard
             key={donation.id}
             icon={<Package className="w-6 h-6 text-primary" />}
@@ -108,7 +101,7 @@ export const MyDonations = () => {
         ))}
       </div>
 
-      {filteredDonations.length === 0 && (
+      {filtered.length === 0 && (
         <Card>
           <CardContent>
             <div className="text-center py-12">
@@ -117,6 +110,30 @@ export const MyDonations = () => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            {page} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
       )}
 
       {detailsDonation && (
@@ -141,9 +158,9 @@ export const MyDonations = () => {
                   <span>{t('donation.column_quantity')}</span>
                 </div>
                 {detailsDonation.items.map((item, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2.5 text-sm border-t border-border">
+                  <div key={i} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2.5 text-sm border-t border-border" style={{ background: i % 2 !== 0 ? 'var(--muted)' : undefined }}>
                     <span>{item.description}</span>
-                    <span className="text-muted-foreground whitespace-nowrap">{item.quantity}</span>
+                    <span className="font-medium tabular-nums whitespace-nowrap">{item.quantity}</span>
                   </div>
                 ))}
               </div>

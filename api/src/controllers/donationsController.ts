@@ -5,12 +5,18 @@ import * as donationService from '../services/donationService';
 // Crear una nueva donación
 export const createDonation = async (req: Request, res: Response) => {
   try {
-    const { campaignId, donorId, note, items } = req.body;
+    const { campaignId, note, items } = req.body;
+
+    if (!req.auth) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const donorId = req.auth.sub;
 
     // Validar datos requeridos
-    if (!campaignId || !donorId || !items || items.length === 0) {
+    if (!campaignId || !items || items.length === 0) {
       return res.status(400).json({
-        error: 'campaignId, donorId e items son requeridos',
+        error: 'campaignId e items son requeridos',
       });
     }
 

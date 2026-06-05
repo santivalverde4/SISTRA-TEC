@@ -8,7 +8,7 @@ export type CampaignStatus =
   | 'entregada'
   | 'finalizada';
 
-export type TransportStatus = 'pendiente' | 'en-camino' | 'entregada' | 'finalizada';
+export type TransportStatus = 'abierta' | 'cerrada' | 'en-camino' | 'entregada' | 'finalizada';
 
 export interface User {
   id: string;

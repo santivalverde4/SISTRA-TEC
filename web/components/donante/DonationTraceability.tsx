@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui-custom/Card';
 import { Input } from '@/components/ui-custom/Input';
 import { StatusBadge } from '@/components/ui-custom/Badge';
@@ -8,134 +8,66 @@ import { Timeline } from '@/components/shared/Timeline';
 import { Search, TrendingUp, Calendar, Package } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useT } from '@/lib/i18n/useT';
+import { resolveErrorKey } from '@/lib/apiError';
+import { getMyDonations, getDonationTracking, type Donation, type TimelineEvent } from '@/services/donationService';
 
-interface DonationItem {
-  description: string;
-  quantity: string;
+interface TraceableDonation extends Donation {
+  timeline: TimelineEvent[];
 }
-
-type CampaignStatus = 'abierta' | 'congelada' | 'cerrada' | 'en-camino' | 'entregada' | 'finalizada';
-
-interface TraceableDonation {
-  id: string;
-  campaignName: string;
-  campaignStatus: CampaignStatus;
-  date: string;
-  items: DonationItem[];
-  note: string;
-  timeline: Array<{
-    id: string;
-    title: string;
-    description: string;
-    date: string;
-    type: 'status' | 'logistic';
-    status?: 'completed' | 'current' | 'pending';
-  }>;
-}
-
-const mockDonations: TraceableDonation[] = [
-  {
-    id: '1',
-    campaignName: 'Ayuda para comunidades afectadas por inundaciones',
-    campaignStatus: 'abierta',
-    date: '2026-05-08',
-    items: [
-      { description: 'Arroz', quantity: '10 kg' },
-      { description: 'Frijoles', quantity: '5 kg' },
-      { description: 'Aceite', quantity: '3 litros' },
-    ],
-    note: 'Productos en buen estado, empacados.',
-    timeline: [
-      {
-        id: '1',
-        title: 'Donación registrada',
-        description: 'Tu donación fue recibida por la campaña',
-        date: '2026-05-08',
-        type: 'status',
-        status: 'completed',
-      },
-      {
-        id: '2',
-        title: 'En período de recolección',
-        description: 'La campaña sigue abierta y recolectando donaciones',
-        date: '2026-05-08',
-        type: 'status',
-        status: 'current',
-      },
-      {
-        id: '3',
-        title: 'Cierre y preparación de envío',
-        description: 'Pendiente de que la campaña cierre',
-        date: 'Próximamente',
-        type: 'status',
-        status: 'pending',
-      },
-    ],
-  },
-  {
-    id: '2',
-    campaignName: 'Ropa de invierno para refugiados',
-    campaignStatus: 'en-camino',
-    date: '2026-05-09',
-    items: [
-      { description: 'Chaquetas talla M', quantity: '8 prendas' },
-      { description: 'Suéteres talla L', quantity: '7 prendas' },
-    ],
-    note: '',
-    timeline: [
-      {
-        id: '1',
-        title: 'Donación registrada',
-        description: 'Tu donación fue recibida por la campaña',
-        date: '2026-05-09',
-        type: 'status',
-        status: 'completed',
-      },
-      {
-        id: '2',
-        title: 'Campaña cerrada para nuevas donaciones',
-        description: 'Se completó el período de recolección',
-        date: '2026-05-10',
-        type: 'status',
-        status: 'completed',
-      },
-      {
-        id: '3',
-        title: 'Donaciones empacadas y listas',
-        description: 'Transportista asignado y ruta confirmada',
-        date: '2026-05-11',
-        type: 'logistic',
-        status: 'completed',
-      },
-      {
-        id: '4',
-        title: 'En camino al destino',
-        description: 'El transporte está en ruta hacia los refugiados',
-        date: '2026-05-12',
-        type: 'status',
-        status: 'current',
-      },
-      {
-        id: '5',
-        title: 'Entrega programada',
-        description: 'Llegada estimada al punto de entrega',
-        date: '2026-05-15',
-        type: 'status',
-        status: 'pending',
-      },
-    ],
-  },
-];
 
 export const DonationTraceability = () => {
   const { t } = useT();
-  const [donations] = useState<TraceableDonation[]>(mockDonations);
+  const [donations, setDonations] = useState<TraceableDonation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selected, setSelected] = useState<TraceableDonation | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingError, setTrackingError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getMyDonations()
+      .then((data) => setDonations(data.map((d) => ({ ...d, timeline: [] }))))
+      .catch((err) => setError(t(resolveErrorKey(err) as Parameters<typeof t>[0])))
+      .finally(() => setLoading(false));
+  }, [t]);
+
+  function handleSelect(donation: TraceableDonation) {
+    setSelected(donation);
+    setTrackingError(null);
+    if (donation.timeline.length > 0) return;
+
+    setTrackingLoading(true);
+    getDonationTracking(donation.id)
+      .then((timeline) => {
+        setDonations((prev) =>
+          prev.map((d) => d.id === donation.id ? { ...d, timeline } : d)
+        );
+        setSelected((prev) => prev?.id === donation.id ? { ...prev, timeline } : prev);
+      })
+      .catch((err) => setTrackingError(t(resolveErrorKey(err) as Parameters<typeof t>[0])))
+      .finally(() => setTrackingLoading(false));
+  }
 
   const filtered = donations.filter((d) =>
     d.campaignName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-16 text-muted-foreground">{t('common.loading')}</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-16 text-destructive">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -170,7 +102,7 @@ export const DonationTraceability = () => {
                     ? 'ring-2 ring-primary shadow-md'
                     : 'hover:shadow-md'
                 }`}
-                onClick={() => setSelected(donation)}
+                onClick={() => handleSelect(donation)}
               >
                 <CardContent>
                   <h4 className="mb-2">{donation.campaignName}</h4>
@@ -212,12 +144,11 @@ export const DonationTraceability = () => {
                     {selected.items.map((item, i) => (
                       <div
                         key={i}
-                        className={`grid grid-cols-[1fr_120px] gap-2 text-sm px-3 py-2.5 ${
-                          i < selected.items.length - 1 ? 'border-b border-border' : ''
-                        }`}
+                        className="grid grid-cols-[1fr_120px] gap-2 text-sm px-3 py-2.5 border-b border-border last:border-b-0"
+                        style={{ background: i % 2 !== 0 ? 'var(--muted)' : undefined }}
                       >
                         <span>{item.description}</span>
-                        <span className="text-muted-foreground">{item.quantity}</span>
+                        <span className="font-medium tabular-nums">{item.quantity}</span>
                       </div>
                     ))}
                   </div>
@@ -233,7 +164,12 @@ export const DonationTraceability = () => {
                     <TrendingUp className="w-5 h-5" />
                     {t('traceability.campaign_history')}
                   </h4>
-                  <Timeline events={selected.timeline} />
+                  {trackingLoading
+                    ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+                    : trackingError
+                      ? <p className="text-sm text-destructive">{trackingError}</p>
+                      : <Timeline events={selected.timeline} />
+                  }
                 </div>
               </CardContent>
             </Card>
