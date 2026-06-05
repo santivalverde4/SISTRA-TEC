@@ -253,12 +253,12 @@ export const ManageCampaigns = () => {
                 className="w-full pl-10 pr-8 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:min-w-[180px]"
               >
                 <option value="all">{t('campaign.all_statuses')}</option>
-                <option value="OPEN">{t('campaign.status_open')}</option>
-                <option value="FROZEN">{t('campaign.status_frozen')}</option>
-                <option value="CLOSED">{t('campaign.status_closed')}</option>
-                <option value="IN_TRANSIT">{t('campaign.status_in_transit')}</option>
-                <option value="DELIVERED">{t('campaign.status_delivered')}</option>
-                <option value="FINALIZED">{t('campaign.status_finalized')}</option>
+                <option value="abierta">{t('campaign.status_open')}</option>
+                <option value="congelada">{t('campaign.status_frozen')}</option>
+                <option value="cerrada">{t('campaign.status_closed')}</option>
+                <option value="en-camino">{t('campaign.status_in_transit')}</option>
+                <option value="entregada">{t('campaign.status_delivered')}</option>
+                <option value="finalizada">{t('campaign.status_finalized')}</option>
               </select>
             </div>
           </div>
@@ -472,12 +472,12 @@ export const ManageCampaigns = () => {
                 onChange={(e) => setEditForm({ ...editForm, status: e.target.value as CampaignStatus })}
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="OPEN">{t('campaign.status_open')}</option>
-                <option value="FROZEN">{t('campaign.status_frozen')}</option>
-                <option value="CLOSED">{t('campaign.status_closed')}</option>
-                <option value="IN_TRANSIT">{t('campaign.status_in_transit')}</option>
-                <option value="DELIVERED">{t('campaign.status_delivered')}</option>
-                <option value="FINALIZED">{t('campaign.status_finalized')}</option>
+                <option value="abierta">{t('campaign.status_open')}</option>
+                <option value="congelada">{t('campaign.status_frozen')}</option>
+                <option value="cerrada">{t('campaign.status_closed')}</option>
+                <option value="en-camino">{t('campaign.status_in_transit')}</option>
+                <option value="entregada">{t('campaign.status_delivered')}</option>
+                <option value="finalizada">{t('campaign.status_finalized')}</option>
               </select>
             </div>
             {editErrors.general && <p className="text-sm text-destructive">{editErrors.general}</p>}

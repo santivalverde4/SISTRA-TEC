@@ -34,32 +34,35 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 
 Badge.displayName = 'Badge';
 
-const statusColors: Record<string, string> = {
-  OPEN: 'bg-[var(--status-open)] text-white',
-  FROZEN: 'bg-[var(--status-frozen)] text-white',
-  CLOSED: 'bg-[var(--status-closed)] text-white',
-  IN_TRANSIT: 'bg-[var(--status-transit)] text-white',
-  DELIVERED: 'bg-[var(--status-delivered)] text-white',
-  FINALIZED: 'bg-[var(--status-completed)] text-white',
+const statusBgColors: Record<string, string> = {
+  'abierta':   '#10b981',
+  'congelada': '#3b82f6',
+  'cerrada':   '#f59e0b',
+  'en-camino': '#8b5cf6',
+  'entregada': '#059669',
+  'finalizada':'#64748b',
 };
 
 export function StatusBadge({ status }: { status: CampaignStatus | TransportStatus | string }) {
   const { t } = useT();
 
   const statusLabels: Record<string, string> = {
-    OPEN: t('campaign.status_open'),
-    FROZEN: t('campaign.status_frozen'),
-    CLOSED: t('campaign.status_closed'),
-    IN_TRANSIT: t('campaign.status_in_transit'),
-    DELIVERED: t('campaign.status_delivered'),
-    FINALIZED: t('campaign.status_finalized'),
+    'abierta':   t('campaign.status_open'),
+    'congelada': t('campaign.status_frozen'),
+    'cerrada':   t('campaign.status_closed'),
+    'en-camino': t('campaign.status_in_transit'),
+    'entregada': t('campaign.status_delivered'),
+    'finalizada':t('campaign.status_finalized'),
   };
 
-  const color = statusColors[status] ?? statusColors['OPEN'];
+  const bg = statusBgColors[status] ?? statusBgColors['OPEN'];
   const label = statusLabels[status] ?? status;
 
   return (
-    <span className={clsx('inline-flex items-center rounded-full px-3 py-1', color)}>
+    <span
+      className="inline-flex items-center rounded-full px-3 py-1 text-white text-sm font-medium"
+      style={{ backgroundColor: bg }}
+    >
       {label}
     </span>
   );

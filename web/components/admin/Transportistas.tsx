@@ -12,12 +12,12 @@ import { useT } from '@/lib/i18n/useT';
 import { getTransporters, type Transporter as Transportista } from '@/services/transporterService';
 
 const statusLabel: Record<string, { label: string; classes: string }> = {
-  OPEN: { label: 'Abierta', classes: 'bg-blue-100 text-blue-700' },
-  FROZEN: { label: 'Congelada', classes: 'bg-yellow-100 text-yellow-700' },
-  CLOSED: { label: 'Cerrada', classes: 'bg-orange-100 text-orange-700' },
-  IN_TRANSIT: { label: 'En camino', classes: 'bg-purple-100 text-purple-700' },
-  DELIVERED: { label: 'Entregada', classes: 'bg-green-100 text-green-700' },
-  FINALIZED: { label: 'Finalizada', classes: 'bg-gray-100 text-gray-600' },
+  'abierta':   { label: 'Abierta',   classes: 'bg-blue-100 text-blue-700' },
+  'congelada': { label: 'Congelada', classes: 'bg-yellow-100 text-yellow-700' },
+  'cerrada':   { label: 'Cerrada',   classes: 'bg-orange-100 text-orange-700' },
+  'en-camino': { label: 'En camino', classes: 'bg-purple-100 text-purple-700' },
+  'entregada': { label: 'Entregada', classes: 'bg-green-100 text-green-700' },
+  'finalizada':{ label: 'Finalizada',classes: 'bg-gray-100 text-gray-600' },
 };
 
 export const Transportistas = () => {

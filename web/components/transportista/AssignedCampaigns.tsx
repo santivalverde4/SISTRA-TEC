@@ -26,7 +26,7 @@ const eventTypes = [
   'Otro',
 ];
 
-type FilterStatus = 'all' | 'CLOSED' | 'IN_TRANSIT' | 'DELIVERED';
+type FilterStatus = 'all' | 'cerrada' | 'en-camino' | 'entregada';
 
 export const AssignedCampaigns = () => {
   const router = useRouter();
@@ -85,7 +85,7 @@ export const AssignedCampaigns = () => {
     try {
       await markDeliveredApi(eventTarget.id);
       setCampaigns(prev => prev.map(c =>
-        c.id === eventTarget.id ? { ...c, status: 'DELIVERED' as const } : c
+        c.id === eventTarget.id ? { ...c, status: 'entregada' as const } : c
       ));
       setDelivered(true);
     } catch (err) {
@@ -115,9 +115,9 @@ export const AssignedCampaigns = () => {
       <div className="flex gap-2 mb-6 flex-wrap">
         {([
           { value: 'all', label: t('transporter.filter_all') },
-          { value: 'CLOSED', label: t('transporter.filter_pending') },
-          { value: 'IN_TRANSIT', label: t('transporter.filter_in_transit') },
-          { value: 'DELIVERED', label: t('transporter.filter_delivered') },
+          { value: 'cerrada', label: t('transporter.filter_pending') },
+          { value: 'en-camino', label: t('transporter.filter_in_transit') },
+          { value: 'entregada', label: t('transporter.filter_delivered') },
         ] as { value: FilterStatus; label: string }[]).map((opt) => (
           <button
             key={opt.value}
@@ -168,7 +168,7 @@ export const AssignedCampaigns = () => {
               </div>
 
               <div className="flex gap-2">
-                {campaign.status === 'IN_TRANSIT' && (
+                {campaign.status === 'en-camino' && (
                   <Button onClick={() => openEventModal(campaign)}>
                     {t('transporter.register_event')}
                   </Button>
