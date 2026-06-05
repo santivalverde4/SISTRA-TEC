@@ -42,7 +42,7 @@ export const changePassword = async (req: Request, res: Response) => {
   }
 
   const matches = await bcrypt.compare(currentPassword, user.passwordHash);
-  if (!matches) throw new HttpError(401, "Invalid current password");
+  if (!matches) throw new HttpError(400, "Invalid current password");
 
   const newHash = await bcrypt.hash(newPassword, 12);
   await prisma.user.update({ where: { id }, data: { passwordHash: newHash } });
