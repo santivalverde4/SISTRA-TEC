@@ -62,6 +62,8 @@ const es = {
     arrival_date_required: 'La fecha de llegada estimada es requerida.',
     tracking_failed: 'No se pudo cargar el historial de trazabilidad.',
     destination_max_length: 'El destino no puede superar los 250 caracteres.',
+    invalid_current_password: 'La contraseña actual es incorrecta.',
+    oauth_no_password: 'Las cuentas de Google no pueden cambiar la contraseña desde aquí.',
   },
 
   sidebar: {
@@ -224,8 +226,6 @@ const es = {
     edit_profile: 'Editar Perfil',
     full_name: 'Nombre Completo',
     email: 'Correo Electrónico',
-    phone: 'Teléfono',
-    address: 'Dirección',
     save_changes: 'Guardar Cambios',
     cancel: 'Cancelar',
     security: 'Seguridad',
@@ -245,6 +245,19 @@ const es = {
     role_donante: 'Donante',
     role_transportista: 'Transportista',
     role_administrador: 'Administrador',
+    oauth_password_hint: 'Tu cuenta usa Google. Puedes añadir una contraseña para también iniciar sesión con correo y contraseña.',
+    create_password: 'Crear contraseña',
+    create_password_title: 'Crear Contraseña',
+    error_name_required: 'El nombre es requerido',
+    error_name_min: 'El nombre debe tener al menos 2 caracteres',
+    error_current_password_required: 'La contraseña actual es requerida',
+    error_new_password_min: 'La nueva contraseña debe tener al menos 6 caracteres',
+    error_passwords_mismatch: 'Las contraseñas no coinciden',
+    error_vehicle_required: 'El tipo de vehículo es requerido',
+    error_plate_required: 'La placa es requerida',
+    save_success: 'Cambios guardados correctamente',
+    password_success: 'Contraseña actualizada correctamente',
+    vehicle_success: 'Vehículo actualizado correctamente',
   },
 
   transporters: {

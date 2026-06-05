@@ -10,6 +10,7 @@ export type ErrorContext =
   | 'campaign'
   | 'assignment'
   | 'donation'
+  | 'profile'
   | 'generic';
 
 interface ErrorMapping {
@@ -32,11 +33,17 @@ const ASSIGNMENT_MAPPINGS: ErrorMapping[] = [
   { match: (m) => m.includes('arrival') || m.includes('estimatedarrival'), key: 'errors.arrival_date_required' },
 ];
 
+const PROFILE_MAPPINGS: ErrorMapping[] = [
+  { match: (m) => m.includes('invalid current password'), key: 'errors.invalid_current_password' },
+  { match: (m) => m.includes('oauth') || m.includes('cannot change password'), key: 'errors.oauth_no_password' },
+];
+
 const CONTEXT_MAPPINGS: Record<ErrorContext, ErrorMapping[]> = {
   auth: AUTH_MAPPINGS,
   campaign: CAMPAIGN_MAPPINGS,
   assignment: ASSIGNMENT_MAPPINGS,
   donation: [],
+  profile: PROFILE_MAPPINGS,
   generic: [],
 };
 
