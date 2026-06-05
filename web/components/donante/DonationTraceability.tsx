@@ -144,12 +144,11 @@ export const DonationTraceability = () => {
                     {selected.items.map((item, i) => (
                       <div
                         key={i}
-                        className={`grid grid-cols-[1fr_120px] gap-2 text-sm px-3 py-2.5 ${
-                          i < selected.items.length - 1 ? 'border-b border-border' : ''
-                        }`}
+                        className="grid grid-cols-[1fr_120px] gap-2 text-sm px-3 py-2.5 border-b border-border last:border-b-0"
+                        style={{ background: i % 2 !== 0 ? 'var(--muted)' : undefined }}
                       >
                         <span>{item.description}</span>
-                        <span className="text-muted-foreground">{item.quantity}</span>
+                        <span className="font-medium tabular-nums">{item.quantity}</span>
                       </div>
                     ))}
                   </div>

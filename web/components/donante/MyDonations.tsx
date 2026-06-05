@@ -158,9 +158,9 @@ export const MyDonations = () => {
                   <span>{t('donation.column_quantity')}</span>
                 </div>
                 {detailsDonation.items.map((item, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2.5 text-sm border-t border-border">
+                  <div key={i} className="grid grid-cols-[1fr_auto] gap-4 px-3 py-2.5 text-sm border-t border-border" style={{ background: i % 2 !== 0 ? 'var(--muted)' : undefined }}>
                     <span>{item.description}</span>
-                    <span className="text-muted-foreground whitespace-nowrap">{item.quantity}</span>
+                    <span className="font-medium tabular-nums whitespace-nowrap">{item.quantity}</span>
                   </div>
                 ))}
               </div>
