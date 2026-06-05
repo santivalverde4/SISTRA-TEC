@@ -116,9 +116,11 @@ export const ManageCampaigns = () => {
   const saveEdit = async () => {
     if (!editTarget || !editForm) return;
     const errs: Record<string, string> = {};
+    if (!editForm.name.trim()) errs.name = t('campaign.error_name_required');
+    if (!editForm.description.trim()) errs.description = t('campaign.error_description_required');
     if (!editForm.startDate) errs.startDate = t('campaign.error_start_required');
     if (!editForm.endDate) errs.endDate = t('campaign.error_end_required');
-    if (editForm.startDate && editForm.endDate && editForm.startDate > editForm.endDate) {
+    if (editForm.startDate && editForm.endDate && editForm.endDate <= editForm.startDate) {
       errs.endDate = t('campaign.error_end_before_start');
     }
     if (Object.keys(errs).length > 0) { setEditErrors(errs); return; }
@@ -251,12 +253,12 @@ export const ManageCampaigns = () => {
                 className="w-full pl-10 pr-8 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:min-w-[180px]"
               >
                 <option value="all">{t('campaign.all_statuses')}</option>
-                <option value="abierta">{t('campaign.status_open')}</option>
-                <option value="congelada">{t('campaign.status_frozen')}</option>
-                <option value="cerrada">{t('campaign.status_closed')}</option>
-                <option value="en-camino">{t('campaign.status_in_transit')}</option>
-                <option value="entregada">{t('campaign.status_delivered')}</option>
-                <option value="finalizada">{t('campaign.status_finalized')}</option>
+                <option value="OPEN">{t('campaign.status_open')}</option>
+                <option value="FROZEN">{t('campaign.status_frozen')}</option>
+                <option value="CLOSED">{t('campaign.status_closed')}</option>
+                <option value="IN_TRANSIT">{t('campaign.status_in_transit')}</option>
+                <option value="DELIVERED">{t('campaign.status_delivered')}</option>
+                <option value="FINALIZED">{t('campaign.status_finalized')}</option>
               </select>
             </div>
           </div>
@@ -426,7 +428,11 @@ export const ManageCampaigns = () => {
           <div className="space-y-4">
             <div>
               <label className="block mb-1 text-sm font-medium">{t('campaign.name')}</label>
-              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                error={editErrors.name}
+              />
             </div>
             <div>
               <label className="block mb-1 text-sm font-medium">{t('campaign.description')}</label>
@@ -436,6 +442,7 @@ export const ManageCampaigns = () => {
                 rows={3}
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               />
+              {editErrors.description && <p className="mt-1 text-sm text-destructive">{editErrors.description}</p>}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -453,7 +460,7 @@ export const ManageCampaigns = () => {
                 <DateInput
                   value={editForm.endDate}
                   onChange={(v) => setEditForm({ ...editForm, endDate: v })}
-                  min={editForm.startDate || today}
+                  min={editForm.startDate ? nextDay(editForm.startDate) : nextDay(today)}
                   error={editErrors.endDate}
                 />
               </div>
@@ -465,12 +472,12 @@ export const ManageCampaigns = () => {
                 onChange={(e) => setEditForm({ ...editForm, status: e.target.value as CampaignStatus })}
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="abierta">{t('campaign.status_open')}</option>
-                <option value="congelada">{t('campaign.status_frozen')}</option>
-                <option value="cerrada">{t('campaign.status_closed')}</option>
-                <option value="en-camino">{t('campaign.status_in_transit')}</option>
-                <option value="entregada">{t('campaign.status_delivered')}</option>
-                <option value="finalizada">{t('campaign.status_finalized')}</option>
+                <option value="OPEN">{t('campaign.status_open')}</option>
+                <option value="FROZEN">{t('campaign.status_frozen')}</option>
+                <option value="CLOSED">{t('campaign.status_closed')}</option>
+                <option value="IN_TRANSIT">{t('campaign.status_in_transit')}</option>
+                <option value="DELIVERED">{t('campaign.status_delivered')}</option>
+                <option value="FINALIZED">{t('campaign.status_finalized')}</option>
               </select>
             </div>
             {editErrors.general && <p className="text-sm text-destructive">{editErrors.general}</p>}
