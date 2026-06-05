@@ -37,6 +37,8 @@ export const AvailableCampaigns = () => {
   const [donateError, setDonateError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 6;
 
   useEffect(() => {
     getAvailableCampaigns()
@@ -61,6 +63,9 @@ export const AvailableCampaigns = () => {
     const matchesFilter = filterCategory === 'all' || campaign.categories.includes(filterCategory);
     return matchesSearch && matchesFilter;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredCampaigns.length / PAGE_SIZE));
+  const pagedCampaigns = filteredCampaigns.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const openDonate = (c: Campaign) => {
     setDonateCampaign(c);
@@ -114,7 +119,7 @@ export const AvailableCampaigns = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                 placeholder={t('campaign.search_placeholder')}
                 className="pl-10"
               />
@@ -123,14 +128,17 @@ export const AvailableCampaigns = () => {
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <select
                 value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
+                onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}
                 className="pl-10 pr-8 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring min-w-[180px]"
               >
                 <option value="all">{t('campaign.all_categories')}</option>
                 <option value="Alimentos">Alimentos</option>
-                <option value="Suministros">Suministros</option>
-                <option value="Medicamentos">Medicamentos</option>
                 <option value="Ropa">Ropa</option>
+                <option value="Medicamentos">Medicamentos</option>
+                <option value="Suministros">Suministros</option>
+                <option value="Educación">Educación</option>
+                <option value="Vivienda">Vivienda</option>
+                <option value="Otro">Otro</option>
               </select>
             </div>
           </div>
@@ -138,7 +146,7 @@ export const AvailableCampaigns = () => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredCampaigns.map((campaign) => (
+        {pagedCampaigns.map((campaign) => (
           <Card key={campaign.id} className="hover:shadow-lg transition-all">
             <CardHeader>
               <h3 className="mb-2">{campaign.name}</h3>
@@ -185,6 +193,28 @@ export const AvailableCampaigns = () => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            {t('common.previous')}
+          </Button>
+          <span className="text-sm text-muted-foreground px-2">
+            {page} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            {t('common.next')}
+          </Button>
+        </div>
       )}
 
       {/* Details modal */}

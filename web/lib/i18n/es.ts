@@ -13,6 +13,8 @@ const es = {
     optional: '(opcional)',
     all: 'Todas',
     loading: 'Cargando...',
+    previous: 'Anterior',
+    next: 'Siguiente',
   },
 
   auth: {
