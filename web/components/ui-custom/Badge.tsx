@@ -3,6 +3,7 @@
 import { HTMLAttributes, forwardRef } from 'react';
 import { clsx } from 'clsx';
 import type { CampaignStatus, TransportStatus } from '@/types';
+import { useT } from '@/lib/i18n/useT';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: 'default' | 'success' | 'warning' | 'destructive' | 'info' | 'secondary';
@@ -33,22 +34,33 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 
 Badge.displayName = 'Badge';
 
-const statusVariants: Record<string, { label: string; color: string }> = {
-  abierta: { label: 'Abierta', color: 'bg-[var(--status-open)] text-white' },
-  congelada: { label: 'Congelada', color: 'bg-[var(--status-frozen)] text-white' },
-  cerrada: { label: 'Cerrada para donaciones', color: 'bg-[var(--status-closed)] text-white' },
-  'en-camino': { label: 'En camino a ser entregada', color: 'bg-[var(--status-transit)] text-white' },
-  entregada: { label: 'Entregada', color: 'bg-[var(--status-delivered)] text-white' },
-  finalizada: { label: 'Finalizada', color: 'bg-[var(--status-completed)] text-white' },
-  pendiente: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700' },
+const statusColors: Record<string, string> = {
+  OPEN: 'bg-[var(--status-open)] text-white',
+  FROZEN: 'bg-[var(--status-frozen)] text-white',
+  CLOSED: 'bg-[var(--status-closed)] text-white',
+  IN_TRANSIT: 'bg-[var(--status-transit)] text-white',
+  DELIVERED: 'bg-[var(--status-delivered)] text-white',
+  FINALIZED: 'bg-[var(--status-completed)] text-white',
 };
 
 export function StatusBadge({ status }: { status: CampaignStatus | TransportStatus | string }) {
-  const config = statusVariants[status] ?? statusVariants['abierta'];
+  const { t } = useT();
+
+  const statusLabels: Record<string, string> = {
+    OPEN: t('campaign.status_open'),
+    FROZEN: t('campaign.status_frozen'),
+    CLOSED: t('campaign.status_closed'),
+    IN_TRANSIT: t('campaign.status_in_transit'),
+    DELIVERED: t('campaign.status_delivered'),
+    FINALIZED: t('campaign.status_finalized'),
+  };
+
+  const color = statusColors[status] ?? statusColors['OPEN'];
+  const label = statusLabels[status] ?? status;
 
   return (
-    <span className={clsx('inline-flex items-center rounded-full px-3 py-1', config.color)}>
-      {config.label}
+    <span className={clsx('inline-flex items-center rounded-full px-3 py-1', color)}>
+      {label}
     </span>
   );
 }
