@@ -1226,6 +1226,99 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Forgot Password (trigger email)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('response is 200', function () { pm.response.to.have.status(200); });",
+              "// The API returns { ok: true } even if the email is not associated to avoid enumeration.",
+              "console.log('If the account exists and has a password, Brevo will send the reset email to the recipient. Check server logs or Brevo dashboard if nothing arrives.');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test@example.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/forgot-password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "forgot-password"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Reset Password (submit token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('response is 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('ok is true', function () { pm.expect(json.ok).to.eql(true); });",
+              "console.log('If successful, the user password was updated and refresh tokens revoked.');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"<COPIA_AQUI_EL_TOKEN_DEL_EMAIL>\",\n  \"newPassword\": \"NewPassw0rd!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/reset-password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "reset-password"
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "variable": [
