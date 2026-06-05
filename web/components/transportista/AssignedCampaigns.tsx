@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
@@ -10,17 +10,11 @@ import { Modal } from '@/components/shared/Modal';
 import { MapPin, CheckCircle, Calendar, Truck, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useT } from '@/lib/i18n/useT';
-
-interface AssignedCampaign {
-  id: string;
-  name: string;
-  status: 'cerrada' | 'en-camino' | 'entregada';
-  destination: string;
-  km: string;
-  departureDate: string;
-  estimatedArrival: string;
-  eventsCount: number;
-}
+import { resolveErrorKey } from '@/lib/apiError';
+import {
+  getMyAssignedCampaigns, registerEvent, markDelivered as markDeliveredApi,
+  type AssignedCampaign,
+} from '@/services/transporterService';
 
 const eventTypes = [
   'Camión salió',
@@ -32,74 +26,84 @@ const eventTypes = [
   'Otro',
 ];
 
-const initialCampaigns: AssignedCampaign[] = [
-  {
-    id: '1',
-    name: 'Ropa de invierno para refugiados',
-    status: 'en-camino',
-    destination: 'Comunidad San Juan, Zona Norte',
-    km: '120',
-    departureDate: '2026-05-12',
-    estimatedArrival: '2026-05-15',
-    eventsCount: 3,
-  },
-  {
-    id: '2',
-    name: 'Medicamentos para zonas rurales',
-    status: 'cerrada',
-    destination: 'Centro de Salud Rural, Zona Sur',
-    km: '85',
-    departureDate: '2026-05-18',
-    estimatedArrival: '2026-05-20',
-    eventsCount: 0,
-  },
-  {
-    id: '3',
-    name: 'Útiles escolares para primarias',
-    status: 'entregada',
-    destination: 'Escuela Rural San Marcos',
-    km: '60',
-    departureDate: '2026-04-05',
-    estimatedArrival: '2026-04-07',
-    eventsCount: 4,
-  },
-];
-
 type FilterStatus = 'all' | 'cerrada' | 'en-camino' | 'entregada';
 
 export const AssignedCampaigns = () => {
   const router = useRouter();
   const { t } = useT();
-  const [campaigns, setCampaigns] = useState<AssignedCampaign[]>(initialCampaigns);
+  const [campaigns, setCampaigns] = useState<AssignedCampaign[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [eventTarget, setEventTarget] = useState<AssignedCampaign | null>(null);
   const [eventForm, setEventForm] = useState({ type: 'Camión salió', description: '', notes: '' });
+  const [eventLoading, setEventLoading] = useState(false);
+  const [eventError, setEventError] = useState<string | null>(null);
   const [delivered, setDelivered] = useState(false);
+
+  useEffect(() => {
+    getMyAssignedCampaigns()
+      .then(setCampaigns)
+      .catch(() => setError(t('errors.load_failed')))
+      .finally(() => setLoading(false));
+  }, [t]);
 
   const openEventModal = (c: AssignedCampaign) => {
     setEventTarget(c);
     setEventForm({ type: 'Camión salió', description: '', notes: '' });
+    setEventError(null);
     setDelivered(false);
   };
 
-  const submitEvent = () => {
+  const submitEvent = async () => {
     if (!eventTarget || !eventForm.description) return;
-    setCampaigns(prev => prev.map(c =>
-      c.id === eventTarget.id ? { ...c, eventsCount: c.eventsCount + 1 } : c
-    ));
-    setDelivered(false);
-    setEventTarget(null);
+    setEventLoading(true);
+    setEventError(null);
+    try {
+      await registerEvent({
+        campaignId: eventTarget.id,
+        type: eventForm.type,
+        description: eventForm.description,
+        notes: eventForm.notes || undefined,
+      });
+      setCampaigns(prev => prev.map(c =>
+        c.id === eventTarget.id ? { ...c, eventsCount: c.eventsCount + 1 } : c
+      ));
+      setDelivered(false);
+      setEventTarget(null);
+    } catch (err) {
+      setEventError(t(resolveErrorKey(err) as Parameters<typeof t>[0]));
+    } finally {
+      setEventLoading(false);
+    }
   };
 
-  const markDelivered = () => {
+  const handleMarkDelivered = async () => {
     if (!eventTarget) return;
-    setCampaigns(prev => prev.map(c =>
-      c.id === eventTarget.id ? { ...c, status: 'entregada' } : c
-    ));
-    setDelivered(true);
+    setEventLoading(true);
+    setEventError(null);
+    try {
+      await markDeliveredApi(eventTarget.id);
+      setCampaigns(prev => prev.map(c =>
+        c.id === eventTarget.id ? { ...c, status: 'entregada' as const } : c
+      ));
+      setDelivered(true);
+    } catch (err) {
+      setEventError(t(resolveErrorKey(err) as Parameters<typeof t>[0]));
+    } finally {
+      setEventLoading(false);
+    }
   };
 
   const filtered = campaigns.filter(c => filter === 'all' || c.status === filter);
+
+  if (loading) {
+    return <div className="p-6 text-center py-16 text-muted-foreground">{t('common.loading')}</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-center py-16 text-destructive">{error}</div>;
+  }
 
   return (
     <div className="p-6">
@@ -217,17 +221,19 @@ export const AssignedCampaigns = () => {
                   className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                 />
               </div>
+              {eventError && <p className="text-sm text-destructive">{eventError}</p>}
               <div className="flex gap-3 pt-2">
                 <Button
                   className="flex-1"
                   onClick={submitEvent}
-                  disabled={!eventForm.description}
+                  disabled={eventLoading || !eventForm.description}
                 >
-                  {t('transporter.event_submit')}
+                  {eventLoading ? t('common.loading') : t('transporter.event_submit')}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={markDelivered}
+                  onClick={handleMarkDelivered}
+                  disabled={eventLoading}
                   className="text-green-600 border-green-600 hover:bg-green-50"
                 >
                   {t('traceability.mark_delivered')}
