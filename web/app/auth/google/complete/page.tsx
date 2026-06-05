@@ -5,22 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { UserCircle } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
-import { api } from '@/lib/api';
-import { setToken, setUser, mapRole, getDefaultRoute, type BackendRole } from '@/lib/auth';
+import { completeGoogleAuth } from '@/services/authService';
+import { getDefaultRoute } from '@/lib/auth';
+import { resolveErrorKey } from '@/lib/apiError';
 import type { UserRole } from '@/types';
 import { useT } from '@/lib/i18n/useT';
-
-interface CompleteResponse {
-  accessToken: string;
-  user: { id: string; email: string; name: string | null; role: BackendRole };
-}
-
-function finish(data: CompleteResponse, router: ReturnType<typeof useRouter>) {
-  const mappedRole = mapRole(data.user.role);
-  setToken(data.accessToken);
-  setUser({ id: data.user.id, email: data.user.email, name: data.user.name, role: mappedRole });
-  router.replace(getDefaultRoute(mappedRole));
-}
 
 export default function GoogleCompletePage() {
   const router = useRouter();
@@ -44,15 +33,15 @@ export default function GoogleCompletePage() {
     }
 
     setLoading(true);
-    // Attempt login without role — succeeds if user already has an OAuth account
-    api.post<CompleteResponse>('/api/auth/google/complete', { tempToken })
-      .then((data) => finish(data, router))
+    // Attempt without role — succeeds if user already has an OAuth account
+    completeGoogleAuth(tempToken)
+      .then((user) => { window.location.href = getDefaultRoute(user.role); })
       .catch((err) => {
         const msg = err instanceof Error ? err.message : '';
         if (msg.includes('Role required')) {
           setNeedsRole(true);
         } else {
-          setError(msg || t('auth.error_network'));
+          setError(t(resolveErrorKey(err, 'auth') as Parameters<typeof t>[0]));
         }
         setLoading(false);
       });
@@ -64,19 +53,10 @@ export default function GoogleCompletePage() {
     setLoading(true);
     setError(null);
     try {
-      const backendRole: BackendRole =
-        role === 'donante' ? 'DONOR' :
-        role === 'transportista' ? 'TRANSPORTER' :
-        'ADMIN_CENTER';
-
-      const data = await api.post<CompleteResponse>('/api/auth/google/complete', {
-        tempToken,
-        role: backendRole,
-      });
-
-      finish(data, router);
+      const user = await completeGoogleAuth(tempToken, role);
+      window.location.href = getDefaultRoute(user.role);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.error_network'));
+      setError(t(resolveErrorKey(err, 'auth') as Parameters<typeof t>[0]));
       setLoading(false);
     }
   }
