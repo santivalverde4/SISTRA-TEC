@@ -25,9 +25,17 @@ export const DonationTraceability = () => {
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
+  const TRACEABLE_STATUSES: string[] = ['cerrada', 'en-camino', 'entregada', 'finalizada'];
+
   useEffect(() => {
     getMyDonations()
-      .then((data) => setDonations(data.map((d) => ({ ...d, timeline: [] }))))
+      .then((data) =>
+        setDonations(
+          data
+            .filter((d) => TRACEABLE_STATUSES.includes(d.campaignStatus))
+            .map((d) => ({ ...d, timeline: [] }))
+        )
+      )
       .catch((err) => setError(t(resolveErrorKey(err) as Parameters<typeof t>[0])))
       .finally(() => setLoading(false));
   }, [t]);
