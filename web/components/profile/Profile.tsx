@@ -257,7 +257,7 @@ export const Profile = () => {
 
                 {isEditing && (
                   <div className="flex gap-2 pt-4">
-                    <Button type="submit" disabled={profileSaving || nameInput.trim().length === 0}>
+                    <Button type="submit" disabled={profileSaving || nameInput.trim().length === 0 || nameInput.trim() === profile.name.trim()}>
                       {profileSaving ? t('common.loading') : t('profile.save_changes')}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancelEdit}>
