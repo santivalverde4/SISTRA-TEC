@@ -117,7 +117,7 @@ export const googleCallback = (req: Request, res: Response) => {
 };
 
 export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Response) => {
-  const { tempToken, role } = req.body ?? {};
+  const { tempToken, role, vehicle, plate } = req.body ?? {};
   if (!tempToken) {
     throw new HttpError(400, "Temp token required");
   }
@@ -154,7 +154,7 @@ export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Resp
     emails: payload.email ? [{ value: payload.email }] as any : undefined
   };
 
-  const user = await upsertGoogleUser(profile as Profile, normalizedRole as unknown as string);
+  const user = await upsertGoogleUser(profile as Profile, normalizedRole as unknown as string, vehicle, plate);
   const tokens = await issueTokensForUser(user);
 
   setRefreshCookie(res, tokens.refreshToken);
