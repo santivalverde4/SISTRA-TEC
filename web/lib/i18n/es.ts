@@ -201,6 +201,7 @@ const es = {
     filter_all: 'Todas',
     filter_in_transit: 'En tránsito',
     filter_delivered: 'Entregadas',
+    filter_closed: 'Cerradas',
     filter_finalized: 'Finalizadas',
     event_singular: 'evento registrado',
     event_plural: 'eventos registrados',

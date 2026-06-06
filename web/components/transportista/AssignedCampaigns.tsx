@@ -16,7 +16,7 @@ import {
   type AssignedCampaign,
 } from '@/services/transporterService';
 
-type FilterStatus = 'all' | 'en-camino' | 'entregada' | 'finalizada';
+type FilterStatus = 'all' | 'cerrada' | 'en-camino' | 'entregada' | 'finalizada';
 
 export const AssignedCampaigns = () => {
   const router = useRouter();
@@ -123,6 +123,7 @@ export const AssignedCampaigns = () => {
       <div className="flex gap-2 mb-6 flex-wrap">
         {([
           { value: 'all', label: t('transporter.filter_all') },
+          { value: 'cerrada', label: t('transporter.filter_closed') },
           { value: 'en-camino', label: t('transporter.filter_in_transit') },
           { value: 'entregada', label: t('transporter.filter_delivered') },
           { value: 'finalizada', label: t('transporter.filter_finalized') },
