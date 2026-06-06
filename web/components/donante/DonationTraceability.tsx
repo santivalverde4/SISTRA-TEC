@@ -38,7 +38,7 @@ export const DonationTraceability = () => {
     if (donation.timeline.length > 0) return;
 
     setTrackingLoading(true);
-    getDonationTracking(donation.id)
+    getDonationTracking(donation.campaignId)
       .then((timeline) => {
         setDonations((prev) =>
           prev.map((d) => d.id === donation.id ? { ...d, timeline } : d)
