@@ -64,6 +64,24 @@ export async function register(payload: RegisterPayload): Promise<AuthUser> {
   }
 }
 
+export async function forgotPassword(email: string): Promise<void> {
+  try {
+    await api.post('/api/auth/forgot-password', { email });
+  } catch (err) {
+    log.error('forgotPassword failed', err);
+    throw err;
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  try {
+    await api.post('/api/auth/reset-password', { token, newPassword });
+  } catch (err) {
+    log.error('resetPassword failed', err);
+    throw err;
+  }
+}
+
 export async function completeGoogleAuth(tempToken: string, role?: UserRole, vehicle?: string, plate?: string): Promise<AuthUser> {
   try {
     const body: Record<string, string> = { tempToken };

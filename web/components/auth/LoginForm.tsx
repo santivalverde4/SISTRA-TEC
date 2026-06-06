@@ -90,7 +90,12 @@ export function LoginForm() {
             </div>
 
             <div>
-              <label className="block mb-2">{t('auth.password')}</label>
+              <div className="flex justify-between mb-2">
+                <label>{t('auth.password')}</label>
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                  {t('auth.forgot_password_title')}
+                </Link>
+              </div>
               <PasswordInput
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

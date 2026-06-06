@@ -61,6 +61,20 @@ const es = {
     error_vehicle_min: 'Ingresa al menos 3 caracteres',
     error_plate_required: 'La placa es requerida',
     error_plate_invalid: 'Solo letras y números, mínimo 6 caracteres',
+
+    forgot_password_title: 'Recuperar contraseña',
+    forgot_password_subtitle: 'Te enviaremos un enlace para restablecer tu contraseña',
+    forgot_password_submit: 'Enviar enlace',
+    forgot_password_success: 'Si existe una cuenta con ese correo, recibirás un enlace en los próximos minutos.',
+    forgot_password_back_to_login: 'Volver al inicio de sesión',
+
+    reset_password_title: 'Nueva contraseña',
+    reset_password_subtitle: 'Ingresa tu nueva contraseña',
+    reset_password_new: 'Nueva contraseña',
+    reset_password_confirm: 'Confirmar nueva contraseña',
+    reset_password_submit: 'Restablecer contraseña',
+    reset_password_success: 'Contraseña restablecida. Ya puedes iniciar sesión.',
+    reset_password_invalid_token: 'El enlace es inválido o ha expirado.',
   },
 
   errors: {
