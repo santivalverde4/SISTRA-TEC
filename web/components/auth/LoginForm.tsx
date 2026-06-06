@@ -90,18 +90,18 @@ export function LoginForm() {
             </div>
 
             <div>
-              <div className="flex justify-between mb-2">
-                <label>{t('auth.password')}</label>
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                  {t('auth.forgot_password_title')}
-                </Link>
-              </div>
+              <label className="block mb-2">{t('auth.password')}</label>
               <PasswordInput
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 error={errors.password}
               />
+              <div className="flex justify-end mt-1">
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                  {t('auth.forgot_password_title')}
+                </Link>
+              </div>
             </div>
           </CardContent>
 
