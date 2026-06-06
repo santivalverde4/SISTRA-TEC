@@ -10,7 +10,7 @@ import { Modal } from '@/components/shared/Modal';
 import {
   Search, Filter, Edit, Trash2, Plus, MoreVertical,
   Truck, Calendar, Package, Tag, MapPin, Route,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, AlertTriangle,
 } from 'lucide-react';
 import type { CampaignStatus } from '@/types';
 import { formatDate } from '@/lib/utils';
@@ -130,9 +130,8 @@ export const ManageCampaigns = () => {
     } else if (editForm.description.trim().length > 1000) {
       errs.description = t('campaign.error_description_max');
     }
-    if (!editForm.startDate) errs.startDate = t('campaign.error_start_required');
     if (!editForm.endDate) errs.endDate = t('campaign.error_end_required');
-    if (editForm.startDate && editForm.endDate && editForm.endDate <= editForm.startDate) {
+    if (editForm.endDate && editForm.endDate <= editForm.startDate) {
       errs.endDate = t('campaign.error_end_before_start');
     }
     if (Object.keys(errs).length > 0) { setEditErrors(errs); return; }
@@ -458,55 +457,80 @@ export const ManageCampaigns = () => {
       {editTarget && editForm && (
         <Modal title={t('campaign.edit_title')} onClose={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
           <div className="space-y-4">
-            <div>
-              <div className="flex justify-between mb-1">
-                <label className="text-sm font-medium">{t('campaign.name')}</label>
-                <span className={`text-xs ${editForm.name.length > 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {editForm.name.length}/100
-                </span>
-              </div>
-              <Input
-                value={editForm.name}
-                onChange={(e) => { setEditForm({ ...editForm, name: e.target.value }); setEditErrors((p) => ({ ...p, name: '' })); }}
-                error={editErrors.name}
-              />
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <label className="text-sm font-medium">{t('campaign.description')}</label>
-                <span className={`text-xs ${editForm.description.length > 1000 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {editForm.description.length}/1000
-                </span>
-              </div>
-              <textarea
-                value={editForm.description}
-                onChange={(e) => { setEditForm({ ...editForm, description: e.target.value }); setEditErrors((p) => ({ ...p, description: '' })); }}
-                rows={3}
-                className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-              />
-              {editErrors.description && <p className="mt-1 text-sm text-destructive">{editErrors.description}</p>}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-1 text-sm font-medium">{t('campaign.start_date_label')}</label>
-                <DateInput
-                  value={editForm.startDate}
-                  onChange={(v) => setEditForm({ ...editForm, startDate: v })}
-                  min={today}
-                  max={editForm.endDate || undefined}
-                  error={editErrors.startDate}
-                />
-              </div>
-              <div>
-                <label className="block mb-1 text-sm font-medium">{t('campaign.end_date_label')}</label>
-                <DateInput
-                  value={editForm.endDate}
-                  onChange={(v) => setEditForm({ ...editForm, endDate: v })}
-                  min={editForm.startDate ? nextDay(editForm.startDate) : nextDay(today)}
-                  error={editErrors.endDate}
-                />
-              </div>
-            </div>
+            {(() => {
+              const isStatusOnly = editTarget.status === 'en-camino' || editTarget.status === 'entregada';
+              return (
+                <>
+                  {editTarget.status === 'en-camino' && (
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                      <AlertTriangle className="mt-0.5 w-4 h-4 shrink-0" />
+                      <span>{t('campaign.locked_in_transit')}</span>
+                    </div>
+                  )}
+                  {editTarget.status === 'entregada' && (
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-green-500/40 bg-green-500/10 px-3 py-2">
+                      <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                        <Package className="w-4 h-4 shrink-0" />
+                        <span>{t('campaign.prompt_finalize')}</span>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-green-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+                        {t('campaign.status_delivered')}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label className="text-sm font-medium">{t('campaign.name')}</label>
+                      <span className={`text-xs ${editForm.name.length > 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {editForm.name.length}/100
+                      </span>
+                    </div>
+                    <Input
+                      value={editForm.name}
+                      onChange={(e) => { setEditForm({ ...editForm, name: e.target.value }); setEditErrors((p) => ({ ...p, name: '' })); }}
+                      error={editErrors.name}
+                      disabled={isStatusOnly}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label className="text-sm font-medium">{t('campaign.description')}</label>
+                      <span className={`text-xs ${editForm.description.length > 1000 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {editForm.description.length}/1000
+                      </span>
+                    </div>
+                    <textarea
+                      value={editForm.description}
+                      onChange={(e) => { setEditForm({ ...editForm, description: e.target.value }); setEditErrors((p) => ({ ...p, description: '' })); }}
+                      rows={3}
+                      disabled={isStatusOnly}
+                      className={`w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none${isStatusOnly ? ' opacity-50 cursor-not-allowed bg-muted' : ''}`}
+                    />
+                    {editErrors.description && <p className="mt-1 text-sm text-destructive">{editErrors.description}</p>}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">{t('campaign.start_date_label')}</label>
+                      <DateInput
+                        value={editForm.startDate}
+                        onChange={() => {}}
+                        disabled
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">{t('campaign.end_date_label')}</label>
+                      <DateInput
+                        value={editForm.endDate}
+                        onChange={(v) => setEditForm({ ...editForm, endDate: v })}
+                        min={nextDay(editForm.startDate || today)}
+                        error={editErrors.endDate}
+                        disabled={isStatusOnly}
+                      />
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
             <div>
               <label className="block mb-1 text-sm font-medium">{t('campaign.status')}</label>
               {(() => {
