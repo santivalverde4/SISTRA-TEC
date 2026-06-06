@@ -169,14 +169,14 @@ export const TransportTraceability = () => {
         <p className="text-muted-foreground mt-1">{t('traceability.transport_subtitle')}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Campaign list */}
-        <div className="lg:col-span-1 space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:h-[calc(100vh-200px)]">
+        {/* Campaign list — scrollable; horizontal chips on mobile, vertical panel on desktop */}
+        <div className="lg:col-span-1 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-hidden overflow-y-hidden lg:overflow-y-auto pb-1 lg:pb-0 pr-0 lg:pr-1">
           {campaigns.map((campaign) => (
             <Card
               key={campaign.assignmentId}
-              className={`cursor-pointer transition-all ${
-                selected?.assignmentId === campaign.assignmentId ? 'ring-2 ring-primary shadow-md' : 'hover:shadow-md'
+              className={`cursor-pointer transition-all shrink-0 lg:shrink w-64 lg:w-auto ${
+                selected?.assignmentId === campaign.assignmentId ? 'border-l-4 border-l-primary shadow-md' : 'hover:shadow-md'
               }`}
               onClick={() => handleSelectCampaign(campaign)}
             >
@@ -192,8 +192,8 @@ export const TransportTraceability = () => {
           ))}
         </div>
 
-        {/* Detail panel */}
-        <div className="lg:col-span-3 space-y-4">
+        {/* Detail panel — independently scrollable on desktop */}
+        <div className="lg:col-span-3 lg:overflow-y-auto space-y-4 lg:pr-1">
           {loadingDetail ? (
             <div className="text-center py-16 text-muted-foreground">{t('common.loading')}</div>
           ) : detailError ? (
@@ -279,6 +279,8 @@ export const TransportTraceability = () => {
                   <Timeline events={selected.timeline} />
                 </CardContent>
               </Card>
+              {/* Spacer so last timeline item isn't clipped by scroll container */}
+              <div className="h-4" />
             </>
           ) : null}
         </div>
