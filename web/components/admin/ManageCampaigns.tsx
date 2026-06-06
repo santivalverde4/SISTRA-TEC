@@ -17,6 +17,7 @@ import { formatDate } from '@/lib/utils';
 import { DateInput } from '@/components/ui-custom/DateInput';
 import { useT } from '@/lib/i18n/useT';
 import { resolveErrorKey } from '@/lib/apiError';
+import { getAllowedTransitions, canEditCampaign, canAssignTransporter, canDeleteCampaign, CAMPAIGN_STATUS_LABELS } from '@/lib/campaignStatus';
 import {
   getCampaigns, getTransporters, updateCampaign, deleteCampaign, assignTransporter,
   type Campaign as BackendCampaign,
@@ -76,6 +77,7 @@ export const ManageCampaigns = () => {
   const [assignForm, setAssignForm] = useState<AssignForm>({
     transporterId: '', destination: '', distanceKm: '', departureDate: '', estimatedArrival: '',
   });
+  const [assignErrors, setAssignErrors] = useState<Record<string, string>>({});
   const [assignLoading, setAssignLoading] = useState(false);
   const [assignError, setAssignError] = useState<string | null>(null);
 
@@ -91,11 +93,13 @@ export const ManageCampaigns = () => {
 
   useEffect(() => { setPage(1); }, [searchTerm, filterStatus]);
 
-  const filtered = campaigns.filter((c) => {
-    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || c.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const filtered = campaigns
+    .filter((c) => {
+      const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter = filterStatus === 'all' || c.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => b.startDate.localeCompare(a.startDate));
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -116,8 +120,16 @@ export const ManageCampaigns = () => {
   const saveEdit = async () => {
     if (!editTarget || !editForm) return;
     const errs: Record<string, string> = {};
-    if (!editForm.name.trim()) errs.name = t('campaign.error_name_required');
-    if (!editForm.description.trim()) errs.description = t('campaign.error_description_required');
+    if (editForm.name.trim().length < 3) {
+      errs.name = t('campaign.error_name_min');
+    } else if (editForm.name.trim().length > 100) {
+      errs.name = t('campaign.error_name_max');
+    }
+    if (editForm.description.trim().length < 10) {
+      errs.description = t('campaign.error_description_min');
+    } else if (editForm.description.trim().length > 1000) {
+      errs.description = t('campaign.error_description_max');
+    }
     if (!editForm.startDate) errs.startDate = t('campaign.error_start_required');
     if (!editForm.endDate) errs.endDate = t('campaign.error_end_required');
     if (editForm.startDate && editForm.endDate && editForm.endDate <= editForm.startDate) {
@@ -162,6 +174,7 @@ export const ManageCampaigns = () => {
 
   const openAssign = (c: BackendCampaign) => {
     setAssignTarget(c);
+    setAssignErrors({});
     setAssignError(null);
     const existing = c.assignment;
     setAssignForm({
@@ -175,17 +188,16 @@ export const ManageCampaigns = () => {
 
   const saveAssignment = async () => {
     if (!assignTarget) return;
-    if (!assignForm.transporterId || !assignForm.destination || !assignForm.distanceKm) return;
-    if (!assignForm.departureDate) {
-      setAssignError(t('errors.departure_date_required'));
-      return;
-    }
-    if (!assignForm.estimatedArrival) {
-      setAssignError(t('errors.arrival_date_required'));
-      return;
-    }
+    const errs: Record<string, string> = {};
+    if (!assignForm.transporterId) errs.transporterId = t('errors.field_required');
+    if (!assignForm.destination.trim()) errs.destination = t('errors.field_required');
+    if (!assignForm.distanceKm || Number(assignForm.distanceKm) <= 0) errs.distanceKm = t('errors.distance_invalid');
+    if (!assignForm.departureDate) errs.departureDate = t('errors.departure_date_required');
+    if (!assignForm.estimatedArrival) errs.estimatedArrival = t('errors.arrival_date_required');
+    if (Object.keys(errs).length > 0) { setAssignErrors(errs); return; }
     setAssignLoading(true);
     setAssignError(null);
+    setAssignErrors({});
     try {
       await assignTransporter(assignTarget.id, {
         transporterId: assignForm.transporterId,
@@ -306,13 +318,28 @@ export const ManageCampaigns = () => {
                     )}
                   </div>
                   <div className="flex flex-col gap-1 shrink-0 sm:flex-row sm:gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openAssign(campaign)} title={t('transporters.assign_title')}>
+                    <Button
+                      variant="outline" size="sm"
+                      onClick={() => openAssign(campaign)}
+                      disabled={!canAssignTransporter(campaign)}
+                      title={t('transporters.assign_title')}
+                    >
                       <Truck className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => openEdit(campaign)} title={t('common.edit')}>
+                    <Button
+                      variant="outline" size="sm"
+                      onClick={() => openEdit(campaign)}
+                      disabled={!canEditCampaign(campaign)}
+                      title={t('common.edit')}
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setDeleteTarget(campaign)} title={t('common.delete')}>
+                    <Button
+                      variant="outline" size="sm"
+                      onClick={() => setDeleteTarget(campaign)}
+                      disabled={!canDeleteCampaign(campaign)}
+                      title={t('common.delete')}
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => setDetailsTarget(campaign)} title={t('campaign.view_details')}>
@@ -359,7 +386,7 @@ export const ManageCampaigns = () => {
               <label className="block mb-1 text-sm font-medium">{t('transporters.assign_transporter_label')}</label>
               <select
                 value={assignForm.transporterId}
-                onChange={(e) => setAssignForm({ ...assignForm, transporterId: e.target.value })}
+                onChange={(e) => { setAssignForm({ ...assignForm, transporterId: e.target.value }); setAssignErrors((p) => ({ ...p, transporterId: '' })); }}
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">{t('transporters.select_transporter')}</option>
@@ -367,14 +394,16 @@ export const ManageCampaigns = () => {
                   <option key={tr.id} value={tr.id}>{tr.name} — {tr.vehicle}</option>
                 ))}
               </select>
+              {assignErrors.transporterId && <p className="mt-1 text-sm text-destructive">{assignErrors.transporterId}</p>}
             </div>
             <div>
               <label className="block mb-1 text-sm font-medium">{t('transporters.destination')}</label>
               <Input
                 value={assignForm.destination}
-                onChange={(e) => setAssignForm({ ...assignForm, destination: e.target.value.slice(0, 250) })}
+                onChange={(e) => { setAssignForm({ ...assignForm, destination: e.target.value.slice(0, 250) }); setAssignErrors((p) => ({ ...p, destination: '' })); }}
                 placeholder={t('transporters.destination_placeholder')}
                 maxLength={250}
+                error={assignErrors.destination}
               />
               <p className="mt-1 text-xs text-muted-foreground text-right">{assignForm.destination.length}/250</p>
             </div>
@@ -383,10 +412,11 @@ export const ManageCampaigns = () => {
                 <label className="block mb-1 text-sm font-medium">{t('transporters.distance_km')}</label>
                 <Input
                   type="number"
-                  min="0"
+                  min="1"
                   value={assignForm.distanceKm}
-                  onChange={(e) => setAssignForm({ ...assignForm, distanceKm: e.target.value })}
+                  onChange={(e) => { setAssignForm({ ...assignForm, distanceKm: e.target.value }); setAssignErrors((p) => ({ ...p, distanceKm: '' })); }}
                   placeholder={t('transporters.distance_placeholder')}
+                  error={assignErrors.distanceKm}
                 />
               </div>
             </div>
@@ -395,16 +425,18 @@ export const ManageCampaigns = () => {
                 <label className="block mb-1 text-sm font-medium">{t('campaign.start_date_label')}</label>
                 <DateInput
                   value={assignForm.departureDate}
-                  onChange={(v) => setAssignForm({ ...assignForm, departureDate: v })}
+                  onChange={(v) => { setAssignForm({ ...assignForm, departureDate: v }); setAssignErrors((p) => ({ ...p, departureDate: '' })); }}
                   min={today}
+                  error={assignErrors.departureDate}
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium">{t('campaign.end_date_label')}</label>
                 <DateInput
                   value={assignForm.estimatedArrival}
-                  onChange={(v) => setAssignForm({ ...assignForm, estimatedArrival: v })}
+                  onChange={(v) => { setAssignForm({ ...assignForm, estimatedArrival: v }); setAssignErrors((p) => ({ ...p, estimatedArrival: '' })); }}
                   min={assignForm.departureDate || undefined}
+                  error={assignErrors.estimatedArrival}
                 />
               </div>
             </div>
@@ -427,18 +459,28 @@ export const ManageCampaigns = () => {
         <Modal title={t('campaign.edit_title')} onClose={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
           <div className="space-y-4">
             <div>
-              <label className="block mb-1 text-sm font-medium">{t('campaign.name')}</label>
+              <div className="flex justify-between mb-1">
+                <label className="text-sm font-medium">{t('campaign.name')}</label>
+                <span className={`text-xs ${editForm.name.length > 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {editForm.name.length}/100
+                </span>
+              </div>
               <Input
                 value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                onChange={(e) => { setEditForm({ ...editForm, name: e.target.value }); setEditErrors((p) => ({ ...p, name: '' })); }}
                 error={editErrors.name}
               />
             </div>
             <div>
-              <label className="block mb-1 text-sm font-medium">{t('campaign.description')}</label>
+              <div className="flex justify-between mb-1">
+                <label className="text-sm font-medium">{t('campaign.description')}</label>
+                <span className={`text-xs ${editForm.description.length > 1000 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {editForm.description.length}/1000
+                </span>
+              </div>
               <textarea
                 value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                onChange={(e) => { setEditForm({ ...editForm, description: e.target.value }); setEditErrors((p) => ({ ...p, description: '' })); }}
                 rows={3}
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               />
@@ -467,25 +509,33 @@ export const ManageCampaigns = () => {
             </div>
             <div>
               <label className="block mb-1 text-sm font-medium">{t('campaign.status')}</label>
-              <select
-                value={editForm.status}
-                onChange={(e) => setEditForm({ ...editForm, status: e.target.value as CampaignStatus })}
-                className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="abierta">{t('campaign.status_open')}</option>
-                <option value="congelada">{t('campaign.status_frozen')}</option>
-                <option value="cerrada">{t('campaign.status_closed')}</option>
-                <option value="en-camino">{t('campaign.status_in_transit')}</option>
-                <option value="entregada">{t('campaign.status_delivered')}</option>
-                <option value="finalizada">{t('campaign.status_finalized')}</option>
-              </select>
+              {(() => {
+                const allowed = getAllowedTransitions(editTarget, today);
+                // Always include current status as the "keep current" option
+                const options: CampaignStatus[] = [editTarget.status, ...allowed];
+                return (
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value as CampaignStatus })}
+                    className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    disabled={allowed.length === 0}
+                  >
+                    {options.map((s) => (
+                      <option key={s} value={s}>{t(CAMPAIGN_STATUS_LABELS[s] as Parameters<typeof t>[0])}</option>
+                    ))}
+                  </select>
+                );
+              })()}
             </div>
             {editErrors.general && <p className="text-sm text-destructive">{editErrors.general}</p>}
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => { setEditTarget(null); setEditForm(null); setEditErrors({}); }}>
                 {t('common.cancel')}
               </Button>
-              <Button onClick={saveEdit} disabled={editLoading}>
+              <Button
+                onClick={saveEdit}
+                disabled={editLoading || !editForm.name.trim() || !editForm.description.trim() || !editForm.startDate || !editForm.endDate}
+              >
                 {editLoading ? t('common.loading') : t('common.save')}
               </Button>
             </div>
@@ -566,15 +616,24 @@ export const ManageCampaigns = () => {
               </div>
             )}
             <div className="flex flex-wrap justify-end gap-3 pt-2 border-t border-border">
-              <Button variant="outline" onClick={() => { setDetailsTarget(null); openAssign(detailsTarget); }}>
+              <Button
+                variant="outline"
+                onClick={() => { setDetailsTarget(null); openAssign(detailsTarget); }}
+                disabled={!canAssignTransporter(detailsTarget)}
+              >
                 <Truck className="w-4 h-4" />{t('common.assign')}
               </Button>
-              <Button variant="outline" onClick={() => { setDetailsTarget(null); openEdit(detailsTarget); }}>
+              <Button
+                variant="outline"
+                onClick={() => { setDetailsTarget(null); openEdit(detailsTarget); }}
+                disabled={!canEditCampaign(detailsTarget)}
+              >
                 <Edit className="w-4 h-4" />{t('common.edit')}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => { setDetailsTarget(null); setDeleteTarget(detailsTarget); }}
+                disabled={!canDeleteCampaign(detailsTarget)}
                 className="text-destructive border-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="w-4 h-4" />{t('common.delete')}

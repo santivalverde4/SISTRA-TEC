@@ -57,16 +57,12 @@ export const CreateCampaign = () => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = t('campaign.error_name_required');
-    } else if (formData.name.trim().length < 3) {
+    if (formData.name.trim().length < 3) {
       newErrors.name = t('campaign.error_name_min');
     } else if (formData.name.trim().length > 100) {
       newErrors.name = t('campaign.error_name_max');
     }
-    if (!formData.description.trim()) {
-      newErrors.description = t('campaign.error_description_required');
-    } else if (formData.description.trim().length < 10) {
+    if (formData.description.trim().length < 10) {
       newErrors.description = t('campaign.error_description_min');
     } else if (formData.description.trim().length > 1000) {
       newErrors.description = t('campaign.error_description_max');
@@ -124,7 +120,7 @@ export const CreateCampaign = () => {
               </div>
               <Input
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setErrors((prev) => ({ ...prev, name: '' })); }}
                 placeholder={t('campaign.name_placeholder')}
                 error={errors.name}
               />
@@ -139,7 +135,7 @@ export const CreateCampaign = () => {
               </div>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => { setFormData({ ...formData, description: e.target.value }); setErrors((prev) => ({ ...prev, description: '' })); }}
                 placeholder={t('campaign.description_placeholder')}
                 rows={4}
                 className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
