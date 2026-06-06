@@ -147,6 +147,9 @@ const es = {
     status_in_transit: 'En camino',
     status_delivered: 'Entregada',
     status_finalized: 'Finalizada',
+    locked_in_transit: 'Esta campaña está en camino. Solo puedes cambiar el estado una vez que el transportista la marque como entregada.',
+    locked_delivered: 'Esta campaña fue entregada. Solo puedes cambiar el estado a Finalizada.',
+    prompt_finalize: 'La campaña fue entregada. Márcala como finalizada para cerrar el ciclo.',
   },
 
   donation: {

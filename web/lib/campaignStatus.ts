@@ -27,18 +27,18 @@ export function getAllowedTransitions(
   today: string,
 ): CampaignStatus[] {
   const { status, startDate, endDate } = campaign;
-  const withinDateRange = today >= startDate.slice(0, 10) && today <= endDate.slice(0, 10);
+  const beforeEndDate = today <= endDate.slice(0, 10);
 
   switch (status) {
     case 'abierta':
       return ['congelada'];
 
     case 'congelada':
-      return withinDateRange ? ['abierta', 'cerrada'] : ['cerrada'];
+      return beforeEndDate ? ['abierta', 'cerrada'] : ['cerrada'];
 
     case 'cerrada':
-      // Can reopen (to abierta or congelada) only if still within date range
-      return withinDateRange ? ['abierta', 'congelada', 'en-camino'] : ['en-camino'];
+      // Can reopen to abierta only if end date has not passed; en-camino always allowed
+      return beforeEndDate ? ['abierta', 'en-camino'] : ['en-camino'];
 
     // Locked once in transit
     case 'en-camino':
@@ -72,10 +72,12 @@ export function canAssignTransporter(campaign: Campaign): boolean {
   return campaign.status === 'cerrada';
 }
 
+const LOCKED_STATUSES: CampaignStatus[] = ['en-camino', 'entregada', 'finalizada'];
+
 /**
  * Returns true if the admin may delete this campaign.
- * Campaigns with at least one donation cannot be deleted.
+ * Cannot delete if it has donations or is past the 'cerrada' state.
  */
 export function canDeleteCampaign(campaign: Campaign): boolean {
-  return campaign.donationsCount === 0;
+  return campaign.donationsCount === 0 && !LOCKED_STATUSES.includes(campaign.status);
 }
