@@ -16,27 +16,25 @@ import {
   type AssignedCampaign,
 } from '@/services/transporterService';
 
-const eventTypes = [
-  'Camión salió',
-  'Entrega parcial',
-  'Ruta bloqueada',
-  'Punto de control',
-  'Parada técnica',
-  'Llegada a destino',
-  'Otro',
-];
-
-type FilterStatus = 'all' | 'cerrada' | 'en-camino' | 'entregada';
+type FilterStatus = 'all' | 'en-camino' | 'entregada' | 'finalizada';
 
 export const AssignedCampaigns = () => {
   const router = useRouter();
   const { t } = useT();
+
+  const eventTypes = [
+    t('transporter.event_type_truck_departed'),
+    t('transporter.event_type_route_blocked'),
+    t('transporter.event_type_checkpoint'),
+    t('transporter.event_type_technical_stop'),
+    t('transporter.event_type_other'),
+  ];
   const [campaigns, setCampaigns] = useState<AssignedCampaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [eventTarget, setEventTarget] = useState<AssignedCampaign | null>(null);
-  const [eventForm, setEventForm] = useState({ type: 'Camión salió', description: '', notes: '' });
+  const [eventForm, setEventForm] = useState({ type: '', description: '', notes: '' });
   const [eventLoading, setEventLoading] = useState(false);
   const [eventError, setEventError] = useState<string | null>(null);
   const [delivered, setDelivered] = useState(false);
@@ -50,7 +48,7 @@ export const AssignedCampaigns = () => {
 
   const openEventModal = (c: AssignedCampaign) => {
     setEventTarget(c);
-    setEventForm({ type: 'Camión salió', description: '', notes: '' });
+    setEventForm({ type: eventTypes[0], description: '', notes: '' });
     setEventError(null);
     setDelivered(false);
   };
@@ -115,9 +113,9 @@ export const AssignedCampaigns = () => {
       <div className="flex gap-2 mb-6 flex-wrap">
         {([
           { value: 'all', label: t('transporter.filter_all') },
-          { value: 'cerrada', label: t('transporter.filter_pending') },
           { value: 'en-camino', label: t('transporter.filter_in_transit') },
           { value: 'entregada', label: t('transporter.filter_delivered') },
+          { value: 'finalizada', label: t('transporter.filter_finalized') },
         ] as { value: FilterStatus; label: string }[]).map((opt) => (
           <button
             key={opt.value}

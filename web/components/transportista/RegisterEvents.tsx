@@ -17,18 +17,16 @@ import {
   type LogisticEvent,
 } from '@/services/transporterService';
 
-const eventTypes = [
-  'Camión salió',
-  'Entrega parcial',
-  'Ruta bloqueada',
-  'Punto de control',
-  'Parada técnica',
-  'Llegada a destino',
-  'Otro',
-];
-
 export const RegisterEvents = () => {
   const { t } = useT();
+
+  const eventTypes = [
+    t('transporter.event_type_truck_departed'),
+    t('transporter.event_type_route_blocked'),
+    t('transporter.event_type_checkpoint'),
+    t('transporter.event_type_technical_stop'),
+    t('transporter.event_type_other'),
+  ];
 
   const [campaigns, setCampaigns] = useState<AssignedCampaign[]>([]);
   const [events, setEvents] = useState<LogisticEvent[]>([]);
