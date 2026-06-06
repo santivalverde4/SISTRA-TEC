@@ -52,6 +52,14 @@ const es = {
     error_invalid_credentials: 'Correo o contraseña incorrectos',
     error_email_taken: 'Este correo ya está registrado',
     error_network: 'Error de conexión. Intenta de nuevo.',
+    vehicle: 'Tipo de vehículo',
+    vehicle_placeholder: 'Ej: Camión 3.5t, Furgoneta, Pickup...',
+    plate: 'Placa del vehículo',
+    plate_placeholder: 'Ej: ABC-1234',
+    error_vehicle_required: 'El tipo de vehículo es requerido',
+    error_vehicle_min: 'Ingresa al menos 3 caracteres',
+    error_plate_required: 'La placa es requerida',
+    error_plate_invalid: 'Solo letras y números, mínimo 6 caracteres',
   },
 
   errors: {

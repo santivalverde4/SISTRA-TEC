@@ -27,37 +27,60 @@ interface BackendTransporter {
 }
 
 interface BackendAssignedCampaign {
+  assignmentId: string;
   id: string;
+  campaignId: string;
   name: string;
   status: string;
-  assignment: {
-    destination: string;
-    distanceKm: number;
-    departureDate: string;
-    estimatedArrival: string;
-  };
+  rawStatus: string;
+  destination: string;
+  km: string;
+  distanceKm: number;
+  departureDate: string;
+  estimatedArrival: string;
   eventsCount: number;
+}
+
+interface BackendTimelineEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+  status: string;
 }
 
 interface BackendTrackingEvent {
   id: string;
+  assignmentId: string;
   type: string;
+  label: string;
   description: string;
   notes: string | null;
-  createdAt: string;
+  occurredAt: string;
 }
 
 interface BackendCampaignTracking {
-  id: string;
-  name: string;
-  status: string;
+  campaign: {
+    id: string;
+    name: string;
+    description: string;
+    status: string;
+    rawStatus: string;
+    categories: string[];
+    donationsCount: number;
+  };
   assignment: {
+    id: string;
+    transporterId: string;
     destination: string;
     distanceKm: number;
+    km: string;
     departureDate: string;
     estimatedArrival: string;
   };
   events: BackendTrackingEvent[];
+  timeline: BackendTimelineEvent[];
 }
 
 // --- View models ---
@@ -79,6 +102,7 @@ export interface Transporter {
 }
 
 export interface AssignedCampaign {
+  assignmentId: string;
   id: string;
   name: string;
   status: CampaignStatus;
@@ -129,26 +153,16 @@ function mapTransporter(t: BackendTransporter): Transporter {
 
 function mapAssignedCampaign(c: BackendAssignedCampaign): AssignedCampaign {
   return {
-    id: c.id,
+    assignmentId: c.assignmentId,
+    id: c.campaignId ?? c.id,
     name: c.name,
     status: c.status as CampaignStatus,
-    destination: c.assignment.destination,
-    km: String(c.assignment.distanceKm),
-    departureDate: c.assignment.departureDate.split('T')[0],
-    estimatedArrival: c.assignment.estimatedArrival.split('T')[0],
+    destination: c.destination,
+    km: c.km ?? String(c.distanceKm),
+    departureDate: typeof c.departureDate === 'string' ? c.departureDate.split('T')[0] : c.departureDate,
+    estimatedArrival: typeof c.estimatedArrival === 'string' ? c.estimatedArrival.split('T')[0] : c.estimatedArrival,
     eventsCount: c.eventsCount,
   };
-}
-
-function mapTimeline(c: BackendCampaignTracking): TimelineEvent[] {
-  return c.events.map((e) => ({
-    id: e.id,
-    title: e.type,
-    description: e.notes ? `${e.description} — ${e.notes}` : e.description,
-    date: new Date(e.createdAt).toLocaleDateString('es-CR'),
-    type: 'logistic' as const,
-    status: 'completed' as const,
-  }));
 }
 
 // --- Service functions ---
@@ -165,7 +179,7 @@ export async function getTransporters(): Promise<Transporter[]> {
 
 export async function getMyAssignedCampaigns(): Promise<AssignedCampaign[]> {
   try {
-    const data = await api.get<BackendAssignedCampaign[]>('/api/assignments/me');
+    const data = await api.get<BackendAssignedCampaign[]>('/api/transporters/me/assignments');
     return data.map(mapAssignedCampaign);
   } catch (err) {
     log.error('getMyAssignedCampaigns failed', err);
@@ -173,37 +187,59 @@ export async function getMyAssignedCampaigns(): Promise<AssignedCampaign[]> {
   }
 }
 
-export async function getCampaignTracking(campaignId: string): Promise<CampaignWithTimeline> {
+export async function getCampaignTracking(assignmentId: string): Promise<CampaignWithTimeline> {
   try {
-    const data = await api.get<BackendCampaignTracking>(`/api/assignments/${campaignId}/tracking`);
+    const data = await api.get<BackendCampaignTracking>(`/api/transport-assignments/${assignmentId}/traceability`);
+    const base: AssignedCampaign = {
+      assignmentId: data.assignment.id,
+      id: data.campaign.id,
+      name: data.campaign.name,
+      status: data.campaign.status as CampaignStatus,
+      destination: data.assignment.destination,
+      km: data.assignment.km ?? String(data.assignment.distanceKm),
+      departureDate: typeof data.assignment.departureDate === 'string'
+        ? data.assignment.departureDate.split('T')[0]
+        : data.assignment.departureDate,
+      estimatedArrival: typeof data.assignment.estimatedArrival === 'string'
+        ? data.assignment.estimatedArrival.split('T')[0]
+        : data.assignment.estimatedArrival,
+      eventsCount: data.events.length,
+    };
     return {
-      ...mapAssignedCampaign({ ...data, eventsCount: data.events.length }),
-      timeline: mapTimeline(data),
+      ...base,
+      timeline: data.timeline.map((e) => ({
+        id: e.id,
+        title: e.title,
+        description: e.description,
+        date: typeof e.date === 'string' ? new Date(e.date).toLocaleDateString('es-CR') : String(e.date),
+        type: e.type as 'status' | 'logistic',
+        status: e.status as 'completed' | 'current' | 'pending',
+      })),
     };
   } catch (err) {
-    log.error(`getCampaignTracking(${campaignId}) failed`, err);
+    log.error(`getCampaignTracking(${assignmentId}) failed`, err);
     throw err;
   }
 }
 
 export async function registerEvent(payload: RegisterEventPayload): Promise<void> {
   try {
-    await api.post(`/api/assignments/${payload.campaignId}/events`, {
+    await api.post(`/api/transport-assignments/${payload.campaignId}/events`, {
       type: payload.type,
       description: payload.description,
       notes: payload.notes,
     });
   } catch (err) {
-    log.error(`registerEvent(campaign=${payload.campaignId}) failed`, err);
+    log.error(`registerEvent(assignment=${payload.campaignId}) failed`, err);
     throw err;
   }
 }
 
-export async function markDelivered(campaignId: string): Promise<void> {
+export async function markDelivered(assignmentId: string): Promise<void> {
   try {
-    await api.patch(`/api/campaigns/${campaignId}/status`, { status: 'entregada' });
+    await api.patch(`/api/transport-assignments/${assignmentId}/deliver`);
   } catch (err) {
-    log.error(`markDelivered(${campaignId}) failed`, err);
+    log.error(`markDelivered(${assignmentId}) failed`, err);
     throw err;
   }
 }

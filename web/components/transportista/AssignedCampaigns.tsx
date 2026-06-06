@@ -61,7 +61,7 @@ export const AssignedCampaigns = () => {
     setEventError(null);
     try {
       await registerEvent({
-        campaignId: eventTarget.id,
+        campaignId: eventTarget.assignmentId,
         type: eventForm.type,
         description: eventForm.description,
         notes: eventForm.notes || undefined,
@@ -83,7 +83,7 @@ export const AssignedCampaigns = () => {
     setEventLoading(true);
     setEventError(null);
     try {
-      await markDeliveredApi(eventTarget.id);
+      await markDeliveredApi(eventTarget.assignmentId);
       setCampaigns(prev => prev.map(c =>
         c.id === eventTarget.id ? { ...c, status: 'entregada' as const } : c
       ));
@@ -173,7 +173,7 @@ export const AssignedCampaigns = () => {
                     {t('transporter.register_event')}
                   </Button>
                 )}
-                <Button variant="outline" onClick={() => router.push('/dashboard/transportista/traceability')}>
+                <Button variant="outline" onClick={() => router.push(`/dashboard/transportista/traceability?assignmentId=${campaign.assignmentId}`)}>
                   {t('transporter.view_traceability')}
                 </Button>
               </div>

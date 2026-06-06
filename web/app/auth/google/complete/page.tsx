@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { UserCircle } from 'lucide-react';
+import { UserCircle, Truck } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
+import { Input } from '@/components/ui-custom/Input';
 import { Button } from '@/components/ui-custom/Button';
 import { completeGoogleAuth } from '@/services/authService';
 import { getDefaultRoute } from '@/lib/auth';
@@ -19,6 +20,9 @@ export default function GoogleCompletePage() {
   const tempToken = searchParams.get('t');
 
   const [role, setRole] = useState<UserRole>('donante');
+  const [vehicle, setVehicle] = useState('');
+  const [plate, setPlate] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [needsRole, setNeedsRole] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,10 +54,20 @@ export default function GoogleCompletePage() {
   async function handleComplete() {
     if (!tempToken) return;
 
+    const newFieldErrors: Record<string, string> = {};
+    if (role === 'transportista') {
+      if (!vehicle || vehicle.trim().length < 3) newFieldErrors.vehicle = t('auth.error_vehicle_min');
+      if (!plate || !/^[A-Za-z0-9]{6,}$/.test(plate.replace(/-/g, ''))) newFieldErrors.plate = t('auth.error_plate_invalid');
+    }
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
+      return;
+    }
+    setFieldErrors({});
     setLoading(true);
     setError(null);
     try {
-      const user = await completeGoogleAuth(tempToken, role);
+      const user = await completeGoogleAuth(tempToken, role, vehicle || undefined, plate || undefined);
       window.location.href = getDefaultRoute(user.role);
     } catch (err) {
       setError(t(resolveErrorKey(err, 'auth') as Parameters<typeof t>[0]));
@@ -99,6 +113,38 @@ export default function GoogleCompletePage() {
               </select>
             </div>
           </div>
+
+          {role === 'transportista' && (
+            <>
+              <div>
+                <label className="block mb-2 text-sm">{t('auth.vehicle')}</label>
+                <div className="relative">
+                  <Truck className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    value={vehicle}
+                    onChange={(e) => setVehicle(e.target.value)}
+                    placeholder={t('auth.vehicle_placeholder')}
+                    error={fieldErrors.vehicle}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm">{t('auth.plate')}</label>
+                <div className="relative">
+                  <Truck className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    value={plate}
+                    onChange={(e) => setPlate(e.target.value.toUpperCase())}
+                    placeholder={t('auth.plate_placeholder')}
+                    error={fieldErrors.plate}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
 
         <CardFooter className="flex-col gap-3">
