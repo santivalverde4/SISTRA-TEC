@@ -243,3 +243,24 @@ export async function markDelivered(assignmentId: string): Promise<void> {
     throw err;
   }
 }
+
+export interface LogisticEvent {
+  id: string;
+  assignmentId: string;
+  type: string;
+  label: string;
+  description: string;
+  notes: string | null;
+  occurredAt: string;
+  campaignId: string;
+  campaignName: string;
+}
+
+export async function getMyEvents(): Promise<LogisticEvent[]> {
+  try {
+    return await api.get<LogisticEvent[]>('/api/transporters/me/events');
+  } catch (err) {
+    log.error('getMyEvents failed', err);
+    throw err;
+  }
+}
