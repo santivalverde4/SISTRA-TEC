@@ -12,6 +12,7 @@ import {
   updateCampaignStatus,
 } from "../controllers/campaignsController";
 import { createOrUpdateCampaignAssignment } from "../controllers/transportAssignmentsController";
+import { getTraceabilityByCampaignId } from "../controllers/transportEventsController";
 
 const router = Router();
 
@@ -21,6 +22,13 @@ router.post("/", authJwt, requireRoles(Role.ADMIN_CENTER), asyncHandler(createCa
 router.put("/:id", authJwt, requireRoles(Role.ADMIN_CENTER), asyncHandler(updateCampaign));
 router.patch("/:id/status", authJwt, requireRoles(Role.ADMIN_CENTER), asyncHandler(updateCampaignStatus));
 router.delete("/:id", authJwt, requireRoles(Role.ADMIN_CENTER), asyncHandler(deleteCampaign));
+
+router.get(
+  "/:campaignId/traceability",
+  authJwt,
+  requireRoles(Role.DONOR, Role.ADMIN_CENTER),
+  asyncHandler(getTraceabilityByCampaignId)
+);
 
 router.post(
   "/:campaignId/assignment",

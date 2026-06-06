@@ -173,11 +173,11 @@ export const getAssignmentTraceability = async (assignmentId: string, userId: st
       type: "logistic",
       status: "completed",
     })),
-    ...(assignment.campaign.status === "DELIVERED"
+    ...(["DELIVERED", "FINALIZED"].includes(assignment.campaign.status)
       ? [
           {
             id: `${assignment.id}-delivered`,
-            title: "Campa\u00f1a finalizada",
+            title: "Campa\u00f1a entregada",
             description: "Proceso completado exitosamente",
             date: assignment.updatedAt,
             type: "status",
@@ -194,6 +194,18 @@ export const getAssignmentTraceability = async (assignmentId: string, userId: st
             status: "pending",
           },
         ]),
+    ...(assignment.campaign.status === "FINALIZED"
+      ? [
+          {
+            id: `${assignment.id}-finalized`,
+            title: "Campa\u00f1a finalizada",
+            description: "Proceso administrativo completado",
+            date: assignment.campaign.updatedAt,
+            type: "status",
+            status: "completed",
+          },
+        ]
+      : []),
   ];
 
   return {
@@ -226,6 +238,71 @@ export const getAssignmentTraceability = async (assignmentId: string, userId: st
     events: assignment.events.map(formatEvent),
     timeline,
   };
+};
+
+export const getTraceabilityByCampaignId = async (campaignId: string) => {
+  const assignment = await prisma.transportAssignment.findFirst({
+    where: { campaignId },
+    include: assignmentInclude,
+  });
+
+  if (!assignment) {
+    return { timeline: [] };
+  }
+
+  const timeline = [
+    {
+      id: `${assignment.id}-closed`,
+      title: "Campa\u00f1a cerrada para donaciones",
+      description: "Donaciones listas para transporte",
+      date: assignment.campaign.endDate,
+      type: "status",
+      status: "completed",
+    },
+    ...assignment.events.map((event) => ({
+      id: event.id,
+      title: eventEnumToLabel[event.type],
+      description: [event.description, event.notes].filter(Boolean).join(" - "),
+      date: event.occurredAt,
+      type: "logistic",
+      status: "completed",
+    })),
+    ...(["DELIVERED", "FINALIZED"].includes(assignment.campaign.status)
+      ? [
+          {
+            id: `${assignment.id}-delivered`,
+            title: "Campa\u00f1a entregada",
+            description: "Proceso completado exitosamente",
+            date: assignment.updatedAt,
+            type: "status",
+            status: "completed",
+          },
+        ]
+      : [
+          {
+            id: `${assignment.id}-estimated`,
+            title: "Llegada estimada",
+            description: `Entrega programada en ${assignment.destination}`,
+            date: assignment.estimatedArrival,
+            type: "status",
+            status: "pending",
+          },
+        ]),
+    ...(assignment.campaign.status === "FINALIZED"
+      ? [
+          {
+            id: `${assignment.id}-finalized`,
+            title: "Campa\u00f1a finalizada",
+            description: "Proceso administrativo completado",
+            date: assignment.campaign.updatedAt,
+            type: "status",
+            status: "completed",
+          },
+        ]
+      : []),
+  ];
+
+  return { timeline };
 };
 
 export const deliverAssignment = async (assignmentId: string, userId: string, role: Role) => {
