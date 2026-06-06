@@ -43,6 +43,8 @@ export const RegisterEvents = () => {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const isEventFormValid = formData.assignmentId !== '' && formData.description.trim().length > 0;
+
   useEffect(() => {
     Promise.all([getMyAssignedCampaigns(), getMyEvents()])
       .then(([campaignList, eventList]) => {
@@ -169,7 +171,12 @@ export const RegisterEvents = () => {
               </div>
 
               <div>
-                <label className="block mb-2">{t('transporter.event_description')}</label>
+                <div className="flex justify-between mb-2">
+                  <label>{t('transporter.event_description')}</label>
+                  <span className={`text-xs ${formData.description.length > 300 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {formData.description.length}/300
+                  </span>
+                </div>
                 <Input
                   value={formData.description}
                   onChange={(e) => { setFormData({ ...formData, description: e.target.value }); setFormError(''); }}
@@ -179,7 +186,15 @@ export const RegisterEvents = () => {
               </div>
 
               <div>
-                <label className="block mb-2">{t('transporter.event_notes')}</label>
+                <div className="flex justify-between mb-2">
+                  <label>
+                    {t('transporter.event_notes')}{' '}
+                    <span className="text-muted-foreground font-normal text-sm">{t('common.optional')}</span>
+                  </label>
+                  <span className={`text-xs ${formData.notes.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {formData.notes.length}/500
+                  </span>
+                </div>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -190,7 +205,7 @@ export const RegisterEvents = () => {
               </div>
 
               <div className="flex gap-2">
-                <Button type="submit" disabled={submitting}>
+                <Button type="submit" disabled={submitting || !isEventFormValid}>
                   {submitting ? t('common.loading') : t('transporter.event_submit')}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>

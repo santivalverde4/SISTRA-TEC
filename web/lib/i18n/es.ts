@@ -129,7 +129,11 @@ const es = {
     edit_title: 'Editar Campaña',
 
     error_name_required: 'El nombre es requerido',
+    error_name_min: 'El nombre debe tener al menos 3 caracteres',
+    error_name_max: 'El nombre no puede superar los 100 caracteres',
     error_description_required: 'La descripción es requerida',
+    error_description_min: 'La descripción debe tener al menos 10 caracteres',
+    error_description_max: 'La descripción no puede superar los 1000 caracteres',
     error_start_required: 'La fecha de inicio es requerida',
     error_end_required: 'La fecha de fin es requerida',
     error_end_before_start: 'La fecha de fin debe ser posterior a la fecha de inicio',

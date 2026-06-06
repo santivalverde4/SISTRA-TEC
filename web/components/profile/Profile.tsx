@@ -110,6 +110,11 @@ export const Profile = () => {
   };
 
   // --- Password handlers ---
+  const isPasswordFormValid =
+    (profile.hasPassword ? passwordData.current.length > 0 : true) &&
+    passwordData.newPass.length > 0 &&
+    passwordData.confirm.length > 0;
+
   const validatePassword = () => {
     const errors = { current: '', newPass: '', confirm: '' };
     if (profile.hasPassword && !passwordData.current) errors.current = t('profile.error_current_password_required');
@@ -149,6 +154,10 @@ export const Profile = () => {
   };
 
   // --- Vehicle handlers ---
+  const isVehicleFormValid =
+    vehicleForm.vehicle.trim().length > 0 &&
+    vehicleForm.plate.trim().length > 0;
+
   const validateVehicle = () => {
     const errors = { vehicle: '', plate: '' };
     if (!vehicleForm.vehicle.trim()) {
@@ -248,7 +257,7 @@ export const Profile = () => {
 
                 {isEditing && (
                   <div className="flex gap-2 pt-4">
-                    <Button type="submit" disabled={profileSaving}>
+                    <Button type="submit" disabled={profileSaving || nameInput.trim().length === 0}>
                       {profileSaving ? t('common.loading') : t('profile.save_changes')}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancelEdit}>
@@ -315,7 +324,7 @@ export const Profile = () => {
                   {passwordSuccess && <p className="text-sm text-[var(--success)]">{passwordSuccess}</p>}
 
                   <div className="flex gap-2">
-                    <Button type="submit" disabled={passwordSaving}>
+                    <Button type="submit" disabled={passwordSaving || !isPasswordFormValid}>
                       {passwordSaving ? t('common.loading') : t('profile.update_password')}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancelPassword}>
@@ -404,7 +413,7 @@ export const Profile = () => {
             {vehicleError && <p className="text-sm text-destructive">{vehicleError}</p>}
 
             <div className="flex gap-3 pt-2">
-              <Button className="flex-1" onClick={handleSaveVehicle} disabled={vehicleSaving}>
+              <Button className="flex-1" onClick={handleSaveVehicle} disabled={vehicleSaving || !isVehicleFormValid}>
                 {vehicleSaving ? t('common.loading') : t('profile.save')}
               </Button>
               <Button variant="outline" onClick={() => setShowVehicleModal(false)}>

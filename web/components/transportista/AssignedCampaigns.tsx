@@ -55,6 +55,8 @@ export const AssignedCampaigns = () => {
     setDelivered(false);
   };
 
+  const isEventFormValid = eventForm.description.trim().length > 0;
+
   const validateEventForm = (): string | null => {
     if (!eventForm.description.trim()) return t('transporter.error_description_required');
     if (eventForm.description.trim().length < 10) return t('transporter.error_description_min');
@@ -262,7 +264,7 @@ export const AssignedCampaigns = () => {
                 <Button
                   className="flex-1"
                   onClick={submitEvent}
-                  disabled={eventLoading}
+                  disabled={eventLoading || !isEventFormValid}
                 >
                   {eventLoading ? t('common.loading') : t('transporter.event_submit')}
                 </Button>

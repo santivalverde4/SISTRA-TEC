@@ -36,6 +36,14 @@ export const CreateCampaign = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const isFormValid =
+    formData.name.trim().length > 0 &&
+    formData.description.trim().length > 0 &&
+    formData.startDate !== '' &&
+    formData.endDate !== '' &&
+    formData.endDate > formData.startDate &&
+    formData.categories.length > 0;
+
   const toggleCategory = (category: string) => {
     setFormData({
       ...formData,
@@ -49,8 +57,20 @@ export const CreateCampaign = () => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name) newErrors.name = t('campaign.error_name_required');
-    if (!formData.description) newErrors.description = t('campaign.error_description_required');
+    if (!formData.name.trim()) {
+      newErrors.name = t('campaign.error_name_required');
+    } else if (formData.name.trim().length < 3) {
+      newErrors.name = t('campaign.error_name_min');
+    } else if (formData.name.trim().length > 100) {
+      newErrors.name = t('campaign.error_name_max');
+    }
+    if (!formData.description.trim()) {
+      newErrors.description = t('campaign.error_description_required');
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = t('campaign.error_description_min');
+    } else if (formData.description.trim().length > 1000) {
+      newErrors.description = t('campaign.error_description_max');
+    }
     if (!formData.startDate) newErrors.startDate = t('campaign.error_start_required');
     if (!formData.endDate) newErrors.endDate = t('campaign.error_end_required');
     if (formData.startDate && formData.endDate && formData.endDate <= formData.startDate) {
@@ -96,7 +116,12 @@ export const CreateCampaign = () => {
         <Card>
           <CardContent className="space-y-6">
             <div>
-              <label className="block mb-2">{t('campaign.name')}</label>
+              <div className="flex justify-between mb-2">
+                <label>{t('campaign.name')}</label>
+                <span className={`text-xs ${formData.name.length > 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {formData.name.length}/100
+                </span>
+              </div>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -106,7 +131,12 @@ export const CreateCampaign = () => {
             </div>
 
             <div>
-              <label className="block mb-2">{t('campaign.description')}</label>
+              <div className="flex justify-between mb-2">
+                <label>{t('campaign.description')}</label>
+                <span className={`text-xs ${formData.description.length > 1000 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {formData.description.length}/1000
+                </span>
+              </div>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -166,7 +196,7 @@ export const CreateCampaign = () => {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || !isFormValid}>
                 <Plus className="w-4 h-4" />
                 {loading ? t('common.loading') : t('campaign.create_button')}
               </Button>

@@ -85,6 +85,8 @@ export const TransportTraceability = () => {
     loadTracking(campaign.assignmentId);
   };
 
+  const isEventFormValid = eventForm.description.trim().length > 0;
+
   const openEventModal = () => {
     setEventForm({ type: eventTypes[0], description: '', notes: '' });
     setEventFormError('');
@@ -317,7 +319,12 @@ export const TransportTraceability = () => {
               </select>
             </div>
             <div>
-              <label className="block mb-1 text-sm font-medium">{t('transporter.event_description_label')}</label>
+              <div className="flex justify-between mb-1">
+                <label className="text-sm font-medium">{t('transporter.event_description_label')}</label>
+                <span className={`text-xs ${eventForm.description.length > 300 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {eventForm.description.length}/300
+                </span>
+              </div>
               <Input
                 value={eventForm.description}
                 onChange={(e) => { setEventForm({ ...eventForm, description: e.target.value }); setEventFormError(''); }}
@@ -326,10 +333,15 @@ export const TransportTraceability = () => {
               />
             </div>
             <div>
-              <label className="block mb-1 text-sm font-medium">
-                {t('transporter.event_notes_label')}{' '}
-                <span className="text-muted-foreground font-normal">{t('common.optional')}</span>
-              </label>
+              <div className="flex justify-between mb-1">
+                <label className="text-sm font-medium">
+                  {t('transporter.event_notes_label')}{' '}
+                  <span className="text-muted-foreground font-normal">{t('common.optional')}</span>
+                </label>
+                <span className={`text-xs ${eventForm.notes.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {eventForm.notes.length}/500
+                </span>
+              </div>
               <textarea
                 value={eventForm.notes}
                 onChange={(e) => setEventForm({ ...eventForm, notes: e.target.value })}
@@ -339,7 +351,7 @@ export const TransportTraceability = () => {
               />
             </div>
             <div className="flex gap-3 pt-2">
-              <Button className="flex-1" onClick={submitEvent} disabled={eventSubmitting}>
+              <Button className="flex-1" onClick={submitEvent} disabled={eventSubmitting || !isEventFormValid}>
                 {eventSubmitting ? t('common.loading') : t('transporter.event_submit')}
               </Button>
               <Button variant="outline" onClick={() => setShowEventModal(false)}>{t('common.cancel')}</Button>
