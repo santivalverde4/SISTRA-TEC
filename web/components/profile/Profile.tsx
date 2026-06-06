@@ -113,7 +113,7 @@ export const Profile = () => {
   const validatePassword = () => {
     const errors = { current: '', newPass: '', confirm: '' };
     if (profile.hasPassword && !passwordData.current) errors.current = t('profile.error_current_password_required');
-    if (passwordData.newPass.length < 6) errors.newPass = t('profile.error_new_password_min');
+    if (passwordData.newPass.length < 6 || !/[a-zA-Z]/.test(passwordData.newPass) || !/[0-9]/.test(passwordData.newPass)) errors.newPass = t('profile.error_new_password_min');
     if (passwordData.newPass !== passwordData.confirm) errors.confirm = t('profile.error_passwords_mismatch');
     return errors;
   };
@@ -151,8 +151,17 @@ export const Profile = () => {
   // --- Vehicle handlers ---
   const validateVehicle = () => {
     const errors = { vehicle: '', plate: '' };
-    if (!vehicleForm.vehicle.trim()) errors.vehicle = t('profile.error_vehicle_required');
-    if (!vehicleForm.plate.trim()) errors.plate = t('profile.error_plate_required');
+    if (!vehicleForm.vehicle.trim()) {
+      errors.vehicle = t('profile.error_vehicle_required');
+    } else if (vehicleForm.vehicle.trim().length < 3) {
+      errors.vehicle = t('profile.error_vehicle_min');
+    }
+    const plateClean = vehicleForm.plate.replace(/-/g, '');
+    if (!vehicleForm.plate.trim()) {
+      errors.plate = t('profile.error_plate_required');
+    } else if (!/^[a-zA-Z0-9]{6,}$/.test(plateClean)) {
+      errors.plate = t('profile.error_plate_invalid');
+    }
     return errors;
   };
 

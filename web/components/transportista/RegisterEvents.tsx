@@ -62,6 +62,18 @@ export const RegisterEvents = () => {
       setFormError(t('transporter.error_description_required'));
       return;
     }
+    if (formData.description.trim().length < 10) {
+      setFormError(t('transporter.error_description_min'));
+      return;
+    }
+    if (formData.description.trim().length > 300) {
+      setFormError(t('transporter.error_description_max'));
+      return;
+    }
+    if (formData.notes.trim().length > 500) {
+      setFormError(t('transporter.error_notes_max'));
+      return;
+    }
     setSubmitting(true);
     setFormError('');
     try {

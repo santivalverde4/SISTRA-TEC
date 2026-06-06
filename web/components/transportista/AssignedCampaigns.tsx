@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
@@ -38,6 +38,8 @@ export const AssignedCampaigns = () => {
   const [eventLoading, setEventLoading] = useState(false);
   const [eventError, setEventError] = useState<string | null>(null);
   const [delivered, setDelivered] = useState(false);
+  const [showDeliverConfirm, setShowDeliverConfirm] = useState(false);
+  const deliverTargetRef = useRef<AssignedCampaign | null>(null);
 
   useEffect(() => {
     getMyAssignedCampaigns()
@@ -87,15 +89,16 @@ export const AssignedCampaigns = () => {
   };
 
   const handleMarkDelivered = async () => {
-    if (!eventTarget) return;
+    const target = deliverTargetRef.current;
+    if (!target) return;
+    setShowDeliverConfirm(false);
     setEventLoading(true);
-    setEventError(null);
     try {
-      await markDeliveredApi(eventTarget.assignmentId);
+      await markDeliveredApi(target.assignmentId);
       setCampaigns(prev => prev.map(c =>
-        c.id === eventTarget.id ? { ...c, status: 'entregada' as const } : c
+        c.id === target.id ? { ...c, status: 'entregada' as const } : c
       ));
-      setDelivered(true);
+      deliverTargetRef.current = null;
     } catch (err) {
       setEventError(t(resolveErrorKey(err) as Parameters<typeof t>[0]));
     } finally {
@@ -191,6 +194,20 @@ export const AssignedCampaigns = () => {
         ))}
       </div>
 
+      {showDeliverConfirm && (
+        <Modal title={t('traceability.confirm_deliver_title')} onClose={() => setShowDeliverConfirm(false)}>
+          <div className="space-y-4">
+            <p className="text-muted-foreground text-sm">{t('traceability.confirm_deliver_message')}</p>
+            <div className="flex gap-3 pt-2">
+              <Button className="flex-1" onClick={handleMarkDelivered} disabled={eventLoading}>
+                {eventLoading ? t('common.loading') : t('traceability.confirm_deliver_button')}
+              </Button>
+              <Button variant="outline" onClick={() => setShowDeliverConfirm(false)}>{t('common.cancel')}</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {eventTarget && (
         <Modal title={`${t('transporter.register_event')} — ${eventTarget.name}`} onClose={() => setEventTarget(null)}>
           {delivered ? (
@@ -251,7 +268,7 @@ export const AssignedCampaigns = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={handleMarkDelivered}
+                  onClick={() => { deliverTargetRef.current = eventTarget; setEventTarget(null); setShowDeliverConfirm(true); }}
                   disabled={eventLoading}
                   className="text-green-600 border-green-600 hover:bg-green-50"
                 >

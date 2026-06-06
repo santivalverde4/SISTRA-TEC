@@ -74,7 +74,7 @@ export function Sidebar({ userRole, isOpen, onClose }: SidebarProps) {
       >
         <div className="p-6 border-b border-sidebar-border">
           <h1 className="text-sidebar-foreground tracking-tight">SISTRA-TEC</h1>
-          <p className="text-sm text-sidebar-foreground/60 mt-1 capitalize">{userRole}</p>
+          <p className="text-sm text-sidebar-foreground/60 mt-1">{t(`profile.role_${userRole}` as Parameters<typeof t>[0])}</p>
         </div>
 
         <nav className="flex-1 p-4 overflow-y-auto">

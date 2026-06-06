@@ -48,7 +48,7 @@ export function RegisterForm() {
     }
     if (!formData.password) {
       newErrors.password = t('auth.error_password_required');
-    } else if (formData.password.length < 6) {
+    } else if (formData.password.length < 6 || !/[a-zA-Z]/.test(formData.password) || !/[0-9]/.test(formData.password)) {
       newErrors.password = t('auth.error_password_min');
     }
     if (formData.role === 'transportista') {

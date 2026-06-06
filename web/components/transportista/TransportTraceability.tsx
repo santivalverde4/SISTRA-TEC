@@ -48,6 +48,7 @@ export const TransportTraceability = () => {
 
   const [deliveredSuccess, setDeliveredSuccess] = useState(false);
   const [delivering, setDelivering] = useState(false);
+  const [showDeliverConfirm, setShowDeliverConfirm] = useState(false);
 
   const loadTracking = useCallback(async (assignmentId: string) => {
     setLoadingDetail(true);
@@ -96,6 +97,18 @@ export const TransportTraceability = () => {
       setEventFormError(t('transporter.error_description_required'));
       return;
     }
+    if (eventForm.description.trim().length < 10) {
+      setEventFormError(t('transporter.error_description_min'));
+      return;
+    }
+    if (eventForm.description.trim().length > 300) {
+      setEventFormError(t('transporter.error_description_max'));
+      return;
+    }
+    if (eventForm.notes.trim().length > 500) {
+      setEventFormError(t('transporter.error_notes_max'));
+      return;
+    }
     setEventSubmitting(true);
     setEventFormError('');
     try {
@@ -116,6 +129,7 @@ export const TransportTraceability = () => {
 
   const handleMarkDelivered = async () => {
     if (!selected) return;
+    setShowDeliverConfirm(false);
     setDelivering(true);
     try {
       await markDelivered(selected.assignmentId);
@@ -229,7 +243,7 @@ export const TransportTraceability = () => {
                       <Button onClick={openEventModal}>{t('traceability.register_event')}</Button>
                       <Button
                         variant="outline"
-                        onClick={handleMarkDelivered}
+                        onClick={() => setShowDeliverConfirm(true)}
                         disabled={delivering}
                         className="text-green-600 border-green-600 hover:bg-green-50"
                       >
@@ -269,6 +283,20 @@ export const TransportTraceability = () => {
           ) : null}
         </div>
       </div>
+
+      {showDeliverConfirm && (
+        <Modal title={t('traceability.confirm_deliver_title')} onClose={() => setShowDeliverConfirm(false)}>
+          <div className="space-y-4">
+            <p className="text-muted-foreground text-sm">{t('traceability.confirm_deliver_message')}</p>
+            <div className="flex gap-3 pt-2">
+              <Button className="flex-1" onClick={handleMarkDelivered} disabled={delivering}>
+                {delivering ? t('common.loading') : t('traceability.confirm_deliver_button')}
+              </Button>
+              <Button variant="outline" onClick={() => setShowDeliverConfirm(false)}>{t('common.cancel')}</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {showEventModal && selected && (
         <Modal
