@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, UserCircle, Truck } from 'lucide-react';
+import { User, Mail, UserCircle, Truck } from 'lucide-react';
 import { Input } from '@/components/ui-custom/Input';
+import { PasswordInput } from '@/components/ui-custom/PasswordInput';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
 import { getDefaultRoute, isAuthenticated, getRole } from '@/lib/auth';
@@ -179,32 +180,22 @@ export function RegisterForm() {
           )}
           <div>
             <label className="block mb-2 text-sm">{t('auth.password')}</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="password"
-                value={formData.password}
-                onChange={(e) => field('password', e.target.value)}
-                placeholder="••••••••"
-                error={errors.password}
-                className="pl-10"
-              />
-            </div>
+            <PasswordInput
+              value={formData.password}
+              onChange={(e) => field('password', e.target.value)}
+              placeholder="••••••••"
+              error={errors.password}
+            />
           </div>
 
           <div>
             <label className="block mb-2 text-sm">{t('auth.confirm_password')}</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => field('confirmPassword', e.target.value)}
-                placeholder="••••••••"
-                error={errors.confirmPassword}
-                className="pl-10"
-              />
-            </div>
+            <PasswordInput
+              value={formData.confirmPassword}
+              onChange={(e) => field('confirmPassword', e.target.value)}
+              placeholder="••••••••"
+              error={errors.confirmPassword}
+            />
           </div>
         </CardContent>
 

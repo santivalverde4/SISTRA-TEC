@@ -6,7 +6,8 @@ import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { Badge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
-import { User, Mail, Lock, Shield, Truck } from 'lucide-react';
+import { User, Mail, Shield, Truck } from 'lucide-react';
+import { PasswordInput } from '@/components/ui-custom/PasswordInput';
 import { getRole } from '@/lib/auth';
 import { resolveErrorKey } from '@/lib/apiError';
 import type { UserRole } from '@/types';
@@ -272,48 +273,33 @@ export const Profile = () => {
                   {profile.hasPassword && (
                     <div>
                       <label className="block mb-2">{t('profile.current_password')}</label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                          type="password"
-                          value={passwordData.current}
-                          onChange={(e) => { setPasswordData({ ...passwordData, current: e.target.value }); setPasswordErrors({ ...passwordErrors, current: '' }); }}
-                          placeholder="••••••••"
-                          className="pl-10"
-                          error={passwordErrors.current}
-                        />
-                      </div>
+                      <PasswordInput
+                        value={passwordData.current}
+                        onChange={(e) => { setPasswordData({ ...passwordData, current: e.target.value }); setPasswordErrors({ ...passwordErrors, current: '' }); }}
+                        placeholder="••••••••"
+                        error={passwordErrors.current}
+                      />
                     </div>
                   )}
 
                   <div>
                     <label className="block mb-2">{t('profile.new_password')}</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        type="password"
-                        value={passwordData.newPass}
-                        onChange={(e) => { setPasswordData({ ...passwordData, newPass: e.target.value }); setPasswordErrors({ ...passwordErrors, newPass: '' }); }}
-                        placeholder="••••••••"
-                        className="pl-10"
-                        error={passwordErrors.newPass}
-                      />
-                    </div>
+                    <PasswordInput
+                      value={passwordData.newPass}
+                      onChange={(e) => { setPasswordData({ ...passwordData, newPass: e.target.value }); setPasswordErrors({ ...passwordErrors, newPass: '' }); }}
+                      placeholder="••••••••"
+                      error={passwordErrors.newPass}
+                    />
                   </div>
 
                   <div>
                     <label className="block mb-2">{t('profile.confirm_new_password')}</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        type="password"
-                        value={passwordData.confirm}
-                        onChange={(e) => { setPasswordData({ ...passwordData, confirm: e.target.value }); setPasswordErrors({ ...passwordErrors, confirm: '' }); }}
-                        placeholder="••••••••"
-                        className="pl-10"
-                        error={passwordErrors.confirm}
-                      />
-                    </div>
+                    <PasswordInput
+                      value={passwordData.confirm}
+                      onChange={(e) => { setPasswordData({ ...passwordData, confirm: e.target.value }); setPasswordErrors({ ...passwordErrors, confirm: '' }); }}
+                      placeholder="••••••••"
+                      error={passwordErrors.confirm}
+                    />
                   </div>
 
                   {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
