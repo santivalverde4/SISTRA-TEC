@@ -40,7 +40,11 @@ export function RegisterForm() {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name) newErrors.name = t('auth.error_name_required');
+    if (!formData.name.trim()) {
+      newErrors.name = t('auth.error_name_required');
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = t('auth.error_name_min');
+    }
     if (!formData.email) {
       newErrors.email = t('auth.error_email_required');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -51,6 +55,9 @@ export function RegisterForm() {
     } else if (formData.password.length < 6 || !/[a-zA-Z]/.test(formData.password) || !/[0-9]/.test(formData.password)) {
       newErrors.password = t('auth.error_password_min');
     }
+    if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = t('auth.error_passwords_mismatch');
+    }
     if (formData.role === 'transportista') {
       if (!formData.vehicle || formData.vehicle.trim().length < 3) {
         newErrors.vehicle = t('auth.error_vehicle_min');
@@ -59,10 +66,6 @@ export function RegisterForm() {
         newErrors.plate = t('auth.error_plate_invalid');
       }
     }
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t('auth.error_passwords_mismatch');
-    }
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -203,7 +206,18 @@ export function RegisterForm() {
           {errors.general && (
             <p className="text-sm text-destructive w-full">{errors.general}</p>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={
+              loading ||
+              formData.name.trim().length < 2 ||
+              !formData.email.trim() ||
+              !formData.password ||
+              !formData.confirmPassword ||
+              (formData.role === 'transportista' && (!formData.vehicle.trim() || !formData.plate.trim()))
+            }
+          >
             {loading ? t('common.loading') : t('auth.register')}
           </Button>
           <p className="text-sm text-muted-foreground">

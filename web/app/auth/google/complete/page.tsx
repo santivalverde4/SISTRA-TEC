@@ -149,7 +149,15 @@ export default function GoogleCompletePage() {
 
         <CardFooter className="flex-col gap-3">
           {error && <p className="text-sm text-destructive w-full">{error}</p>}
-          <Button className="w-full" onClick={handleComplete} disabled={loading || !needsRole}>
+          <Button
+            className="w-full"
+            onClick={handleComplete}
+            disabled={
+              loading ||
+              !needsRole ||
+              (role === 'transportista' && (!vehicle.trim() || !plate.trim()))
+            }
+          >
             {loading ? t('common.loading') : t('auth.google_complete_button')}
           </Button>
         </CardFooter>
