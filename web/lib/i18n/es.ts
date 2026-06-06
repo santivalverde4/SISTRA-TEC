@@ -235,6 +235,9 @@ const es = {
     delivered_modal_title: '¡Campaña marcada como entregada!',
     delivered_modal_message: 'El estado fue actualizado exitosamente.',
     error_description_required: 'La descripción del evento es requerida',
+    error_description_min: 'La descripción debe tener al menos 10 caracteres',
+    error_description_max: 'La descripción no puede superar los 300 caracteres',
+    error_notes_max: 'Las notas no pueden superar los 500 caracteres',
   },
 
   profile: {

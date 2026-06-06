@@ -53,8 +53,18 @@ export const AssignedCampaigns = () => {
     setDelivered(false);
   };
 
+  const validateEventForm = (): string | null => {
+    if (!eventForm.description.trim()) return t('transporter.error_description_required');
+    if (eventForm.description.trim().length < 10) return t('transporter.error_description_min');
+    if (eventForm.description.trim().length > 300) return t('transporter.error_description_max');
+    if (eventForm.notes.trim().length > 500) return t('transporter.error_notes_max');
+    return null;
+  };
+
   const submitEvent = async () => {
-    if (!eventTarget || !eventForm.description) return;
+    if (!eventTarget) return;
+    const validationError = validateEventForm();
+    if (validationError) { setEventError(validationError); return; }
     setEventLoading(true);
     setEventError(null);
     try {
@@ -202,7 +212,12 @@ export const AssignedCampaigns = () => {
                 </select>
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium">{t('transporter.event_description_label')}</label>
+                <div className="flex justify-between mb-1">
+                  <label className="text-sm font-medium">{t('transporter.event_description_label')}</label>
+                  <span className={`text-xs ${eventForm.description.length > 300 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {eventForm.description.length}/300
+                  </span>
+                </div>
                 <Input
                   value={eventForm.description}
                   onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
@@ -210,7 +225,12 @@ export const AssignedCampaigns = () => {
                 />
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium">{t('transporter.event_notes_label')} <span className="text-muted-foreground font-normal">{t('common.optional')}</span></label>
+                <div className="flex justify-between mb-1">
+                  <label className="text-sm font-medium">{t('transporter.event_notes_label')} <span className="text-muted-foreground font-normal">{t('common.optional')}</span></label>
+                  <span className={`text-xs ${eventForm.notes.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {eventForm.notes.length}/500
+                  </span>
+                </div>
                 <textarea
                   value={eventForm.notes}
                   onChange={(e) => setEventForm({ ...eventForm, notes: e.target.value })}
@@ -224,7 +244,7 @@ export const AssignedCampaigns = () => {
                 <Button
                   className="flex-1"
                   onClick={submitEvent}
-                  disabled={eventLoading || !eventForm.description}
+                  disabled={eventLoading}
                 >
                   {eventLoading ? t('common.loading') : t('transporter.event_submit')}
                 </Button>
