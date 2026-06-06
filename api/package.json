@@ -8,7 +8,10 @@
     "start": "ts-node src/index.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "db:reset": "ts-node prisma/reset.ts",
+    "db:seed": "prisma db seed",
+    "db:fresh": "npm run db:reset && npm run db:seed"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
