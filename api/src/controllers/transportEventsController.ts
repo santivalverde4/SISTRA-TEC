@@ -34,6 +34,11 @@ export const getAssignmentTraceability = async (req: Request, res: Response) => 
   res.json(traceability);
 };
 
+export const getTraceabilityByCampaignId = async (req: Request, res: Response) => {
+  const traceability = await transportEventsService.getTraceabilityByCampaignId(req.params.campaignId);
+  res.json(traceability);
+};
+
 export const deliverAssignment = async (req: Request, res: Response) => {
   const assignment = await transportEventsService.deliverAssignment(
     req.params.id,

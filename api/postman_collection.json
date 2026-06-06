@@ -12,12 +12,17 @@
       "name": "Donaciones",
       "item": [
         {
-          "name": "Ver Tracking",
+          "name": "Ver Trazabilidad de Campaña (Donante)",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": {
-              "raw": "http://localhost:4000/api/donations/cmpxgd4of000djaojc0dl1pyo/tracking",
+              "raw": "http://localhost:4000/api/campaigns/:campaignId/traceability",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -25,9 +30,15 @@
               "port": "4000",
               "path": [
                 "api",
-                "donations",
-                "cmpxgd4of000djaojc0dl1pyo",
-                "tracking"
+                "campaigns",
+                ":campaignId",
+                "traceability"
+              ],
+              "variable": [
+                {
+                  "key": "campaignId",
+                  "value": ""
+                }
               ]
             }
           },
@@ -921,7 +932,7 @@
           "response": []
         },
         {
-          "name": "Trazabilidad de la donación",
+          "name": "Trazabilidad por Assignment (Transportista)",
           "request": {
             "method": "GET",
             "header": [],

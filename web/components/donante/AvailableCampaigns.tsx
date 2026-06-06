@@ -79,16 +79,38 @@ export const AvailableCampaigns = () => {
     setRowErrors({});
   };
 
+  const NOTE_MAX = 300;
+  const DESC_MAX = 100;
+  const QTY_MAX = 9999;
+
+  const isFormReady =
+    donateRows.every((r) => r.description.trim().length > 0 && r.quantity.trim().length > 0);
+
   const validateRows = (): boolean => {
     const errors: Record<number, { description?: string; quantity?: string }> = {};
     donateRows.forEach((row) => {
       const rowErr: { description?: string; quantity?: string } = {};
-      if (!row.description.trim()) rowErr.description = t('donation.error_description_required');
+      if (!row.description.trim()) {
+        rowErr.description = t('donation.error_description_required');
+      } else if (row.description.trim().length < 2) {
+        rowErr.description = t('donation.error_description_min');
+      } else if (row.description.trim().length > DESC_MAX) {
+        rowErr.description = t('donation.error_description_max');
+      }
       const qty = Number(row.quantity);
-      if (!row.quantity.trim()) rowErr.quantity = t('donation.error_quantity_required');
-      else if (isNaN(qty) || qty <= 0) rowErr.quantity = t('donation.error_quantity_positive');
+      if (!row.quantity.trim()) {
+        rowErr.quantity = t('donation.error_quantity_required');
+      } else if (isNaN(qty) || qty <= 0) {
+        rowErr.quantity = t('donation.error_quantity_positive');
+      } else if (qty > QTY_MAX) {
+        rowErr.quantity = t('donation.error_quantity_max');
+      }
       if (Object.keys(rowErr).length > 0) errors[row.id] = rowErr;
     });
+    if (donateNote.length > NOTE_MAX) {
+      // note error is shown inline via counter; block submit silently
+      return false;
+    }
     setRowErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -311,25 +333,29 @@ export const AvailableCampaigns = () => {
                   <span>{t('donation.column_quantity')}</span>
                   <span />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {donateRows.map((row) => (
                     <div key={row.id} className="grid grid-cols-[1fr_120px_32px] gap-2 items-start">
                       <Input
                         value={row.description}
-                        onChange={(e) => { updateRow(row.id, 'description', e.target.value); setRowErrors((prev) => { const n = { ...prev }; if (n[row.id]) delete n[row.id].description; return n; }); }}
+                        onChange={(e) => { updateRow(row.id, 'description', e.target.value.slice(0, DESC_MAX + 1)); setRowErrors((prev) => { const n = { ...prev }; if (n[row.id]) delete n[row.id].description; return n; }); }}
                         placeholder={t('donation.product_placeholder')}
                         error={rowErrors[row.id]?.description}
                       />
                       <Input
+                        type="number"
+                        min="1"
+                        max={QTY_MAX}
                         value={row.quantity}
                         onChange={(e) => { updateRow(row.id, 'quantity', e.target.value); setRowErrors((prev) => { const n = { ...prev }; if (n[row.id]) delete n[row.id].quantity; return n; }); }}
-                        placeholder={t('donation.quantity_placeholder')}
+                        placeholder="1"
                         error={rowErrors[row.id]?.quantity}
                       />
                       <button
                         type="button"
                         onClick={() => removeRow(row.id)}
-                        className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        disabled={donateRows.length === 1}
+                        className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -341,23 +367,31 @@ export const AvailableCampaigns = () => {
                   {t('donation.add_product')}
                 </Button>
                 <div>
-                  <label className="block mb-1 text-sm font-medium">
-                    {t('donation.additional_note')} <span className="text-muted-foreground font-normal">{t('common.optional')}</span>
-                  </label>
+                  <div className="flex justify-between mb-1">
+                    <label className="text-sm font-medium">
+                      {t('donation.additional_note')} <span className="text-muted-foreground font-normal">{t('common.optional')}</span>
+                    </label>
+                    <span className={`text-xs ${donateNote.length > NOTE_MAX ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      {donateNote.length}/{NOTE_MAX}
+                    </span>
+                  </div>
                   <textarea
                     value={donateNote}
                     onChange={(e) => setDonateNote(e.target.value)}
                     rows={2}
                     placeholder={t('donation.additional_note_placeholder')}
-                    className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    className={`w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none${donateNote.length > NOTE_MAX ? ' border-destructive' : ''}`}
                   />
+                  {donateNote.length > NOTE_MAX && (
+                    <p className="mt-1 text-xs text-destructive">{t('donation.error_note_max')}</p>
+                  )}
                 </div>
                 {donateError && <p className="text-sm text-destructive">{donateError}</p>}
                 <div className="flex gap-3 pt-2">
                   <Button
                     className="flex-1"
                     onClick={handleSubmitDonation}
-                    disabled={donateLoading}
+                    disabled={donateLoading || !isFormReady}
                   >
                     <Heart className="w-4 h-4" />
                     {donateLoading ? t('common.loading') : t('donation.confirm_donation')}

@@ -13,10 +13,12 @@ export const requireRoles = (...roles: Role[]): RequestHandler => {
 
     const r = req as Request & { auth?: AuthTokenPayload };
     if (!r.auth) {
-      throw new HttpError(401, "Unauthorized");
+      next(new HttpError(401, "Unauthorized"));
+      return;
     }
     if (!roles.includes(r.auth.role)) {
-      throw new HttpError(403, "Forbidden");
+      next(new HttpError(403, "Forbidden"));
+      return;
     }
     next();
   };

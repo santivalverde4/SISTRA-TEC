@@ -1,19 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { Input } from '@/components/ui-custom/Input';
+import { PasswordInput } from '@/components/ui-custom/PasswordInput';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
-import { getDefaultRoute } from '@/lib/auth';
+import { getDefaultRoute, isAuthenticated, getRole } from '@/lib/auth';
 import { login } from '@/services/authService';
 import { resolveErrorKey } from '@/lib/apiError';
 import { useT } from '@/lib/i18n/useT';
 
 export function LoginForm() {
   const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const role = getRole();
+      if (role) router.replace(getDefaultRoute(role));
+    }
+  }, [router]);
   const { t } = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,16 +91,16 @@ export function LoginForm() {
 
             <div>
               <label className="block mb-2">{t('auth.password')}</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  error={errors.password}
-                  className="pl-10"
-                />
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                error={errors.password}
+              />
+              <div className="flex justify-end mt-1">
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                  {t('auth.forgot_password_title')}
+                </Link>
               </div>
             </div>
           </CardContent>

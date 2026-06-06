@@ -25,9 +25,17 @@ export const DonationTraceability = () => {
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
+  const TRACEABLE_STATUSES: string[] = ['cerrada', 'en-camino', 'entregada', 'finalizada'];
+
   useEffect(() => {
     getMyDonations()
-      .then((data) => setDonations(data.map((d) => ({ ...d, timeline: [] }))))
+      .then((data) =>
+        setDonations(
+          data
+            .filter((d) => TRACEABLE_STATUSES.includes(d.campaignStatus))
+            .map((d) => ({ ...d, timeline: [] }))
+        )
+      )
       .catch((err) => setError(t(resolveErrorKey(err) as Parameters<typeof t>[0])))
       .finally(() => setLoading(false));
   }, [t]);
@@ -38,7 +46,7 @@ export const DonationTraceability = () => {
     if (donation.timeline.length > 0) return;
 
     setTrackingLoading(true);
-    getDonationTracking(donation.id)
+    getDonationTracking(donation.campaignId)
       .then((timeline) => {
         setDonations((prev) =>
           prev.map((d) => d.id === donation.id ? { ...d, timeline } : d)
@@ -76,42 +84,37 @@ export const DonationTraceability = () => {
         <p className="text-muted-foreground mt-1">{t('traceability.donation_subtitle')}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left list */}
-        <div className="lg:col-span-1">
-          <Card className="mb-4">
-            <CardContent>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={t('traceability.search_placeholder')}
-                  className="pl-10"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:h-[calc(100vh-200px)]">
+        {/* Campaign list — horizontal chips on mobile, scrollable panel on desktop */}
+        <div className="lg:col-span-1 flex flex-col gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={t('traceability.search_placeholder')}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-x-hidden overflow-y-hidden lg:overflow-y-auto pb-1 lg:pb-0">
             {filtered.map((donation) => (
               <Card
                 key={donation.id}
-                className={`cursor-pointer transition-all ${
+                className={`cursor-pointer transition-all shrink-0 lg:shrink w-64 lg:w-auto ${
                   selected?.id === donation.id
-                    ? 'ring-2 ring-primary shadow-md'
+                    ? 'border-l-4 border-l-primary shadow-md'
                     : 'hover:shadow-md'
                 }`}
                 onClick={() => handleSelect(donation)}
               >
-                <CardContent>
-                  <h4 className="mb-2">{donation.campaignName}</h4>
+                <CardContent className="p-4">
+                  <h4 className="mb-2 text-sm font-medium">{donation.campaignName}</h4>
                   <StatusBadge status={donation.campaignStatus} />
-                  <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />{formatDate(donation.date)}
+                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />{formatDate(donation.date)}
                   </p>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Package className="w-3.5 h-3.5" />
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Package className="w-3 h-3" />
                     {donation.items.length} {donation.items.length === 1 ? t('donation.item_singular') : t('donation.item_plural')}
                   </p>
                 </CardContent>
@@ -120,21 +123,25 @@ export const DonationTraceability = () => {
           </div>
         </div>
 
-        {/* Right detail */}
-        <div className="lg:col-span-2">
-          {selected ? (
-            <Card>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2>{selected.campaignName}</h2>
-                    <p className="text-muted-foreground mt-1 text-sm">{t('traceability.donated_on')} {formatDate(selected.date)}</p>
+        {/* Detail panel — independently scrollable on desktop */}
+        <div className="lg:col-span-3 lg:overflow-y-auto space-y-4 lg:pr-1">
+          {trackingLoading ? (
+            <div className="text-center py-16 text-muted-foreground">{t('common.loading')}</div>
+          ) : trackingError ? (
+            <div className="text-center py-16 text-destructive">{trackingError}</div>
+          ) : selected ? (
+            <>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2>{selected.campaignName}</h2>
+                      <p className="text-muted-foreground mt-1 text-sm">{t('traceability.donated_on')} {formatDate(selected.date)}</p>
+                    </div>
+                    <StatusBadge status={selected.campaignStatus} />
                   </div>
-                  <StatusBadge status={selected.campaignStatus} />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
+                </CardHeader>
+                <CardContent>
                   <h4 className="mb-3">{t('traceability.what_you_donated')}</h4>
                   <div className="grid grid-cols-[1fr_120px] gap-2 text-sm font-medium text-muted-foreground px-1 mb-2">
                     <span>{t('donation.column_product')}</span>
@@ -153,35 +160,33 @@ export const DonationTraceability = () => {
                     ))}
                   </div>
                   {selected.note && (
-                    <p className="mt-2 text-sm text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">
+                    <p className="mt-3 text-sm text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">
                       {selected.note}
                     </p>
                   )}
-                </div>
+                </CardContent>
+              </Card>
 
-                <div>
-                  <h4 className="mb-4 flex items-center gap-2">
+              <Card>
+                <CardHeader>
+                  <h3 className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" />
                     {t('traceability.campaign_history')}
-                  </h4>
-                  {trackingLoading
-                    ? <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
-                    : trackingError
-                      ? <p className="text-sm text-destructive">{trackingError}</p>
-                      : <Timeline events={selected.timeline} />
-                  }
-                </div>
-              </CardContent>
-            </Card>
+                  </h3>
+                </CardHeader>
+                <CardContent>
+                  <Timeline events={selected.timeline} />
+                </CardContent>
+              </Card>
+              <div className="h-4" />
+            </>
           ) : (
             <Card>
               <CardContent>
                 <div className="text-center py-16">
                   <TrendingUp className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="mb-2">{t('traceability.select_donation')}</h3>
-                  <p className="text-muted-foreground">
-                    {t('traceability.select_donation_hint')}
-                  </p>
+                  <p className="text-muted-foreground">{t('traceability.select_donation_hint')}</p>
                 </div>
               </CardContent>
             </Card>

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { Badge } from '@/components/ui-custom/Badge';
 import { Modal } from '@/components/shared/Modal';
-import { User, Mail, Lock, Shield, Truck } from 'lucide-react';
+import { User, Mail, Shield, Truck } from 'lucide-react';
+import { PasswordInput } from '@/components/ui-custom/PasswordInput';
 import { getRole } from '@/lib/auth';
 import { resolveErrorKey } from '@/lib/apiError';
 import type { UserRole } from '@/types';
@@ -109,10 +110,15 @@ export const Profile = () => {
   };
 
   // --- Password handlers ---
+  const isPasswordFormValid =
+    (profile.hasPassword ? passwordData.current.length > 0 : true) &&
+    passwordData.newPass.length > 0 &&
+    passwordData.confirm.length > 0;
+
   const validatePassword = () => {
     const errors = { current: '', newPass: '', confirm: '' };
     if (profile.hasPassword && !passwordData.current) errors.current = t('profile.error_current_password_required');
-    if (passwordData.newPass.length < 6) errors.newPass = t('profile.error_new_password_min');
+    if (passwordData.newPass.length < 6 || !/[a-zA-Z]/.test(passwordData.newPass) || !/[0-9]/.test(passwordData.newPass)) errors.newPass = t('profile.error_new_password_min');
     if (passwordData.newPass !== passwordData.confirm) errors.confirm = t('profile.error_passwords_mismatch');
     return errors;
   };
@@ -148,10 +154,23 @@ export const Profile = () => {
   };
 
   // --- Vehicle handlers ---
+  const isVehicleFormValid =
+    vehicleForm.vehicle.trim().length > 0 &&
+    vehicleForm.plate.trim().length > 0;
+
   const validateVehicle = () => {
     const errors = { vehicle: '', plate: '' };
-    if (!vehicleForm.vehicle.trim()) errors.vehicle = t('profile.error_vehicle_required');
-    if (!vehicleForm.plate.trim()) errors.plate = t('profile.error_plate_required');
+    if (!vehicleForm.vehicle.trim()) {
+      errors.vehicle = t('profile.error_vehicle_required');
+    } else if (vehicleForm.vehicle.trim().length < 3) {
+      errors.vehicle = t('profile.error_vehicle_min');
+    }
+    const plateClean = vehicleForm.plate.replace(/-/g, '');
+    if (!vehicleForm.plate.trim()) {
+      errors.plate = t('profile.error_plate_required');
+    } else if (!/^[a-zA-Z0-9]{6,}$/.test(plateClean)) {
+      errors.plate = t('profile.error_plate_invalid');
+    }
     return errors;
   };
 
@@ -238,7 +257,7 @@ export const Profile = () => {
 
                 {isEditing && (
                   <div className="flex gap-2 pt-4">
-                    <Button type="submit" disabled={profileSaving}>
+                    <Button type="submit" disabled={profileSaving || nameInput.trim().length === 0 || nameInput.trim() === profile.name.trim()}>
                       {profileSaving ? t('common.loading') : t('profile.save_changes')}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancelEdit}>
@@ -272,55 +291,40 @@ export const Profile = () => {
                   {profile.hasPassword && (
                     <div>
                       <label className="block mb-2">{t('profile.current_password')}</label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                          type="password"
-                          value={passwordData.current}
-                          onChange={(e) => { setPasswordData({ ...passwordData, current: e.target.value }); setPasswordErrors({ ...passwordErrors, current: '' }); }}
-                          placeholder="••••••••"
-                          className="pl-10"
-                          error={passwordErrors.current}
-                        />
-                      </div>
+                      <PasswordInput
+                        value={passwordData.current}
+                        onChange={(e) => { setPasswordData({ ...passwordData, current: e.target.value }); setPasswordErrors({ ...passwordErrors, current: '' }); }}
+                        placeholder="••••••••"
+                        error={passwordErrors.current}
+                      />
                     </div>
                   )}
 
                   <div>
                     <label className="block mb-2">{t('profile.new_password')}</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        type="password"
-                        value={passwordData.newPass}
-                        onChange={(e) => { setPasswordData({ ...passwordData, newPass: e.target.value }); setPasswordErrors({ ...passwordErrors, newPass: '' }); }}
-                        placeholder="••••••••"
-                        className="pl-10"
-                        error={passwordErrors.newPass}
-                      />
-                    </div>
+                    <PasswordInput
+                      value={passwordData.newPass}
+                      onChange={(e) => { setPasswordData({ ...passwordData, newPass: e.target.value }); setPasswordErrors({ ...passwordErrors, newPass: '' }); }}
+                      placeholder="••••••••"
+                      error={passwordErrors.newPass}
+                    />
                   </div>
 
                   <div>
                     <label className="block mb-2">{t('profile.confirm_new_password')}</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        type="password"
-                        value={passwordData.confirm}
-                        onChange={(e) => { setPasswordData({ ...passwordData, confirm: e.target.value }); setPasswordErrors({ ...passwordErrors, confirm: '' }); }}
-                        placeholder="••••••••"
-                        className="pl-10"
-                        error={passwordErrors.confirm}
-                      />
-                    </div>
+                    <PasswordInput
+                      value={passwordData.confirm}
+                      onChange={(e) => { setPasswordData({ ...passwordData, confirm: e.target.value }); setPasswordErrors({ ...passwordErrors, confirm: '' }); }}
+                      placeholder="••••••••"
+                      error={passwordErrors.confirm}
+                    />
                   </div>
 
                   {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
                   {passwordSuccess && <p className="text-sm text-[var(--success)]">{passwordSuccess}</p>}
 
                   <div className="flex gap-2">
-                    <Button type="submit" disabled={passwordSaving}>
+                    <Button type="submit" disabled={passwordSaving || !isPasswordFormValid}>
                       {passwordSaving ? t('common.loading') : t('profile.update_password')}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancelPassword}>
@@ -409,7 +413,7 @@ export const Profile = () => {
             {vehicleError && <p className="text-sm text-destructive">{vehicleError}</p>}
 
             <div className="flex gap-3 pt-2">
-              <Button className="flex-1" onClick={handleSaveVehicle} disabled={vehicleSaving}>
+              <Button className="flex-1" onClick={handleSaveVehicle} disabled={vehicleSaving || !isVehicleFormValid}>
                 {vehicleSaving ? t('common.loading') : t('profile.save')}
               </Button>
               <Button variant="outline" onClick={() => setShowVehicleModal(false)}>

@@ -59,8 +59,19 @@ export function clearSession(): void {
   localStorage.removeItem(USER_KEY);
 }
 
+export function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return typeof payload.exp === 'number' && Date.now() / 1000 > payload.exp;
+  } catch {
+    return true;
+  }
+}
+
 export function isAuthenticated(): boolean {
-  return !!getToken() && !!getUser();
+  const token = getToken();
+  if (!token || !getUser()) return false;
+  return !isTokenExpired(token);
 }
 
 export function getDefaultRoute(role: UserRole): string {

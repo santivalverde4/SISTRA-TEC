@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, UserCircle } from 'lucide-react';
+import { User, Mail, UserCircle, Truck } from 'lucide-react';
 import { Input } from '@/components/ui-custom/Input';
+import { PasswordInput } from '@/components/ui-custom/PasswordInput';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui-custom/Card';
-import { getDefaultRoute } from '@/lib/auth';
+import { getDefaultRoute, isAuthenticated, getRole } from '@/lib/auth';
 import { register } from '@/services/authService';
 import { resolveErrorKey } from '@/lib/apiError';
 import type { UserRole } from '@/types';
@@ -15,6 +16,13 @@ import { useT } from '@/lib/i18n/useT';
 
 export function RegisterForm() {
   const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const role = getRole();
+      if (role) router.replace(getDefaultRoute(role));
+    }
+  }, [router]);
   const { t } = useT();
   const [formData, setFormData] = useState({
     name: '',
@@ -22,6 +30,8 @@ export function RegisterForm() {
     password: '',
     confirmPassword: '',
     role: 'donante' as UserRole,
+    vehicle: '',
+    plate: '',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -30,7 +40,11 @@ export function RegisterForm() {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name) newErrors.name = t('auth.error_name_required');
+    if (!formData.name.trim()) {
+      newErrors.name = t('auth.error_name_required');
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = t('auth.error_name_min');
+    }
     if (!formData.email) {
       newErrors.email = t('auth.error_email_required');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -38,13 +52,20 @@ export function RegisterForm() {
     }
     if (!formData.password) {
       newErrors.password = t('auth.error_password_required');
-    } else if (formData.password.length < 6) {
+    } else if (formData.password.length < 6 || !/[a-zA-Z]/.test(formData.password) || !/[0-9]/.test(formData.password)) {
       newErrors.password = t('auth.error_password_min');
     }
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = t('auth.error_passwords_mismatch');
     }
-
+    if (formData.role === 'transportista') {
+      if (!formData.vehicle || formData.vehicle.trim().length < 3) {
+        newErrors.vehicle = t('auth.error_vehicle_min');
+      }
+      if (!formData.plate || !/^[A-Za-z0-9]{6,}$/.test(formData.plate.replace(/-/g, ''))) {
+        newErrors.plate = t('auth.error_plate_invalid');
+      }
+    }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -57,6 +78,8 @@ export function RegisterForm() {
         email: formData.email,
         password: formData.password,
         role: formData.role,
+        vehicle: formData.vehicle || undefined,
+        plate: formData.plate || undefined,
       });
       router.push(getDefaultRoute(user.role));
     } catch (err) {
@@ -126,34 +149,56 @@ export function RegisterForm() {
             </div>
           </div>
 
+
+          {formData.role === 'transportista' && (
+            <>
+              <div>
+                <label className="block mb-2 text-sm">{t('auth.vehicle')}</label>
+                <div className="relative">
+                  <Truck className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    value={formData.vehicle}
+                    onChange={(e) => field('vehicle', e.target.value)}
+                    placeholder={t('auth.vehicle_placeholder')}
+                    error={errors.vehicle}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm">{t('auth.plate')}</label>
+                <div className="relative">
+                  <Truck className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    value={formData.plate}
+                    onChange={(e) => field('plate', e.target.value.toUpperCase())}
+                    placeholder={t('auth.plate_placeholder')}
+                    error={errors.plate}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </>
+          )}
           <div>
             <label className="block mb-2 text-sm">{t('auth.password')}</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="password"
-                value={formData.password}
-                onChange={(e) => field('password', e.target.value)}
-                placeholder="••••••••"
-                error={errors.password}
-                className="pl-10"
-              />
-            </div>
+            <PasswordInput
+              value={formData.password}
+              onChange={(e) => field('password', e.target.value)}
+              placeholder="••••••••"
+              error={errors.password}
+            />
           </div>
 
           <div>
             <label className="block mb-2 text-sm">{t('auth.confirm_password')}</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-[9px] w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => field('confirmPassword', e.target.value)}
-                placeholder="••••••••"
-                error={errors.confirmPassword}
-                className="pl-10"
-              />
-            </div>
+            <PasswordInput
+              value={formData.confirmPassword}
+              onChange={(e) => field('confirmPassword', e.target.value)}
+              placeholder="••••••••"
+              error={errors.confirmPassword}
+            />
           </div>
         </CardContent>
 
@@ -161,7 +206,18 @@ export function RegisterForm() {
           {errors.general && (
             <p className="text-sm text-destructive w-full">{errors.general}</p>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={
+              loading ||
+              formData.name.trim().length < 2 ||
+              !formData.email.trim() ||
+              !formData.password ||
+              !formData.confirmPassword ||
+              (formData.role === 'transportista' && (!formData.vehicle.trim() || !formData.plate.trim()))
+            }
+          >
             {loading ? t('common.loading') : t('auth.register')}
           </Button>
           <p className="text-sm text-muted-foreground">

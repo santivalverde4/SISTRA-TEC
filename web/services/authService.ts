@@ -21,6 +21,8 @@ export interface RegisterPayload {
   email: string;
   password: string;
   role: UserRole;
+  vehicle?: string;
+  plate?: string;
 }
 
 interface AuthResponse {
@@ -52,6 +54,8 @@ export async function register(payload: RegisterPayload): Promise<AuthUser> {
       email: payload.email,
       password: payload.password,
       role: mapRoleToBackend(payload.role),
+      vehicle: payload.vehicle,
+      plate: payload.plate,
     });
     return storeSession(data);
   } catch (err) {
@@ -60,10 +64,30 @@ export async function register(payload: RegisterPayload): Promise<AuthUser> {
   }
 }
 
-export async function completeGoogleAuth(tempToken: string, role?: UserRole): Promise<AuthUser> {
+export async function forgotPassword(email: string): Promise<void> {
+  try {
+    await api.post('/api/auth/forgot-password', { email });
+  } catch (err) {
+    log.error('forgotPassword failed', err);
+    throw err;
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  try {
+    await api.post('/api/auth/reset-password', { token, newPassword });
+  } catch (err) {
+    log.error('resetPassword failed', err);
+    throw err;
+  }
+}
+
+export async function completeGoogleAuth(tempToken: string, role?: UserRole, vehicle?: string, plate?: string): Promise<AuthUser> {
   try {
     const body: Record<string, string> = { tempToken };
     if (role) body.role = mapRoleToBackend(role);
+    if (vehicle) body.vehicle = vehicle;
+    if (plate) body.plate = plate;
     const data = await api.post<AuthResponse>('/api/auth/google/complete', body);
     return storeSession(data);
   } catch (err) {

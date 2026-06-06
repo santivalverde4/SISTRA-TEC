@@ -1,14 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { isAuthenticated, getRole } from '@/lib/auth';
+import { isAuthenticated, getRole, getDefaultRoute } from '@/lib/auth';
 import type { UserRole } from '@/types';
+
+const ROLE_PREFIXES: Record<UserRole, string> = {
+  donante: '/dashboard/donante',
+  transportista: '/dashboard/transportista',
+  administrador: '/dashboard/admin',
+};
+
+const SHARED_PATHS = ['/dashboard/profile'];
+
+function canAccess(role: UserRole, pathname: string): boolean {
+  if (SHARED_PATHS.some((p) => pathname.startsWith(p))) return true;
+  return pathname.startsWith(ROLE_PREFIXES[role]);
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -17,8 +31,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.replace('/login');
       return;
     }
-    setUserRole(getRole());
-  }, [router]);
+    const role = getRole();
+    if (!role) {
+      router.replace('/login');
+      return;
+    }
+    if (!canAccess(role, pathname)) {
+      router.replace(getDefaultRoute(role));
+      return;
+    }
+    setUserRole(role);
+  }, [router, pathname]);
 
   if (!userRole) return null;
 

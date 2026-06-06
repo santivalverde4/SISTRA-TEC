@@ -218,7 +218,10 @@ export const listAssignmentsForTransporter = async (userId: string) => {
   }
 
   const assignments = await prisma.transportAssignment.findMany({
-    where: { transporterId: transporter.id },
+    where: {
+      transporterId: transporter.id,
+      campaign: { status: { in: ["CLOSED", "IN_TRANSIT", "DELIVERED", "FINALIZED"] } },
+    },
     include: {
       campaign: true,
       events: true,

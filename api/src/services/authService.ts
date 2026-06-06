@@ -15,6 +15,8 @@ type RegisterInput = {
   password: string;
   name?: string;
   role?: string;
+  vehicle?: string;
+  plate?: string;
 };
 
 type LoginInput = {
@@ -41,15 +43,19 @@ export const registerLocal = async (input: RegisterInput): Promise<User> => {
   }
 
   const passwordHash = await bcrypt.hash(input.password, 12);
+  const role = normalizeRole(input.role);
 
-  return prisma.user.create({
-    data: {
-      email: input.email,
-      passwordHash,
-      name: input.name,
-      role: normalizeRole(input.role)
-    }
+  const user = await prisma.user.create({
+    data: { email: input.email, passwordHash, name: input.name, role }
   });
+
+  if (role === Role.TRANSPORTER) {
+    await prisma.transporter.create({
+      data: { userId: user.id, vehicle: input.vehicle ?? "", plate: input.plate ?? "" }
+    });
+  }
+
+  return user;
 };
 
 export const loginLocal = async (input: LoginInput): Promise<User> => {
@@ -95,7 +101,7 @@ export const revokeRefreshToken = async (refreshToken: string) => {
   await revokeRefreshTokenRecord(refreshToken);
 };
 
-export const upsertGoogleUser = async (profile: Profile, role?: string): Promise<User> => {
+export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?: string, plate?: string): Promise<User> => {
   const email = profile.emails?.[0]?.value;
   if (!email) {
     throw new HttpError(400, "Google profile missing email");
@@ -117,11 +123,21 @@ export const upsertGoogleUser = async (profile: Profile, role?: string): Promise
       if (existingAccount.user.role !== newRole) {
         await prisma.user.update({ where: { id: existingAccount.user.id }, data: { role: newRole } });
         existingAccount.user.role = newRole;
+
+        if (newRole === Role.TRANSPORTER) {
+          await prisma.transporter.upsert({
+            where: { userId: existingAccount.user.id },
+            update: {},
+            create: { userId: existingAccount.user.id, vehicle: "", plate: "" }
+          });
+        }
       }
     }
 
     return existingAccount.user;
   }
+
+  const finalRole = role ? normalizeRole(role) : Role.DONOR;
 
   const user = await prisma.user.upsert({
     where: { email },
@@ -129,7 +145,7 @@ export const upsertGoogleUser = async (profile: Profile, role?: string): Promise
     create: {
       email,
       name: profile.displayName || undefined,
-      role: role ? normalizeRole(role) : Role.DONOR
+      role: finalRole
     }
   });
 
@@ -140,6 +156,14 @@ export const upsertGoogleUser = async (profile: Profile, role?: string): Promise
       userId: user.id
     }
   });
+
+  if (finalRole === Role.TRANSPORTER) {
+    await prisma.transporter.upsert({
+      where: { userId: user.id },
+      update: {},
+      create: { userId: user.id, vehicle: vehicle ?? "", plate: plate ?? "" }
+    });
+  }
 
   return user;
 };
