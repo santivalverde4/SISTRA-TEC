@@ -1,12 +1,20 @@
 import type { Request, Response } from "express";
+import { Role } from "@prisma/client";
 import * as campaignsService from "../services/campaignsService";
 
 export const listCampaigns = async (req: Request, res: Response) => {
+  const userRole = (req as any).auth?.role;
+  const userId = (req as any).auth?.sub;
+
+  // Solo ADMINs ven solo sus propias campañas
+  // Los DONATEs ven todas las campañas (sin filtro de creador)
+  const requesterId = userRole === Role.ADMIN_CENTER ? userId : undefined;
+
   const campaigns = await campaignsService.listCampaigns({
     search: typeof req.query.search === "string" ? req.query.search : undefined,
     status: typeof req.query.status === "string" ? req.query.status : undefined,
     category: typeof req.query.category === "string" ? req.query.category : undefined,
-    requesterId: (req as any).auth?.sub,
+    requesterId,
   });
 
   res.json(campaigns);

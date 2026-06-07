@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { Badge } from '@/components/ui-custom/Badge';
+import { ContextHelp } from '@/components/ui-custom/ContextHelp';
+import { FieldExplanation } from '@/components/ui-custom/FieldExplanation';
+import { ConstructiveError } from '@/components/ui-custom/ConstructiveError';
+import { UndoButton } from '@/components/ui-custom/UndoButton';
 import { Search, Filter, Heart, Calendar, X, CheckCircle, Plus, Trash2, Package } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useT } from '@/lib/i18n/useT';
@@ -50,6 +54,7 @@ export const AvailableCampaigns = () => {
   const [detailsCampaign, setDetailsCampaign] = useState<Campaign | null>(null);
   const [donateCampaign, setDonateCampaign] = useState<Campaign | null>(null);
   const [donateRows, setDonateRows] = useState<DonationRow[]>([{ id: 1, description: '', quantity: '' }]);
+  const [previousRows, setPreviousRows] = useState<DonationRow[]>([]);
   const [donateNote, setDonateNote] = useState('');
   const [donateSuccess, setDonateSuccess] = useState(false);
   const [rowErrors, setRowErrors] = useState<Record<number, { description?: string; quantity?: string }>>({});
@@ -59,8 +64,16 @@ export const AvailableCampaigns = () => {
     setDonateRows(prev => prev.length > 1 ? prev.filter(r => r.id !== id) : prev);
     setRowErrors(prev => { const n = { ...prev }; delete n[id]; return n; });
   };
-  const updateRow = (id: number, field: 'description' | 'quantity', value: string) =>
+  
+  const undoDonationChanges = () => {
+    setDonateRows(previousRows);
+    setRowErrors({});
+  };
+  
+  const updateRow = (id: number, field: 'description' | 'quantity', value: string) => {
+    setPreviousRows([...donateRows]);
     setDonateRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+  };
 
   const filteredCampaigns = campaigns.filter((campaign) => {
     const matchesSearch = campaign.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -93,22 +106,21 @@ export const AvailableCampaigns = () => {
       if (!row.description.trim()) {
         rowErr.description = t('donation.error_description_required');
       } else if (row.description.trim().length < 2) {
-        rowErr.description = t('donation.error_description_min');
+        rowErr.description = `${t('donation.error_description_min')} - mínimo 2 caracteres`;
       } else if (row.description.trim().length > DESC_MAX) {
-        rowErr.description = t('donation.error_description_max');
+        rowErr.description = `${t('donation.error_description_max')} - máximo ${DESC_MAX} caracteres`;
       }
       const qty = Number(row.quantity);
       if (!row.quantity.trim()) {
-        rowErr.quantity = t('donation.error_quantity_required');
+        rowErr.quantity = `${t('donation.error_quantity_required')} - ingrese un número`;
       } else if (isNaN(qty) || qty <= 0) {
-        rowErr.quantity = t('donation.error_quantity_positive');
+        rowErr.quantity = 'La cantidad debe ser un número mayor a 0';
       } else if (qty > QTY_MAX) {
-        rowErr.quantity = t('donation.error_quantity_max');
+        rowErr.quantity = `Máximo ${QTY_MAX} unidades permitidas`;
       }
       if (Object.keys(rowErr).length > 0) errors[row.id] = rowErr;
     });
     if (donateNote.length > NOTE_MAX) {
-      // note error is shown inline via counter; block submit silently
       return false;
     }
     setRowErrors(errors);
@@ -319,6 +331,9 @@ export const AvailableCampaigns = () => {
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
                 <h3 className="font-semibold text-lg">{t('donation.success_title')}</h3>
                 <p className="text-muted-foreground text-sm">{t('donation.success_message')}</p>
+                <p className="text-xs text-green-700 bg-green-50 p-3 rounded">
+                  ✓ Tu aporte es vital para ayudar a quienes lo necesitan
+                </p>
                 <div className="flex gap-3 justify-center pt-2">
                   <Button variant="outline" onClick={() => setDonateCampaign(null)}>{t('common.close')}</Button>
                   <Button onClick={() => { setDonateCampaign(null); openDonate(donateCampaign); }}>
@@ -328,37 +343,66 @@ export const AvailableCampaigns = () => {
               </div>
             ) : (
               <div className="space-y-4">
+                <FieldExplanation text="Especifica exactamente qué productos deseas donar. Sé claro: 'Arroz 1kg', 'Camisetas M', etc. Esto ayuda al equipo a organizar y distribuir tu donación correctamente." />
+
                 <div className="grid grid-cols-[1fr_120px_32px] gap-2 text-sm font-medium text-muted-foreground px-1">
-                  <span>{t('donation.column_product')}</span>
-                  <span>{t('donation.column_quantity')}</span>
+                  <div className="flex items-center gap-2">
+                    <span>{t('donation.column_product')}</span>
+                    <ContextHelp 
+                      text="Describe el producto de forma específica para que el equipo pueda prepararlo y distribuirlo correctamente. Ejemplos: 'Arroz blanco 1kg', 'Camisetas talla M', 'Medicamento Ibuprofeno 400mg'" 
+                      title="¿Cómo describir un producto?"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>{t('donation.column_quantity')}</span>
+                    <ContextHelp 
+                      text="Cantidad en unidades del producto. Ejemplo: si donas 5 paquetes de arroz, escribe 5" 
+                      title="¿Qué es la cantidad?"
+                    />
+                  </div>
                   <span />
                 </div>
                 <div className="space-y-3">
                   {donateRows.map((row) => (
-                    <div key={row.id} className="grid grid-cols-[1fr_120px_32px] gap-2 items-start">
-                      <Input
-                        value={row.description}
-                        onChange={(e) => { updateRow(row.id, 'description', e.target.value.slice(0, DESC_MAX + 1)); setRowErrors((prev) => { const n = { ...prev }; if (n[row.id]) delete n[row.id].description; return n; }); }}
-                        placeholder={t('donation.product_placeholder')}
-                        error={rowErrors[row.id]?.description}
-                      />
-                      <Input
-                        type="number"
-                        min="1"
-                        max={QTY_MAX}
-                        value={row.quantity}
-                        onChange={(e) => { updateRow(row.id, 'quantity', e.target.value); setRowErrors((prev) => { const n = { ...prev }; if (n[row.id]) delete n[row.id].quantity; return n; }); }}
-                        placeholder="1"
-                        error={rowErrors[row.id]?.quantity}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeRow(row.id)}
-                        disabled={donateRows.length === 1}
-                        className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div key={row.id} className="space-y-1">
+                      <div className="grid grid-cols-[1fr_120px_32px] gap-2 items-start">
+                        <Input
+                          value={row.description}
+                          onChange={(e) => { updateRow(row.id, 'description', e.target.value.slice(0, DESC_MAX + 1)); setRowErrors((prev) => { const n = { ...prev }; if (n[row.id]) delete n[row.id].description; return n; }); }}
+                          placeholder={t('donation.product_placeholder')}
+                          error={rowErrors[row.id]?.description}
+                        />
+                        <Input
+                          type="number"
+                          min="1"
+                          max={QTY_MAX}
+                          value={row.quantity}
+                          onChange={(e) => { updateRow(row.id, 'quantity', e.target.value); setRowErrors((prev) => { const n = { ...prev }; if (n[row.id]) delete n[row.id].quantity; return n; }); }}
+                          placeholder="1"
+                          error={rowErrors[row.id]?.quantity}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeRow(row.id)}
+                          disabled={donateRows.length === 1}
+                          className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                          title={donateRows.length === 1 ? "Necesitas al menos un producto" : "Eliminar producto"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {rowErrors[row.id]?.description && (
+                        <ConstructiveError 
+                          error={rowErrors[row.id]?.description || ''}
+                          suggestion="Describe el producto de forma clara: tipo, marca o características principales"
+                        />
+                      )}
+                      {rowErrors[row.id]?.quantity && (
+                        <ConstructiveError 
+                          error={rowErrors[row.id]?.quantity || ''}
+                          suggestion="Ingresa un número sin decimales (ejemplo: 5, 10, 50)"
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -368,8 +412,12 @@ export const AvailableCampaigns = () => {
                 </Button>
                 <div>
                   <div className="flex justify-between mb-1">
-                    <label className="text-sm font-medium">
+                    <label className="text-sm font-medium flex items-center gap-2">
                       {t('donation.additional_note')} <span className="text-muted-foreground font-normal">{t('common.optional')}</span>
+                      <ContextHelp 
+                        text="Usa este espacio para notas especiales: condiciones de almacenamiento, instrucciones especiales, o detalles que consideres importantes" 
+                        title="¿Para qué sirve esta nota?"
+                      />
                     </label>
                     <span className={`text-xs ${donateNote.length > NOTE_MAX ? 'text-destructive' : 'text-muted-foreground'}`}>
                       {donateNote.length}/{NOTE_MAX}
@@ -383,10 +431,18 @@ export const AvailableCampaigns = () => {
                     className={`w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none${donateNote.length > NOTE_MAX ? ' border-destructive' : ''}`}
                   />
                   {donateNote.length > NOTE_MAX && (
-                    <p className="mt-1 text-xs text-destructive">{t('donation.error_note_max')}</p>
+                    <ConstructiveError 
+                      error={t('donation.error_note_max')}
+                      suggestion="Reduce el texto a menos de 300 caracteres"
+                    />
                   )}
                 </div>
-                {donateError && <p className="text-sm text-destructive">{donateError}</p>}
+                {donateError && (
+                  <ConstructiveError 
+                    error={donateError}
+                    suggestion="Verifica que todos los campos estén completos y sean válidos"
+                  />
+                )}
                 <div className="flex gap-3 pt-2">
                   <Button
                     className="flex-1"
@@ -396,6 +452,7 @@ export const AvailableCampaigns = () => {
                     <Heart className="w-4 h-4" />
                     {donateLoading ? t('common.loading') : t('donation.confirm_donation')}
                   </Button>
+                  <UndoButton onUndo={undoDonationChanges} disabled={previousRows.length === 0} label="Deshacer" />
                   <Button variant="outline" onClick={() => setDonateCampaign(null)}>{t('common.cancel')}</Button>
                 </div>
               </div>
