@@ -6,6 +6,7 @@ export const listCampaigns = async (req: Request, res: Response) => {
     search: typeof req.query.search === "string" ? req.query.search : undefined,
     status: typeof req.query.status === "string" ? req.query.status : undefined,
     category: typeof req.query.category === "string" ? req.query.category : undefined,
+    requesterId: (req as any).auth?.sub,
   });
 
   res.json(campaigns);
@@ -17,12 +18,12 @@ export const getCampaignById = async (req: Request, res: Response) => {
 };
 
 export const createCampaign = async (req: Request, res: Response) => {
-  const campaign = await campaignsService.createCampaign(req.body);
+  const campaign = await campaignsService.createCampaign({ ...req.body, createdById: (req as any).auth?.sub });
   res.status(201).json(campaign);
 };
 
 export const updateCampaign = async (req: Request, res: Response) => {
-  const campaign = await campaignsService.updateCampaign(req.params.id, req.body);
+  const campaign = await campaignsService.updateCampaign(req.params.id, { ...req.body, requesterId: (req as any).auth?.sub });
   res.json(campaign);
 };
 
