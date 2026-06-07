@@ -19,6 +19,8 @@ async function main() {
         passwordHash: await hash('Admin123'),
         name: 'Admin Centro',
         role: 'ADMIN_CENTER',
+        phone: '+50660000001',
+        address: 'Calle Principal 100, Ciudad',
       },
     }),
     prisma.user.create({
@@ -27,6 +29,8 @@ async function main() {
         passwordHash: await hash('Donor123'),
         name: 'María González',
         role: 'DONOR',
+        phone: '+50660000002',
+        address: 'Avenida Secundaria 20, Barrio',
       },
     }),
     prisma.user.create({
@@ -35,6 +39,8 @@ async function main() {
         passwordHash: await hash('Donor123'),
         name: 'Carlos Rodríguez',
         role: 'DONOR',
+        phone: '+50660000003',
+        address: 'Colonia Centro 5, Ciudad',
       },
     }),
     prisma.user.create({
@@ -43,6 +49,8 @@ async function main() {
         passwordHash: await hash('Trans123'),
         name: 'Luis Herrera',
         role: 'TRANSPORTER',
+        phone: '+50660000004',
+        address: 'Bodega 12, Polígono Industrial',
       },
     }),
   ]);
@@ -52,6 +60,7 @@ async function main() {
       userId: transporterUser.id,
       vehicle: 'Camión Isuzu 3.5t',
       plate: 'ABC1234',
+      phone: transporterUser.phone ?? undefined,
     },
   });
 

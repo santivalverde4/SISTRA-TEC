@@ -594,7 +594,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"vehicle\":\"Camión 3.5t\",\"plate\":\"DEV-002\"}",
+              "raw": "{\"vehicle\":\"Camión 3.5t\",\"plate\":\"DEV-002\",\"phone\":\"+50660000007\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -629,7 +629,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"userId\":\"USER_ID\",\"vehicle\":\"Furgoneta\",\"plate\":\"ABC-123\"}",
+              "raw": "{\"userId\":\"USER_ID\",\"vehicle\":\"Furgoneta\",\"plate\":\"ABC-123\",\"phone\":\"+50660000004\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -663,7 +663,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"vehicle\":\"Camión 7t\",\"plate\":\"XYZ-789\"}",
+              "raw": "{\"vehicle\":\"Camión 7t\",\"plate\":\"XYZ-789\",\"phone\":\"+50660000005\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -999,337 +999,402 @@
       ]
     },
     {
-      "name": "Register",
-      "event": [
+      "name": "Auth",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "// Guardar accessToken en environment variable para llamadas protegidas",
-              "if (pm.response.code === 201 || pm.response.code === 200) {",
-              "  const json = pm.response.json();",
-              "  if (json.accessToken) {",
-              "    pm.environment.set('accessToken', json.accessToken);",
-              "  }",
-              "}"
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"test+admin@example.com\",\n  \"password\": \"Passw0rd!\",\n  \"name\": \"Admin Test\",\n  \"role\": \"ADMIN_CENTER\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/register",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "register"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Login",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "if (pm.response.code === 200) {",
-              "  const json = pm.response.json();",
-              "  if (json.accessToken) {",
-              "    pm.environment.set('accessToken', json.accessToken);",
-              "  }",
-              "}"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"test+admin@example.com\",\n  \"password\": \"Passw0rd!\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/login",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "login"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Start Google OAuth (open in browser)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/google",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "google"
-          ]
-        },
-        "description": "Abrir en navegador. Completa el inicio de sesión en Google. Después de aceptar, Google redirigirá a FRONTEND_URL/auth/google/complete?t=<TOKEN>. Copia el valor de t para el siguiente paso."
-      },
-      "response": []
-    },
-    {
-      "name": "Complete Google Onboard",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "// Guarda accessToken si la respuesta es exitosa",
-              "if (pm.response.code === 200) {",
-              "  const json = pm.response.json();",
-              "  if (json.accessToken) {",
-              "    pm.environment.set('accessToken', json.accessToken);",
-              "  }",
-              "}"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"tempToken\": \"<COPIA_AQUI_EL_TOKEN_T>\",\n  \"role\": \"TRANSPORTER\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/google/complete",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "google",
-            "complete"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Create Inventory Item (protected)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test+admin@example.com\",\n  \"password\": \"Passw0rd!\",\n  \"name\": \"Admin Test\",\n  \"role\": \"ADMIN_CENTER\",\n  \"phone\": \"+50660000011\",\n  \"address\": \"Calle Test 1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
           },
-          {
-            "key": "Authorization",
-            "value": "Bearer {{accessToken}}"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"Arroz\",\n  \"category\": \"Alimentos\",\n  \"unit\": \"kg\"\n}"
+          "response": []
         },
-        "url": {
-          "raw": "{{baseUrl}}/api/inventory",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "inventory"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Refresh Token",
-      "event": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "if (pm.response.code === 200) {",
-              "  const json = pm.response.json();",
-              "  if (json.accessToken) {",
-              "    pm.environment.set('accessToken', json.accessToken);",
-              "  }",
-              "}"
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/refresh",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "refresh"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Logout",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/logout",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "logout"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Forgot Password (trigger email)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('response is 200', function () { pm.response.to.have.status(200); });",
-              "// The API returns { ok: true } even if the email is not associated to avoid enumeration.",
-              "console.log('If the account exists and has a password, Brevo will send the reset email to the recipient. Check server logs or Brevo dashboard if nothing arrives.');"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"test@example.com\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test+admin@example.com\",\n  \"password\": \"Passw0rd!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/forgot-password",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "forgot-password"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.accessToken) {",
+                  "    pm.environment.set('accessToken', json.accessToken);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
           ]
+        },
+        {
+          "name": "Start Google OAuth (open in browser)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "google"
+              ]
+            },
+            "description": "Abrir en navegador. Completa el inicio de sesión en Google. Después de aceptar, Google redirigirá a FRONTEND_URL/auth/google/complete?t=<TOKEN>. Copia el valor de t para el siguiente paso."
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Google Onboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Guarda accessToken si la respuesta es exitosa",
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.accessToken) {",
+                  "    pm.environment.set('accessToken', json.accessToken);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tempToken\": \"<COPIA_AQUI_EL_TOKEN_T>\",\n  \"role\": \"TRANSPORTER\",\n  \"phone\": \"+50660000004\",\n  \"address\": \"Bodega 12\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/google/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "google",
+                "complete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.accessToken) {",
+                  "    pm.environment.set('accessToken', json.accessToken);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password (trigger email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('response is 200', function () { pm.response.to.have.status(200); });",
+                  "// The API returns { ok: true } even if the email is not associated to avoid enumeration.",
+                  "console.log('If the account exists and has a password, Brevo will send the reset email to the recipient. Check server logs or Brevo dashboard if nothing arrives.');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password (submit token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('response is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('ok is true', function () { pm.expect(json.ok).to.eql(true); });",
+                  "console.log('If successful, the user password was updated and refresh tokens revoked.');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"<COPIA_AQUI_EL_TOKEN_DEL_EMAIL>\",\n  \"newPassword\": \"NewPassw0rd!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            }
+          },
+          "response": []
         }
-      },
-      "response": []
+      ]
     },
     {
-      "name": "Reset Password (submit token)",
-      "event": [
+      "name": "Users",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('response is 200', function () { pm.response.to.have.status(200); });",
-              "const json = pm.response.json();",
-              "pm.test('ok is true', function () { pm.expect(json.ok).to.eql(true); });",
-              "console.log('If successful, the user password was updated and refresh tokens revoked.');"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"token\": \"<COPIA_AQUI_EL_TOKEN_DEL_EMAIL>\",\n  \"newPassword\": \"NewPassw0rd!\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "name": "Get my user (me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('response is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('has phone and address (may be undefined)', function() { pm.expect(json).to.have.property('phone'); pm.expect(json).to.have.property('address'); });"
+                ],
+                "type": "text/javascript"
+              }
             }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/reset-password",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "api",
-            "auth",
-            "reset-password"
-          ]
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","users","me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update my user (me)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mi Nombre\",\n  \"phone\": \"+50660000099\",\n  \"address\": \"Calle Actualizada 123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","users","me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password (me)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"OldPass123\",\n  \"newPassword\": \"NewPass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","users","me","change-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('response is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('returns an array', function () { pm.expect(Array.isArray(json)).to.eql(true); });",
+                  "if (json.length > 0) { pm.test('items have phone and address (may be undefined)', function() { pm.expect(json[0]).to.have.property('phone'); pm.expect(json[0]).to.have.property('address'); }); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","users"]
+            }
+          },
+          "response": []
         }
-      },
-      "response": []
+      ]
     }
   ],
   "variable": [

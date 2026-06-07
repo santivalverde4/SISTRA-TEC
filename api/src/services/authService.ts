@@ -17,6 +17,8 @@ type RegisterInput = {
   role?: string;
   vehicle?: string;
   plate?: string;
+  phone?: string;
+  address?: string;
 };
 
 type LoginInput = {
@@ -46,12 +48,12 @@ export const registerLocal = async (input: RegisterInput): Promise<User> => {
   const role = normalizeRole(input.role);
 
   const user = await prisma.user.create({
-    data: { email: input.email, passwordHash, name: input.name, role }
+    data: { email: input.email, passwordHash, name: input.name, role, phone: input.phone, address: input.address }
   });
 
   if (role === Role.TRANSPORTER) {
     await prisma.transporter.create({
-      data: { userId: user.id, vehicle: input.vehicle ?? "", plate: input.plate ?? "" }
+      data: { userId: user.id, vehicle: input.vehicle ?? "", plate: input.plate ?? "", phone: input.phone ?? undefined }
     });
   }
 
@@ -101,7 +103,7 @@ export const revokeRefreshToken = async (refreshToken: string) => {
   await revokeRefreshTokenRecord(refreshToken);
 };
 
-export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?: string, plate?: string): Promise<User> => {
+export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?: string, plate?: string, phone?: string, address?: string): Promise<User> => {
   const email = profile.emails?.[0]?.value;
   if (!email) {
     throw new HttpError(400, "Google profile missing email");
@@ -128,7 +130,7 @@ export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?
           await prisma.transporter.upsert({
             where: { userId: existingAccount.user.id },
             update: {},
-            create: { userId: existingAccount.user.id, vehicle: "", plate: "" }
+            create: { userId: existingAccount.user.id, vehicle: "", plate: "", phone: phone ?? undefined }
           });
         }
       }
@@ -141,11 +143,13 @@ export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?
 
   const user = await prisma.user.upsert({
     where: { email },
-    update: { name: profile.displayName || undefined },
+    update: { name: profile.displayName || undefined, phone: phone ?? undefined, address: address ?? undefined },
     create: {
       email,
       name: profile.displayName || undefined,
-      role: finalRole
+      role: finalRole,
+      phone: phone ?? undefined,
+      address: address ?? undefined
     }
   });
 
@@ -161,7 +165,7 @@ export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?
     await prisma.transporter.upsert({
       where: { userId: user.id },
       update: {},
-      create: { userId: user.id, vehicle: vehicle ?? "", plate: plate ?? "" }
+      create: { userId: user.id, vehicle: vehicle ?? "", plate: plate ?? "", phone: phone ?? undefined }
     });
   }
 

@@ -22,7 +22,9 @@ const toPublicUser = (user: User) => ({
   id: user.id,
   email: user.email,
   name: user.name,
-  role: user.role
+  role: user.role,
+  phone: (user as any).phone ?? undefined,
+  address: (user as any).address ?? undefined
 });
 
 const setRefreshCookie = (res: Response, token: string) => {
@@ -37,12 +39,12 @@ const setRefreshCookie = (res: Response, token: string) => {
 };
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, name, role } = req.body ?? {};
+  const { email, password, name, role, phone, address } = req.body ?? {};
   if (!email || !password) {
     throw new HttpError(400, "Email and password required");
   }
 
-  const user = await registerLocal({ email, password, name, role });
+  const user = await registerLocal({ email, password, name, role, phone, address });
   const tokens = await issueTokensForUser(user);
 
   setRefreshCookie(res, tokens.refreshToken);
@@ -117,7 +119,7 @@ export const googleCallback = (req: Request, res: Response) => {
 };
 
 export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Response) => {
-  const { tempToken, role, vehicle, plate } = req.body ?? {};
+  const { tempToken, role, vehicle, plate, phone, address } = req.body ?? {};
   if (!tempToken) {
     throw new HttpError(400, "Temp token required");
   }
@@ -154,7 +156,7 @@ export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Resp
     emails: payload.email ? [{ value: payload.email }] as any : undefined
   };
 
-  const user = await upsertGoogleUser(profile as Profile, normalizedRole as unknown as string, vehicle, plate);
+  const user = await upsertGoogleUser(profile as Profile, normalizedRole as unknown as string, vehicle, plate, phone, address);
   const tokens = await issueTokensForUser(user);
 
   setRefreshCookie(res, tokens.refreshToken);

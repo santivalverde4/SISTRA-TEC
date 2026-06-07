@@ -3,7 +3,8 @@ import { authJwt } from "../middlewares/authJwt";
 import {
   getUserById,
   updateUser,
-  changePassword
+  changePassword,
+  getAllUsers
 } from "../controllers/usersController";
 import { asyncHandler } from "../utils/asyncHandler";
 
@@ -20,6 +21,8 @@ const forwardToWithAuthId = (handler: any) => {
     return handler(req, res, next);
   });
 };
+
+router.get("/", authJwt, asyncHandler(getAllUsers));
 
 router.get("/me", authJwt, forwardToWithAuthId(getUserById));
 router.put("/me", authJwt, forwardToWithAuthId(updateUser));
