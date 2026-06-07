@@ -74,6 +74,7 @@ async function main() {
         startDate: past(5),
         endDate: future(25),
         categories: ['Ropa', 'Alimentos'],
+        createdById: admin.id,
       },
     }),
     prisma.campaign.create({
@@ -84,6 +85,7 @@ async function main() {
         startDate: past(20),
         endDate: future(10),
         categories: ['Educación'],
+        createdById: admin.id,
       },
     }),
     prisma.campaign.create({
@@ -94,6 +96,7 @@ async function main() {
         startDate: past(40),
         endDate: past(10),
         categories: ['Alimentos'],
+        createdById: admin.id,
       },
     }),
     prisma.campaign.create({
@@ -104,6 +107,7 @@ async function main() {
         startDate: past(50),
         endDate: past(20),
         categories: ['Salud'],
+        createdById: admin.id,
       },
     }),
     prisma.campaign.create({
@@ -114,6 +118,7 @@ async function main() {
         startDate: past(100),
         endDate: past(70),
         categories: ['Construcción', 'Vivienda'],
+        createdById: admin.id,
       },
     }),
   ]);

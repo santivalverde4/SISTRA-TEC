@@ -16,7 +16,7 @@ import { getTraceabilityByCampaignId } from "../controllers/transportEventsContr
 
 const router = Router();
 
-router.get("/", asyncHandler(listCampaigns));
+router.get("/", authJwt, asyncHandler(listCampaigns));
 router.get("/:id", asyncHandler(getCampaignById));
 router.post("/", authJwt, requireRoles(Role.ADMIN_CENTER), asyncHandler(createCampaign));
 router.put("/:id", authJwt, requireRoles(Role.ADMIN_CENTER), asyncHandler(updateCampaign));

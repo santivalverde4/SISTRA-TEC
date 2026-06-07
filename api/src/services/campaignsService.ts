@@ -113,22 +113,29 @@ export const listCampaigns = async (filters: {
   search?: string;
   status?: string;
   category?: string;
+  requesterId?: string; // quien pide ver
 }) => {
   const status = normalizeCampaignStatus(filters.status);
 
+  const where: any = {
+    ...(filters.search
+      ? {
+          OR: [
+            { name: { contains: filters.search, mode: "insensitive" } },
+            { description: { contains: filters.search, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+    ...(status ? { status } : {}),
+    ...(filters.category ? { categories: { has: filters.category } } : {}),
+  };
+
+  if (filters.requesterId) {
+    where.createdById = filters.requesterId; // solo los propios
+  }
+
   const campaigns = await prisma.campaign.findMany({
-    where: {
-      ...(filters.search
-        ? {
-            OR: [
-              { name: { contains: filters.search, mode: "insensitive" } },
-              { description: { contains: filters.search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-      ...(status ? { status } : {}),
-      ...(filters.category ? { categories: { has: filters.category } } : {}),
-    },
+    where,
     include: campaignInclude,
     orderBy: { startDate: "desc" },
   });
@@ -156,6 +163,7 @@ export const createCampaign = async (data: {
   startDate?: string;
   endDate?: string;
   categories?: unknown;
+  createdById?: string;
 }) => {
   if (!data.name?.trim()) {
     throw new HttpError(400, "name is required");
@@ -170,6 +178,7 @@ export const createCampaign = async (data: {
       startDate: parseDate(data.startDate, "startDate"),
       endDate: parseDate(data.endDate, "endDate"),
       categories: parseCategories(data.categories ?? []),
+      ...(data.createdById ? { createdById: data.createdById } : {}),
     },
     include: campaignInclude,
   });
@@ -186,12 +195,21 @@ export const updateCampaign = async (
     startDate?: string;
     endDate?: string;
     categories?: unknown;
+    requesterId?: string; // quien pide cambiar
   }
 ) => {
   const status = normalizeCampaignStatus(data.status);
 
   try {
-    const campaign = await prisma.campaign.update({
+    const campaign = await prisma.campaign.findUnique({ where: { id } });
+    if (!campaign) throw new HttpError(404, "Campaign not found");
+
+    // solo los propios
+    if (data.requesterId && campaign.createdById !== data.requesterId) {
+      throw new HttpError(403, "Forbidden");
+    }
+
+    const updated = await prisma.campaign.update({
       where: { id },
       data: {
         ...(data.name !== undefined ? { name: data.name.trim() } : {}),
@@ -204,8 +222,9 @@ export const updateCampaign = async (
       include: campaignInclude,
     });
 
-    return formatCampaign(campaign);
-  } catch {
+    return formatCampaign(updated);
+  } catch (err) {
+    if (err instanceof HttpError) throw err;
     throw new HttpError(404, "Campaign not found");
   }
 };
