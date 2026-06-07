@@ -537,17 +537,26 @@ export const ManageCampaigns = () => {
                 const allowed = getAllowedTransitions(editTarget, today);
                 // Always include current status as the "keep current" option
                 const options: CampaignStatus[] = [editTarget.status, ...allowed];
+                const showNoTransporterHint = editTarget.status === 'cerrada' && !editTarget.assignment;
                 return (
-                  <select
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value as CampaignStatus })}
-                    className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    disabled={allowed.length === 0}
-                  >
-                    {options.map((s) => (
-                      <option key={s} value={s}>{t(CAMPAIGN_STATUS_LABELS[s] as Parameters<typeof t>[0])}</option>
-                    ))}
-                  </select>
+                  <>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value as CampaignStatus })}
+                      className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      disabled={allowed.length === 0}
+                    >
+                      {options.map((s) => (
+                        <option key={s} value={s}>{t(CAMPAIGN_STATUS_LABELS[s] as Parameters<typeof t>[0])}</option>
+                      ))}
+                    </select>
+                    {showNoTransporterHint && (
+                      <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400 mt-2">
+                        <AlertTriangle className="mt-0.5 w-4 h-4 shrink-0" />
+                        <span>{t('campaign.no_transporter_for_transit')}</span>
+                      </div>
+                    )}
+                  </>
                 );
               })()}
             </div>
