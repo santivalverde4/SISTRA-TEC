@@ -32,6 +32,9 @@ export function RegisterForm() {
     role: 'donante' as UserRole,
     vehicle: '',
     plate: '',
+    phone: '',
+    address: '',
+    transporterPhone: '',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -58,12 +61,25 @@ export function RegisterForm() {
     if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = t('auth.error_passwords_mismatch');
     }
+    if (!formData.phone.trim() || formData.phone.trim().length < 8) {
+      newErrors.phone = t('profile.error_phone_min');
+    } else if (!/^[+\d\s\-()]{8,}$/.test(formData.phone.trim())) {
+      newErrors.phone = t('profile.error_phone_invalid');
+    }
+    if (!formData.address.trim() || formData.address.trim().length < 5) {
+      newErrors.address = t('profile.error_address_min');
+    }
     if (formData.role === 'transportista') {
       if (!formData.vehicle || formData.vehicle.trim().length < 3) {
         newErrors.vehicle = t('auth.error_vehicle_min');
       }
       if (!formData.plate || !/^[A-Za-z0-9]{6,}$/.test(formData.plate.replace(/-/g, ''))) {
         newErrors.plate = t('auth.error_plate_invalid');
+      }
+      if (!formData.transporterPhone.trim() || formData.transporterPhone.trim().length < 8) {
+        newErrors.transporterPhone = t('profile.error_phone_min');
+      } else if (!/^[+\d\s\-()]{8,}$/.test(formData.transporterPhone.trim())) {
+        newErrors.transporterPhone = t('profile.error_phone_invalid');
       }
     }
     if (Object.keys(newErrors).length > 0) {
@@ -80,6 +96,9 @@ export function RegisterForm() {
         role: formData.role,
         vehicle: formData.vehicle || undefined,
         plate: formData.plate || undefined,
+        phone: formData.phone || undefined,
+        address: formData.address || undefined,
+        transporterPhone: formData.transporterPhone || undefined,
       });
       router.push(getDefaultRoute(user.role));
     } catch (err) {
@@ -150,6 +169,26 @@ export function RegisterForm() {
           </div>
 
 
+          <div>
+            <label className="block mb-2 text-sm">{t('profile.phone')}</label>
+            <Input
+              value={formData.phone}
+              onChange={(e) => field('phone', e.target.value)}
+              placeholder={t('profile.phone_placeholder')}
+              error={errors.phone}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm">{t('profile.address')}</label>
+            <Input
+              value={formData.address}
+              onChange={(e) => field('address', e.target.value)}
+              placeholder={t('profile.address_placeholder')}
+              error={errors.address}
+            />
+          </div>
+
           {formData.role === 'transportista' && (
             <>
               <div>
@@ -178,6 +217,16 @@ export function RegisterForm() {
                     className="pl-10"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm">{t('auth.transporter_phone')}</label>
+                <Input
+                  value={formData.transporterPhone}
+                  onChange={(e) => field('transporterPhone', e.target.value)}
+                  placeholder={t('profile.phone_placeholder')}
+                  error={errors.transporterPhone}
+                />
               </div>
             </>
           )}
@@ -215,7 +264,9 @@ export function RegisterForm() {
               !formData.email.trim() ||
               !formData.password ||
               !formData.confirmPassword ||
-              (formData.role === 'transportista' && (!formData.vehicle.trim() || !formData.plate.trim()))
+              formData.phone.trim().length < 8 || !/^[+\d\s\-()]{8,}$/.test(formData.phone.trim()) ||
+              formData.address.trim().length < 5 ||
+              (formData.role === 'transportista' && (!formData.vehicle.trim() || !formData.plate.trim() || formData.transporterPhone.trim().length < 8 || !/^[+\d\s\-()]{8,}$/.test(formData.transporterPhone.trim())))
             }
           >
             {loading ? t('common.loading') : t('auth.register')}

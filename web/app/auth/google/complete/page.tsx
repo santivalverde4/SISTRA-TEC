@@ -22,6 +22,7 @@ export default function GoogleCompletePage() {
   const [role, setRole] = useState<UserRole>('donante');
   const [vehicle, setVehicle] = useState('');
   const [plate, setPlate] = useState('');
+  const [transporterPhone, setTransporterPhone] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [needsRole, setNeedsRole] = useState(false);
@@ -58,6 +59,8 @@ export default function GoogleCompletePage() {
     if (role === 'transportista') {
       if (!vehicle || vehicle.trim().length < 3) newFieldErrors.vehicle = t('auth.error_vehicle_min');
       if (!plate || !/^[A-Za-z0-9]{6,}$/.test(plate.replace(/-/g, ''))) newFieldErrors.plate = t('auth.error_plate_invalid');
+      if (!transporterPhone.trim() || transporterPhone.trim().length < 8) newFieldErrors.transporterPhone = t('profile.error_phone_min');
+      else if (!/^[+\d\s\-()]{8,}$/.test(transporterPhone.trim())) newFieldErrors.transporterPhone = t('profile.error_phone_invalid');
     }
     if (Object.keys(newFieldErrors).length > 0) {
       setFieldErrors(newFieldErrors);
@@ -67,7 +70,7 @@ export default function GoogleCompletePage() {
     setLoading(true);
     setError(null);
     try {
-      const user = await completeGoogleAuth(tempToken, role, vehicle || undefined, plate || undefined);
+      const user = await completeGoogleAuth(tempToken, role, vehicle || undefined, plate || undefined, undefined, undefined, transporterPhone || undefined);
       window.location.href = getDefaultRoute(user.role);
     } catch (err) {
       setError(t(resolveErrorKey(err, 'auth') as Parameters<typeof t>[0]));
@@ -143,6 +146,16 @@ export default function GoogleCompletePage() {
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block mb-2 text-sm">{t('auth.transporter_phone')}</label>
+                <Input
+                  value={transporterPhone}
+                  onChange={(e) => setTransporterPhone(e.target.value)}
+                  placeholder={t('profile.phone_placeholder')}
+                  error={fieldErrors.transporterPhone}
+                />
+              </div>
             </>
           )}
         </CardContent>
@@ -155,7 +168,7 @@ export default function GoogleCompletePage() {
             disabled={
               loading ||
               !needsRole ||
-              (role === 'transportista' && (!vehicle.trim() || !plate.trim()))
+              (role === 'transportista' && (!vehicle.trim() || !plate.trim() || transporterPhone.trim().length < 8 || !/^[+\d\s\-()]{8,}$/.test(transporterPhone.trim())))
             }
           >
             {loading ? t('common.loading') : t('auth.google_complete_button')}
