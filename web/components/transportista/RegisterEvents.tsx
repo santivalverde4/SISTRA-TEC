@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui-custom/Input';
 import { Badge } from '@/components/ui-custom/Badge';
+import { ContextHelp } from '@/components/ui-custom/ContextHelp';
+import { FieldExplanation } from '@/components/ui-custom/FieldExplanation';
+import { ConstructiveError } from '@/components/ui-custom/ConstructiveError';
 import { Plus, FileText, Clock, Calendar, Info, StickyNote } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { resolveErrorKey } from '@/lib/apiError';
@@ -61,19 +64,19 @@ export const RegisterEvents = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.description.trim()) {
-      setFormError(t('transporter.error_description_required'));
+      setFormError('Debes describir qué sucedió en el evento');
       return;
     }
     if (formData.description.trim().length < 10) {
-      setFormError(t('transporter.error_description_min'));
+      setFormError('La descripción es muy corta. Necesitamos al menos 10 caracteres para entender el evento');
       return;
     }
     if (formData.description.trim().length > 300) {
-      setFormError(t('transporter.error_description_max'));
+      setFormError('La descripción es muy larga. Máximo 300 caracteres');
       return;
     }
     if (formData.notes.trim().length > 500) {
-      setFormError(t('transporter.error_notes_max'));
+      setFormError('Las notas adicionales son muy largas. Máximo 500 caracteres');
       return;
     }
     setSubmitting(true);
@@ -140,8 +143,16 @@ export const RegisterEvents = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <FieldExplanation text="Registra cada evento importante durante el transporte para que el equipo pueda rastrear el estado de la campaña en tiempo real. Esto ayuda a mantener a los donantes informados." />
+
               <div>
-                <label className="block mb-2">{t('transporter.event_campaign')}</label>
+                <label className="block mb-2 font-medium flex items-center gap-2">
+                  {t('transporter.event_campaign')}
+                  <ContextHelp 
+                    text="Selecciona la campaña de donación a la cual está asignado este transporte"
+                    title="¿Qué es una campaña?"
+                  />
+                </label>
                 <select
                   value={formData.assignmentId}
                   onChange={(e) => setFormData({ ...formData, assignmentId: e.target.value })}
@@ -158,7 +169,19 @@ export const RegisterEvents = () => {
               </div>
 
               <div>
-                <label className="block mb-2">{t('transporter.event_type')}</label>
+                <label className="block mb-2 font-medium flex items-center gap-2">
+                  {t('transporter.event_type')}
+                  <ContextHelp 
+                    text="
+• Camión Partió: El vehículo inició el viaje
+• Ruta Bloqueada: Hay un obstáculo en el camino
+• Punto de Control: Pasaste por un control oficial
+• Parada Técnica: El vehículo paró por mantenimiento
+• Otro: Cualquier otro evento importante
+"
+                    title="¿Qué significa cada tipo?"
+                  />
+                </label>
                 <select
                   value={formData.eventType}
                   onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
@@ -172,7 +195,13 @@ export const RegisterEvents = () => {
 
               <div>
                 <div className="flex justify-between mb-2">
-                  <label>{t('transporter.event_description')}</label>
+                  <label className="font-medium flex items-center gap-2">
+                    {t('transporter.event_description')}
+                    <ContextHelp 
+                      text="Describe qué sucedió de forma clara y concisa. Incluye detalles importantes: ubicación, hora aproximada, si hay retrasos, etc."
+                      title="¿Cómo debo describir el evento?"
+                    />
+                  </label>
                   <span className={`text-xs ${formData.description.length > 300 ? 'text-destructive' : 'text-muted-foreground'}`}>
                     {formData.description.length}/300
                   </span>
@@ -180,16 +209,21 @@ export const RegisterEvents = () => {
                 <Input
                   value={formData.description}
                   onChange={(e) => { setFormData({ ...formData, description: e.target.value }); setFormError(''); }}
-                  placeholder={t('transporter.event_description_placeholder')}
+                  placeholder="Ej: Camión partió a las 8:00am desde el depósito central..."
                   error={formError}
                 />
+                <FieldExplanation text="Sé específico: incluye ubicación, hora y cualquier detalle que sea importante para el seguimiento." />
               </div>
 
               <div>
                 <div className="flex justify-between mb-2">
-                  <label>
+                  <label className="font-medium flex items-center gap-2">
                     {t('transporter.event_notes')}{' '}
                     <span className="text-muted-foreground font-normal text-sm">{t('common.optional')}</span>
+                    <ContextHelp 
+                      text="Información adicional que podría ser útil. Por ejemplo: condiciones climáticas, incidentes menores, cambios de ruta, etc."
+                      title="¿Cuándo debo agregar notas?"
+                    />
                   </label>
                   <span className={`text-xs ${formData.notes.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>
                     {formData.notes.length}/500
@@ -203,6 +237,13 @@ export const RegisterEvents = () => {
                   className="w-full px-3 py-2 bg-input-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                 />
               </div>
+
+              {formError && (
+                <ConstructiveError 
+                  error={formError}
+                  suggestion="Revisa los campos: descripción debe tener entre 10 y 300 caracteres"
+                />
+              )}
 
               <div className="flex gap-2">
                 <Button type="submit" disabled={submitting || !isEventFormValid}>
