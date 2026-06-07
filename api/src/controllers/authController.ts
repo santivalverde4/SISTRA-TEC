@@ -39,12 +39,12 @@ const setRefreshCookie = (res: Response, token: string) => {
 };
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, name, role, phone, address } = req.body ?? {};
+  const { email, password, name, role, phone, address, vehicle, plate, transporterPhone } = req.body ?? {};
   if (!email || !password) {
     throw new HttpError(400, "Email and password required");
   }
 
-  const user = await registerLocal({ email, password, name, role, phone, address });
+  const user = await registerLocal({ email, password, name, role, phone, address, vehicle, plate, transporterPhone });
   const tokens = await issueTokensForUser(user);
 
   setRefreshCookie(res, tokens.refreshToken);
@@ -119,7 +119,7 @@ export const googleCallback = (req: Request, res: Response) => {
 };
 
 export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Response) => {
-  const { tempToken, role, vehicle, plate, phone, address } = req.body ?? {};
+  const { tempToken, role, vehicle, plate, phone, address, transporterPhone } = req.body ?? {};
   if (!tempToken) {
     throw new HttpError(400, "Temp token required");
   }
@@ -134,7 +134,7 @@ export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Resp
     throw new HttpError(401, "Invalid or expired temp token");
   }
 
-  
+
   const existingAccount = await prisma.oauthAccount.findUnique({
     where: {
       provider_providerUserId: {
@@ -144,8 +144,11 @@ export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Resp
     }
   });
 
-  
-  if (!existingAccount && !normalizedRole) {
+  const existingUserByEmail = payload.email
+    ? await prisma.user.findUnique({ where: { email: payload.email } })
+    : null;
+
+  if (!existingAccount && !existingUserByEmail && !normalizedRole) {
     throw new HttpError(400, "Role required to complete onboarding for new users");
   }
 
@@ -156,7 +159,7 @@ export const completeGoogleOnboard = asyncHandler(async (req: Request, res: Resp
     emails: payload.email ? [{ value: payload.email }] as any : undefined
   };
 
-  const user = await upsertGoogleUser(profile as Profile, normalizedRole as unknown as string, vehicle, plate, phone, address);
+  const user = await upsertGoogleUser(profile as Profile, normalizedRole as unknown as string, vehicle, plate, phone, address, transporterPhone);
   const tokens = await issueTokensForUser(user);
 
   setRefreshCookie(res, tokens.refreshToken);

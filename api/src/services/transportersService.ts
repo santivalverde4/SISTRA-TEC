@@ -30,7 +30,7 @@ const formatTransporter = (transporter: any) => ({
   userId: transporter.userId,
   name: transporter.user.name,
   email: transporter.user.email,
-  phone: transporter.user.phone ?? undefined,
+  phone: transporter.phone ?? transporter.user.phone ?? undefined,
   address: transporter.user.address ?? undefined,
   vehicle: transporter.vehicle,
   plate: transporter.plate,

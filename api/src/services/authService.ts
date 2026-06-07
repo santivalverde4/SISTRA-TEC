@@ -19,6 +19,7 @@ type RegisterInput = {
   plate?: string;
   phone?: string;
   address?: string;
+  transporterPhone?: string;
 };
 
 type LoginInput = {
@@ -53,7 +54,7 @@ export const registerLocal = async (input: RegisterInput): Promise<User> => {
 
   if (role === Role.TRANSPORTER) {
     await prisma.transporter.create({
-      data: { userId: user.id, vehicle: input.vehicle ?? "", plate: input.plate ?? "", phone: input.phone ?? undefined }
+      data: { userId: user.id, vehicle: input.vehicle ?? "", plate: input.plate ?? "", phone: input.transporterPhone ?? undefined }
     });
   }
 
@@ -103,7 +104,7 @@ export const revokeRefreshToken = async (refreshToken: string) => {
   await revokeRefreshTokenRecord(refreshToken);
 };
 
-export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?: string, plate?: string, phone?: string, address?: string): Promise<User> => {
+export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?: string, plate?: string, phone?: string, address?: string, transporterPhone?: string): Promise<User> => {
   const email = profile.emails?.[0]?.value;
   if (!email) {
     throw new HttpError(400, "Google profile missing email");
@@ -130,7 +131,7 @@ export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?
           await prisma.transporter.upsert({
             where: { userId: existingAccount.user.id },
             update: {},
-            create: { userId: existingAccount.user.id, vehicle: "", plate: "", phone: phone ?? undefined }
+            create: { userId: existingAccount.user.id, vehicle: "", plate: "", phone: transporterPhone ?? undefined }
           });
         }
       }
@@ -165,7 +166,7 @@ export const upsertGoogleUser = async (profile: Profile, role?: string, vehicle?
     await prisma.transporter.upsert({
       where: { userId: user.id },
       update: {},
-      create: { userId: user.id, vehicle: vehicle ?? "", plate: plate ?? "", phone: phone ?? undefined }
+      create: { userId: user.id, vehicle: vehicle ?? "", plate: plate ?? "", phone: transporterPhone ?? undefined }
     });
   }
 
