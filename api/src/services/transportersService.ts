@@ -30,6 +30,8 @@ const formatTransporter = (transporter: any) => ({
   userId: transporter.userId,
   name: transporter.user.name,
   email: transporter.user.email,
+  phone: transporter.user.phone ?? undefined,
+  address: transporter.user.address ?? undefined,
   vehicle: transporter.vehicle,
   plate: transporter.plate,
   assignments: transporter.assignments?.map(formatAssignment) ?? [],
@@ -37,7 +39,7 @@ const formatTransporter = (transporter: any) => ({
 
 const transporterInclude = {
   user: {
-    select: { id: true, name: true, email: true, role: true },
+    select: { id: true, name: true, email: true, role: true, phone: true, address: true },
   },
   assignments: {
     include: { campaign: true },
@@ -80,7 +82,7 @@ export const getTransporterByUserId = async (userId: string) => {
   return formatTransporter(transporter);
 };
 
-export const createTransporter = async (data: { userId?: string; vehicle?: string; plate?: string }) => {
+export const createTransporter = async (data: { userId?: string; vehicle?: string; plate?: string; phone?: string }) => {
   if (!data.userId || !data.vehicle || !data.plate) {
     throw new HttpError(400, "userId, vehicle and plate are required");
   }
@@ -99,6 +101,7 @@ export const createTransporter = async (data: { userId?: string; vehicle?: strin
       userId: data.userId,
       vehicle: data.vehicle,
       plate: data.plate,
+      ...(data.phone ? { phone: data.phone } : {}),
     },
     include: transporterInclude,
   });
@@ -108,7 +111,7 @@ export const createTransporter = async (data: { userId?: string; vehicle?: strin
 
 export const updateTransporter = async (
   id: string,
-  data: { vehicle?: string; plate?: string }
+  data: { vehicle?: string; plate?: string; phone?: string }
 ) => {
   try {
     const transporter = await prisma.transporter.update({
@@ -116,6 +119,7 @@ export const updateTransporter = async (
       data: {
         ...(data.vehicle !== undefined ? { vehicle: data.vehicle } : {}),
         ...(data.plate !== undefined ? { plate: data.plate } : {}),
+        ...(data.phone !== undefined ? { phone: data.phone } : {}),
       },
       include: transporterInclude,
     });
@@ -128,7 +132,7 @@ export const updateTransporter = async (
 
 export const updateTransporterByUserId = async (
   userId: string,
-  data: { vehicle?: string; plate?: string }
+  data: { vehicle?: string; plate?: string; phone?: string }
 ) => {
   const transporter = await prisma.transporter.findUnique({ where: { userId } });
   if (!transporter) {

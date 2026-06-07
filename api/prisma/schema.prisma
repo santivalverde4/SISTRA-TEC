@@ -52,6 +52,8 @@ model User {
   email         String         @unique
   passwordHash  String?
   name          String?
+  phone         String?
+  address       String?
   role          Role           @default(DONOR)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -144,6 +146,7 @@ model Transporter {
   user    User    @relation(fields: [userId], references: [id])
   vehicle String
   plate   String
+  phone   String?
 
   assignments TransportAssignment[]
 }

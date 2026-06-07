@@ -3,10 +3,20 @@ import { prisma } from "../db/prisma";
 import { HttpError } from "../utils/httpError";
 import bcrypt from "bcryptjs";
 
+export const getAllUsers = async (req: Request, res: Response) => {
+  const users = await prisma.user.findMany({
+    select: { id: true, email: true, name: true, role: true, phone: true, address: true, passwordHash: true }
+  });
+  const result = users.map(({ passwordHash, ...rest }) => ({ ...rest, hasPassword: !!passwordHash }));
+  res.json(result);
+};
 
 export const getUserById = async (req: Request, res: Response) => {
   const id = req.params.id;
-  const user = await prisma.user.findUnique({ where: { id }, select: { id: true, email: true, name: true, role: true, passwordHash: true } });
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, email: true, name: true, role: true, passwordHash: true, phone: true, address: true }
+  });
   if (!user) throw new HttpError(404, "User not found");
   const { passwordHash, ...rest } = user;
   res.json({ ...rest, hasPassword: !!passwordHash });
@@ -14,8 +24,8 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   const id = req.params.id;
-  const { name, role } = req.body ?? {};
-  await prisma.user.update({ where: { id }, data: { name, role } });
+  const { name, role, phone, address } = req.body ?? {};
+  await prisma.user.update({ where: { id }, data: { name, role, phone, address } });
   res.json({ ok: true });
 };
 
