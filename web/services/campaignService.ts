@@ -12,6 +12,7 @@ export interface BackendTransporter {
   vehicle: string;
   plate: string;
   email: string;
+  phone?: string;
 }
 
 export interface BackendAssignment {

@@ -23,6 +23,9 @@ export interface RegisterPayload {
   role: UserRole;
   vehicle?: string;
   plate?: string;
+  phone?: string;
+  address?: string;
+  transporterPhone?: string;
 }
 
 interface AuthResponse {
@@ -56,6 +59,9 @@ export async function register(payload: RegisterPayload): Promise<AuthUser> {
       role: mapRoleToBackend(payload.role),
       vehicle: payload.vehicle,
       plate: payload.plate,
+      phone: payload.phone,
+      address: payload.address,
+      transporterPhone: payload.transporterPhone,
     });
     return storeSession(data);
   } catch (err) {
@@ -82,12 +88,15 @@ export async function resetPassword(token: string, newPassword: string): Promise
   }
 }
 
-export async function completeGoogleAuth(tempToken: string, role?: UserRole, vehicle?: string, plate?: string): Promise<AuthUser> {
+export async function completeGoogleAuth(tempToken: string, role?: UserRole, vehicle?: string, plate?: string, phone?: string, address?: string, transporterPhone?: string): Promise<AuthUser> {
   try {
     const body: Record<string, string> = { tempToken };
     if (role) body.role = mapRoleToBackend(role);
     if (vehicle) body.vehicle = vehicle;
     if (plate) body.plate = plate;
+    if (phone) body.phone = phone;
+    if (address) body.address = address;
+    if (transporterPhone) body.transporterPhone = transporterPhone;
     const data = await api.post<AuthResponse>('/api/auth/google/complete', body);
     return storeSession(data);
   } catch (err) {

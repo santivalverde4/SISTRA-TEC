@@ -10,37 +10,43 @@ interface BackendUser {
   email: string;
   role: string;
   hasPassword: boolean;
+  phone?: string;
+  address?: string;
 }
 
 interface BackendTransporter {
   vehicle: string;
   plate: string;
+  phone?: string;
 }
 
 export interface ProfileData {
   name: string;
   email: string;
   hasPassword: boolean;
+  phone: string;
+  address: string;
 }
 
 export interface VehicleData {
   vehicle: string;
   plate: string;
+  phone: string;
 }
 
 export async function getProfile(): Promise<ProfileData> {
   try {
     const data = await api.get<BackendUser>('/api/users/me');
-    return { name: data.name ?? '', email: data.email, hasPassword: data.hasPassword };
+    return { name: data.name ?? '', email: data.email, hasPassword: data.hasPassword, phone: data.phone ?? '', address: data.address ?? '' };
   } catch (err) {
     log.error('getProfile failed', err);
     throw err;
   }
 }
 
-export async function updateProfile(payload: { name: string }): Promise<void> {
+export async function updateProfile(payload: { name: string; phone: string; address: string }): Promise<void> {
   try {
-    await api.put('/api/users/me', { name: payload.name });
+    await api.put('/api/users/me', { name: payload.name, phone: payload.phone, address: payload.address });
     const stored = getUser();
     if (stored) setUser({ ...stored, name: payload.name });
   } catch (err) {
@@ -63,7 +69,7 @@ export async function changePassword(newPassword: string, currentPassword?: stri
 export async function getMyVehicle(): Promise<VehicleData> {
   try {
     const data = await api.get<BackendTransporter>('/api/transporters/me');
-    return { vehicle: data.vehicle, plate: data.plate };
+    return { vehicle: data.vehicle, plate: data.plate, phone: data.phone ?? '' };
   } catch (err) {
     log.error('getMyVehicle failed', err);
     throw err;
@@ -72,7 +78,7 @@ export async function getMyVehicle(): Promise<VehicleData> {
 
 export async function updateMyVehicle(payload: VehicleData): Promise<void> {
   try {
-    await api.put('/api/transporters/me', payload);
+    await api.put('/api/transporters/me', { vehicle: payload.vehicle, plate: payload.plate, phone: payload.phone || undefined });
   } catch (err) {
     log.error('updateMyVehicle failed', err);
     throw err;
