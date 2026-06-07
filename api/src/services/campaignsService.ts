@@ -178,7 +178,9 @@ export const createCampaign = async (data: {
       startDate: parseDate(data.startDate, "startDate"),
       endDate: parseDate(data.endDate, "endDate"),
       categories: parseCategories(data.categories ?? []),
-      ...(data.createdById ? { createdById: data.createdById } : {}),
+      createdBy: { 
+        connect: { id: data.createdById as string } 
+      },
     },
     include: campaignInclude,
   });
