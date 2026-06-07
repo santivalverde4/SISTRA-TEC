@@ -33,10 +33,12 @@ export const Profile = () => {
   };
 
   // --- Profile state ---
-  const [profile, setProfile] = useState<ProfileData>({ name: '', email: '', hasPassword: true });
+  const [profile, setProfile] = useState<ProfileData>({ name: '', email: '', hasPassword: true, phone: '', address: '' });
   const [profileLoading, setProfileLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [nameInput, setNameInput] = useState('');
+  const [phoneInput, setPhoneInput] = useState('');
+  const [addressInput, setAddressInput] = useState('');
   const [nameError, setNameError] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState('');
@@ -51,10 +53,10 @@ export const Profile = () => {
   const [passwordError, setPasswordError] = useState('');
 
   // --- Vehicle state (transportista only) ---
-  const [vehicle, setVehicle] = useState<VehicleData>({ vehicle: '', plate: '' });
+  const [vehicle, setVehicle] = useState<VehicleData>({ vehicle: '', plate: '', phone: '' });
   const [showVehicleModal, setShowVehicleModal] = useState(false);
-  const [vehicleForm, setVehicleForm] = useState<VehicleData>({ vehicle: '', plate: '' });
-  const [vehicleErrors, setVehicleErrors] = useState({ vehicle: '', plate: '' });
+  const [vehicleForm, setVehicleForm] = useState<VehicleData>({ vehicle: '', plate: '', phone: '' });
+  const [vehicleErrors, setVehicleErrors] = useState<{ vehicle: string; plate: string; phone?: string }>({ vehicle: '', plate: '', phone: '' });
   const [vehicleSaving, setVehicleSaving] = useState(false);
   const [vehicleSuccess, setVehicleSuccess] = useState('');
   const [vehicleError, setVehicleError] = useState('');
@@ -64,6 +66,8 @@ export const Profile = () => {
       .then((data) => {
         setProfile(data);
         setNameInput(data.name);
+        setPhoneInput(data.phone);
+        setAddressInput(data.address);
       })
       .catch(() => setProfileError(t('errors.load_failed')))
       .finally(() => setProfileLoading(false));
@@ -82,17 +86,23 @@ export const Profile = () => {
     return '';
   };
 
+  const [phoneError, setPhoneError] = useState('');
+  const [addressError, setAddressError] = useState('');
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const err = validateName(nameInput);
     if (err) { setNameError(err); return; }
+    if (!phoneInput.trim() || phoneInput.trim().length < 8) { setPhoneError(t('profile.error_phone_min')); return; }
+    if (!/^[+\d\s\-()]{8,}$/.test(phoneInput.trim())) { setPhoneError(t('profile.error_phone_invalid')); return; }
+    if (!addressInput.trim() || addressInput.trim().length < 5) { setAddressError(t('profile.error_address_min')); return; }
 
     setProfileSaving(true);
     setProfileError('');
     setProfileSuccess('');
     try {
-      await updateProfile({ name: nameInput.trim() });
-      setProfile((prev) => ({ ...prev, name: nameInput.trim() }));
+      await updateProfile({ name: nameInput.trim(), phone: phoneInput.trim(), address: addressInput.trim() });
+      setProfile((prev) => ({ ...prev, name: nameInput.trim(), phone: phoneInput.trim(), address: addressInput.trim() }));
       setIsEditing(false);
       setProfileSuccess(t('profile.save_success'));
     } catch (err) {
@@ -104,7 +114,11 @@ export const Profile = () => {
 
   const handleCancelEdit = () => {
     setNameInput(profile.name);
+    setPhoneInput(profile.phone);
+    setAddressInput(profile.address);
     setNameError('');
+    setPhoneError('');
+    setAddressError('');
     setProfileError('');
     setIsEditing(false);
   };
@@ -156,10 +170,12 @@ export const Profile = () => {
   // --- Vehicle handlers ---
   const isVehicleFormValid =
     vehicleForm.vehicle.trim().length > 0 &&
-    vehicleForm.plate.trim().length > 0;
+    vehicleForm.plate.trim().length > 0 &&
+    vehicleForm.phone.trim().length >= 8 &&
+    /^[+\d\s\-()]{8,}$/.test(vehicleForm.phone.trim());
 
   const validateVehicle = () => {
-    const errors = { vehicle: '', plate: '' };
+    const errors: { vehicle: string; plate: string; phone?: string } = { vehicle: '', plate: '' };
     if (!vehicleForm.vehicle.trim()) {
       errors.vehicle = t('profile.error_vehicle_required');
     } else if (vehicleForm.vehicle.trim().length < 3) {
@@ -170,6 +186,12 @@ export const Profile = () => {
       errors.plate = t('profile.error_plate_required');
     } else if (!/^[a-zA-Z0-9]{6,}$/.test(plateClean)) {
       errors.plate = t('profile.error_plate_invalid');
+    }
+    const phoneClean = vehicleForm.phone.trim();
+    if (!phoneClean || phoneClean.length < 8) {
+      errors.phone = t('profile.error_phone_min');
+    } else if (!/^[+\d\s\-()]{8,}$/.test(phoneClean)) {
+      errors.phone = t('profile.error_phone_invalid');
     }
     return errors;
   };
@@ -183,8 +205,8 @@ export const Profile = () => {
     setVehicleError('');
     setVehicleSuccess('');
     try {
-      await updateMyVehicle({ vehicle: vehicleForm.vehicle.trim(), plate: vehicleForm.plate.trim() });
-      setVehicle({ vehicle: vehicleForm.vehicle.trim(), plate: vehicleForm.plate.trim() });
+      await updateMyVehicle({ vehicle: vehicleForm.vehicle.trim(), plate: vehicleForm.plate.trim(), phone: vehicleForm.phone.trim() });
+      setVehicle({ vehicle: vehicleForm.vehicle.trim(), plate: vehicleForm.plate.trim(), phone: vehicleForm.phone.trim() });
       setVehicleSuccess(t('profile.vehicle_success'));
       setShowVehicleModal(false);
     } catch (err) {
@@ -252,12 +274,34 @@ export const Profile = () => {
                   </div>
                 </div>
 
+                <div>
+                  <label className="block mb-2">{t('profile.phone')}</label>
+                  <Input
+                    value={phoneInput}
+                    onChange={(e) => { setPhoneInput(e.target.value); setPhoneError(''); }}
+                    disabled={!isEditing}
+                    placeholder={t('profile.phone_placeholder')}
+                    error={phoneError}
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2">{t('profile.address')}</label>
+                  <Input
+                    value={addressInput}
+                    onChange={(e) => { setAddressInput(e.target.value); setAddressError(''); }}
+                    disabled={!isEditing}
+                    placeholder={t('profile.address_placeholder')}
+                    error={addressError}
+                  />
+                </div>
+
                 {profileError && <p className="text-sm text-destructive">{profileError}</p>}
                 {profileSuccess && <p className="text-sm text-[var(--success)]">{profileSuccess}</p>}
 
                 {isEditing && (
                   <div className="flex gap-2 pt-4">
-                    <Button type="submit" disabled={profileSaving || nameInput.trim().length === 0 || nameInput.trim() === profile.name.trim()}>
+                    <Button type="submit" disabled={profileSaving || nameInput.trim().length === 0 || phoneInput.trim().length < 8 || !/^[+\d\s\-()]{8,}$/.test(phoneInput.trim()) || addressInput.trim().length < 5 || (nameInput.trim() === profile.name.trim() && phoneInput.trim() === profile.phone && addressInput.trim() === profile.address)}>
                       {profileSaving ? t('common.loading') : t('profile.save_changes')}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleCancelEdit}>
@@ -342,7 +386,7 @@ export const Profile = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <h3>{t('profile.vehicle_info')}</h3>
-                  <Button variant="outline" onClick={() => { setVehicleForm(vehicle); setVehicleErrors({ vehicle: '', plate: '' }); setVehicleError(''); setShowVehicleModal(true); }}>
+                  <Button variant="outline" onClick={() => { setVehicleForm({ ...vehicle }); setVehicleErrors({ vehicle: '', plate: '' }); setVehicleError(''); setShowVehicleModal(true); }}>
                     {t('common.edit')}
                   </Button>
                 </div>
@@ -352,7 +396,7 @@ export const Profile = () => {
                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Truck className="w-6 h-6 text-primary" />
                   </div>
-                  <div className="grid grid-cols-2 gap-6 text-sm flex-1">
+                  <div className="grid grid-cols-3 gap-6 text-sm flex-1">
                     <div>
                       <p className="text-muted-foreground mb-1">{t('transporters.vehicle')}</p>
                       <p className="font-medium">{vehicle.vehicle || '—'}</p>
@@ -360,6 +404,10 @@ export const Profile = () => {
                     <div>
                       <p className="text-muted-foreground mb-1">{t('transporters.plate')}</p>
                       <p className="font-medium">{vehicle.plate || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground mb-1">{t('profile.phone')}</p>
+                      <p className="font-medium">{vehicle.phone || '—'}</p>
                     </div>
                   </div>
                 </div>
@@ -407,6 +455,16 @@ export const Profile = () => {
                 onChange={(e) => { setVehicleForm({ ...vehicleForm, plate: e.target.value }); setVehicleErrors({ ...vehicleErrors, plate: '' }); }}
                 placeholder={t('profile.plate_placeholder')}
                 error={vehicleErrors.plate}
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium">{t('profile.phone')}</label>
+              <Input
+                value={vehicleForm.phone}
+                onChange={(e) => { setVehicleForm({ ...vehicleForm, phone: e.target.value }); setVehicleErrors({ ...vehicleErrors, phone: '' }); }}
+                placeholder={t('profile.phone_placeholder')}
+                error={vehicleErrors.phone}
               />
             </div>
 
