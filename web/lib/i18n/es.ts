@@ -160,6 +160,7 @@ const es = {
     status_frozen: 'Congelada',
     status_closed: 'Cerrada',
     status_in_transit: 'En camino',
+    no_transporter_for_transit: 'Asigna un transportista antes de poner la campaña en camino.',
     status_delivered: 'Entregada',
     status_finalized: 'Finalizada',
     locked_in_transit: 'Esta campaña está en camino. Solo puedes cambiar el estado una vez que el transportista la marque como entregada.',

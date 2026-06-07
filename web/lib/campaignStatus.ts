@@ -17,7 +17,7 @@ export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, string> = {
  * Rules:
  * - abierta   → congelada always; auto-closes when past end date (handled by backend)
  * - congelada → abierta/cerrada if within date range; cerrada only if past date range
- * - cerrada   → abierta/congelada if within date range (reopen); en-camino always
+ * - cerrada   → abierta if within date range; en-camino only if a transporter is assigned
  * - en-camino → no transitions (locked once dispatched)
  * - entregada → finalizada (admin finalizes after transporter marks delivered)
  * - finalizada→ immutable
@@ -36,9 +36,11 @@ export function getAllowedTransitions(
     case 'congelada':
       return beforeEndDate ? ['abierta', 'cerrada'] : ['cerrada'];
 
-    case 'cerrada':
-      // Can reopen to abierta only if end date has not passed; en-camino always allowed
-      return beforeEndDate ? ['abierta', 'en-camino'] : ['en-camino'];
+    case 'cerrada': {
+      const hasTransporter = !!campaign.assignment;
+      const inTransit: CampaignStatus[] = hasTransporter ? ['en-camino'] : [];
+      return beforeEndDate ? ['abierta', ...inTransit] : inTransit;
+    }
 
     // Locked once in transit
     case 'en-camino':
